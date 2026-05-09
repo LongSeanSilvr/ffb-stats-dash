@@ -1,13 +1,12 @@
 import React from 'react';
 import { Card } from '../components/Card';
-import { useLeagueData } from '../hooks/useLeagueData';
+import { useLeagueContext } from '../context/LeagueContext';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 export const Dashboard: React.FC = () => {
-  const LEAGUE_ID = import.meta.env.VITE_LEAGUE_ID as string;
-  const { loading, error, seasons } = useLeagueData(LEAGUE_ID);
+  const { loading, error, selectedSeason, seasons } = useLeagueContext();
 
-  if (loading) {
+  if (loading && !selectedSeason) {
     return (
       <div className="flex justify-center items-center h-full">
         <div className="loading-spinner"></div>
@@ -15,12 +14,11 @@ export const Dashboard: React.FC = () => {
     );
   }
 
-  if (error || seasons.length === 0) {
+  if (error || !selectedSeason) {
     return <div className="text-danger-color">Error loading data: {error}</div>;
   }
 
-  const currentSeason = seasons[0];
-  const { league, rosters, rosterToUser } = currentSeason;
+  const { league, rosters, rosterToUser } = selectedSeason;
 
   // Prepare data for chart
   const pointsData = rosters.map(r => ({
@@ -48,7 +46,7 @@ export const Dashboard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 gap-6">
-        <Card title="Total Points Scored (Current Season)" className="stagger-1">
+        <Card title={`Total Points Scored (${league.season} Season)`} className="stagger-1">
           <div style={{ height: 400 }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={pointsData}>

@@ -1,23 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { Card } from '../components/Card';
-import { useLeagueData, calculateFaabEfficiency } from '../hooks/useLeagueData';
+import { calculateFaabEfficiency } from '../hooks/useLeagueData';
+import { useLeagueContext } from '../context/LeagueContext';
 import type { FaabEfficiency } from '../hooks/useLeagueData';
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export const Teams: React.FC = () => {
-  const LEAGUE_ID = import.meta.env.VITE_LEAGUE_ID as string;
-  const { loading, error, seasons } = useLeagueData(LEAGUE_ID);
+  const { loading, error, selectedSeason } = useLeagueContext();
   const [faabData, setFaabData] = useState<FaabEfficiency[]>([]);
 
   useEffect(() => {
-    if (seasons.length > 0) {
-      const currentSeason = seasons[0];
-      calculateFaabEfficiency(currentSeason.league.league_id, currentSeason.rosters, currentSeason.rosterToUser)
+    if (selectedSeason) {
+      calculateFaabEfficiency(selectedSeason.league.league_id, selectedSeason.rosters, selectedSeason.rosterToUser)
         .then(setFaabData);
     }
-  }, [seasons]);
+  }, [selectedSeason]);
 
-  if (loading) {
+  if (loading && !selectedSeason) {
     return (
       <div className="flex justify-center items-center h-full">
         <div className="loading-spinner"></div>
@@ -25,13 +24,11 @@ export const Teams: React.FC = () => {
     );
   }
 
-  if (error || seasons.length === 0) return null;
-
-  const currentSeason = seasons[0];
+  if (error || !selectedSeason) return null;
 
   // Prepare data for Scatter Chart (Wins vs FAAB Spent)
-  const scatterData = currentSeason.rosters.map(r => {
-    const user = currentSeason.rosterToUser[r.roster_id];
+  const scatterData = selectedSeason.rosters.map(r => {
+    const user = selectedSeason.rosterToUser[r.roster_id];
     return {
       name: user?.display_name || `Team ${r.roster_id}`,
       wins: r.settings.wins,
@@ -82,7 +79,7 @@ export const Teams: React.FC = () => {
         </Card>
       </div>
 
-      <Card title="Team Standings (Current Season)" className="stagger-3">
+      <Card title={`Team Standings (${selectedSeason.league.season} Season)`} className="stagger-3">
         <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid var(--card-border)' }}>
@@ -93,9 +90,9 @@ export const Teams: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {[...currentSeason.rosters].sort((a,b) => b.settings.wins - a.settings.wins || b.settings.fpts - a.settings.fpts).map(r => (
+            {[...selectedSeason.rosters].sort((a,b) => b.settings.wins - a.settings.wins || b.settings.fpts - a.settings.fpts).map(r => (
               <tr key={r.roster_id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                <td className="p-3 font-semibold">{currentSeason.rosterToUser[r.roster_id]?.display_name || `Team ${r.roster_id}`}</td>
+                <td className="p-3 font-semibold">{selectedSeason.rosterToUser[r.roster_id]?.display_name || `Team ${r.roster_id}`}</td>
                 <td className="p-3">{r.settings.wins}-{r.settings.losses}{r.settings.ties > 0 ? `-${r.settings.ties}` : ''}</td>
                 <td className="p-3">{r.settings.fpts + (r.settings.fpts_decimal/100)}</td>
                 <td className="p-3">{r.settings.fpts_against + (r.settings.fpts_against_decimal/100)}</td>

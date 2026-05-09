@@ -1,12 +1,11 @@
 import React from 'react';
 import { Card } from '../components/Card';
-import { useLeagueData } from '../hooks/useLeagueData';
+import { useLeagueContext } from '../context/LeagueContext';
 
 export const Players: React.FC = () => {
-  const LEAGUE_ID = import.meta.env.VITE_LEAGUE_ID as string;
-  const { loading, error, seasons } = useLeagueData(LEAGUE_ID);
+  const { loading, error, selectedSeason } = useLeagueContext();
 
-  if (loading) {
+  if (loading && !selectedSeason) {
     return (
       <div className="flex justify-center items-center h-full">
         <div className="loading-spinner"></div>
@@ -14,7 +13,7 @@ export const Players: React.FC = () => {
     );
   }
 
-  if (error || seasons.length === 0) return null;
+  if (error || !selectedSeason) return null;
 
   return (
     <div className="animate-fade-in">
