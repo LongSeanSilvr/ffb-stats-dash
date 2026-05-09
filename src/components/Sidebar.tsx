@@ -7,7 +7,7 @@ export const Sidebar: React.FC = () => {
   const { seasons, selectedSeasonId, setSelectedSeasonId, loading } = useLeagueContext();
   return (
     <aside className="sidebar">
-      <div className="sidebar-logo">
+      <div className="sidebar-logo pt-4">
         <LayoutDashboard className="text-accent" />
         <span>Sleeper Dash</span>
       </div>

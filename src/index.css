@@ -57,9 +57,10 @@ a:hover {
   -webkit-backdrop-filter: var(--glass-backdrop);
   border: 1px solid var(--card-border);
   border-radius: 16px;
-  padding: 1.5rem;
+  padding: 2rem;
   box-shadow: var(--glass-shadow);
   transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  overflow: hidden; /* Fixes hover overlay bleeding out of card */
 }
 
 .glass-card:hover {
@@ -91,7 +92,7 @@ a:hover {
   backdrop-filter: var(--glass-backdrop);
   display: flex;
   flex-direction: column;
-  padding: 1.5rem;
+  padding: 2rem 1.5rem; /* Increased top/bottom padding */
   position: sticky;
   top: 0;
   height: 100vh;
@@ -101,7 +102,7 @@ a:hover {
   font-size: 1.25rem;
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem; /* Increased margin */
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -125,7 +126,7 @@ a:hover {
 }
 
 .nav-item:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.08); /* slightly higher opacity on hover */
   color: var(--text-primary);
 }
 
@@ -137,7 +138,7 @@ a:hover {
 
 .main-content {
   flex: 1;
-  padding: 2rem;
+  padding: 3rem; /* Increased padding */
   overflow-y: auto;
 }
 
@@ -198,6 +199,7 @@ a:hover {
 .gap-2 { gap: 0.5rem; }
 .gap-4 { gap: 1rem; }
 .gap-6 { gap: 1.5rem; }
+.gap-8 { gap: 2rem; }
 
 .grid { display: grid; }
 .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
@@ -205,8 +207,22 @@ a:hover {
 .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
 
 /* Custom Utilities */
+.mt-2 { margin-top: 0.5rem; }
+.mt-4 { margin-top: 1rem; }
+.mt-6 { margin-top: 1.5rem; }
+.mt-8 { margin-top: 2rem; }
+.mt-10 { margin-top: 2.5rem; }
+
+.mb-2 { margin-bottom: 0.5rem; }
+.mb-4 { margin-bottom: 1rem; }
+.mb-6 { margin-bottom: 1.5rem; }
+.mb-8 { margin-bottom: 2rem; }
+.mb-10 { margin-bottom: 2.5rem; }
+.mb-12 { margin-bottom: 3rem; }
+
 .mt-auto { margin-top: auto; }
 .min-h-0 { min-height: 0; }
+.overflow-y-auto { overflow-y: auto; }
 
 .seasons-panel {
   background: rgba(0, 0, 0, 0.2);
