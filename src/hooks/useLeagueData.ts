@@ -17,8 +17,6 @@ export interface AppData {
   currentSeasonId: string;
 }
 
-const MAX_SEASONS = 3;
-
 export function useLeagueData(initialLeagueId: string) {
   const [data, setData] = useState<AppData>({
     loading: true,
@@ -34,9 +32,7 @@ export function useLeagueData(initialLeagueId: string) {
         let currentId: string | null = initialLeagueId;
         const seasonsFetched: SeasonData[] = [];
 
-        for (let i = 0; i < MAX_SEASONS; i++) {
-          if (!currentId) break;
-
+        while (currentId && currentId !== '0') {
           const league = await getLeague(currentId);
           const users = await getUsers(currentId);
           const rosters = await getRosters(currentId);
