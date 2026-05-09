@@ -92,6 +92,9 @@ a:hover {
   display: flex;
   flex-direction: column;
   padding: 1.5rem;
+  position: sticky;
+  top: 0;
+  height: 100vh;
 }
 
 .sidebar-logo {
@@ -200,6 +203,44 @@ a:hover {
 .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
 .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
 .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+/* Custom Utilities */
+.mt-auto { margin-top: auto; }
+.min-h-0 { min-height: 0; }
+
+.seasons-panel {
+  background: rgba(0, 0, 0, 0.2);
+  border-top: 1px solid var(--card-border);
+  padding: 1.5rem;
+  margin: auto -1.5rem -1.5rem -1.5rem;
+}
+
+.season-btn {
+  padding: 0.5rem 1rem;
+  color: var(--text-secondary);
+  border: none;
+  border-left: 2px solid transparent;
+  transition: all 0.2s ease;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+}
+
+.season-btn:hover {
+  background: rgba(255, 255, 255, 0.03);
+  color: #e2e8f0;
+}
+
+.season-btn.active {
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.15) 0%, transparent 100%);
+  color: #60a5fa; /* Brighter blue */
+  border-left: 2px solid var(--accent-color);
+  font-weight: 600;
+  text-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
+}
 
 /* Avatar */
 .avatar {

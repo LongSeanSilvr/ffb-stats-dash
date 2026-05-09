@@ -27,21 +27,21 @@ export const Sidebar: React.FC = () => {
         </NavLink>
       </nav>
 
-      <div className="mt-auto">
-        <h4 className="text-sm text-muted text-uppercase mb-3">Loaded Seasons</h4>
-        <div className="flex flex-col gap-2">
+      <div className="seasons-panel flex flex-col min-h-0">
+        <h4 className="text-sm text-muted text-uppercase mb-3">Seasons</h4>
+        <div className="flex flex-col gap-1 overflow-y-auto" style={{ maxHeight: '35vh' }}>
           {seasons.map((season) => (
             <button
               key={season.league.league_id}
               onClick={() => setSelectedSeasonId(season.league.league_id)}
-              className={`nav-item text-left w-full cursor-pointer ${
+              className={`season-btn ${
                 selectedSeasonId === season.league.league_id ? 'active' : ''
               }`}
             >
-              {season.league.season} Season
+              {season.league.season}
             </button>
           ))}
-          {loading && <div className="text-sm text-muted px-4 py-2">Loading seasons...</div>}
+          {loading && <div className="text-sm text-muted py-2">Loading...</div>}
         </div>
       </div>
     </aside>
