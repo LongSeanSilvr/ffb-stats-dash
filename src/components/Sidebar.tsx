@@ -17,13 +17,17 @@ export const Sidebar: React.FC = () => {
           <LayoutDashboard size={20} />
           Dashboard
         </NavLink>
-        <NavLink to="/teams" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+        <NavLink to="/managers" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+          <UserCircle size={20} />
+          League Managers
+        </NavLink>
+        <NavLink to="/faab" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
           <Users size={20} />
-          Teams & FAAB
+          FAAB Analysis
         </NavLink>
         <NavLink to="/players" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
           <UserCircle size={20} />
-          Players
+          Player Deep Dives
         </NavLink>
       </nav>
 

@@ -88,3 +88,12 @@ export async function getMatchups(leagueId: string, week: number): Promise<Match
   if (!res.ok) throw new Error(`Failed to fetch matchups for week ${week}`);
   return res.json();
 }
+
+let cachedPlayers: Record<string, any> | null = null;
+export async function getPlayers(): Promise<Record<string, any>> {
+  if (cachedPlayers) return cachedPlayers;
+  const res = await fetch(`${BASE_URL}/players/nfl`);
+  if (!res.ok) throw new Error('Failed to fetch players');
+  cachedPlayers = await res.json();
+  return cachedPlayers;
+}
