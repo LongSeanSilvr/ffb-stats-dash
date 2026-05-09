@@ -3,6 +3,8 @@ import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './pages/Dashboard';
 import { Managers } from './pages/Managers';
 import { Faab } from './pages/Faab';
+import { Draft } from './pages/Draft';
+import { Trades } from './pages/Trades';
 import { Players } from './pages/Players';
 import { LeagueProvider } from './context/LeagueContext';
 
@@ -16,6 +18,8 @@ function App() {
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/managers" element={<Managers />} />
+              <Route path="/draft" element={<Draft />} />
+              <Route path="/trades" element={<Trades />} />
               <Route path="/faab" element={<Faab />} />
               <Route path="/players" element={<Players />} />
             </Routes>
@@ -27,3 +31,4 @@ function App() {
 }
 
 export default App;
+

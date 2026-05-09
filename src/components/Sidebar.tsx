@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, UserCircle } from 'lucide-react';
+import { LayoutDashboard, Users, UserCircle, Target, DollarSign, Repeat } from 'lucide-react';
 import { useLeagueContext } from '../context/LeagueContext';
 
 export const Sidebar: React.FC = () => {
@@ -21,12 +21,20 @@ export const Sidebar: React.FC = () => {
           <UserCircle size={20} />
           League Managers
         </NavLink>
+        <NavLink to="/draft" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+          <Target size={20} />
+          Draft Analysis
+        </NavLink>
         <NavLink to="/faab" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <Users size={20} />
+          <DollarSign size={20} />
           FAAB Analysis
         </NavLink>
+        <NavLink to="/trades" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+          <Repeat size={20} />
+          Trade Analysis
+        </NavLink>
         <NavLink to="/players" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <UserCircle size={20} />
+          <Users size={20} />
           Player Deep Dives
         </NavLink>
       </nav>

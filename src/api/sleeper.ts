@@ -10,6 +10,7 @@ export interface League {
   previous_league_id: string | null;
   settings: Record<string, any>;
   avatar: string | null;
+  draft_id: string;
 }
 
 export interface User {
@@ -96,4 +97,27 @@ export async function getPlayers(): Promise<Record<string, any>> {
   if (!res.ok) throw new Error('Failed to fetch players');
   cachedPlayers = await res.json();
   return cachedPlayers;
+}
+
+export interface DraftPick {
+  draft_id: string;
+  draft_slot: number;
+  is_keeper: boolean | null;
+  pick_no: number;
+  picked_by: string;
+  player_id: string;
+  roster_id: number;
+  round: number;
+  metadata: {
+    first_name: string;
+    last_name: string;
+    position: string;
+    team: string;
+  };
+}
+
+export async function getDraftPicks(draftId: string): Promise<DraftPick[]> {
+  const res = await fetch(`${BASE_URL}/draft/${draftId}/picks`);
+  if (!res.ok) throw new Error(`Failed to fetch draft picks for draft ${draftId}`);
+  return res.json();
 }
