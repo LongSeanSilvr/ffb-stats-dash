@@ -92,9 +92,28 @@ export function useDraftEfficiency() {
           };
         });
 
+        // Pre-calculate rounds designated for keepers based on high explicit frequency
+        const keeperRoundTallies: Record<number, { total: number; keepers: number }> = {};
+        draftPicks.forEach(p => {
+          if (!keeperRoundTallies[p.round]) keeperRoundTallies[p.round] = { total: 0, keepers: 0 };
+          keeperRoundTallies[p.round].total++;
+          if (p.is_keeper) keeperRoundTallies[p.round].keepers++;
+        });
+        
+        const keeperRounds = new Set<number>();
+        Object.entries(keeperRoundTallies).forEach(([rdStr, tally]) => {
+          // If > 50% of the round is marked as keepers, it is a dedicated keeper round
+          if (tally.total > 0 && (tally.keepers / tally.total) > 0.5) {
+            keeperRounds.add(Number(rdStr));
+          }
+        });
+
         // Build draft assets: each draft pick becomes an asset with tenure starting at week 1
         const assets: DraftAsset[] = draftPicks.map((pick: DraftPick) => {
           const player = playersData[pick.player_id];
+          // Consider a keeper if explicitly marked OR if in a dedicated keeper round
+          const isKeeper = pick.is_keeper === true || keeperRounds.has(pick.round);
+          
           return {
             playerId: pick.player_id,
             playerName: player
@@ -104,7 +123,7 @@ export function useDraftEfficiency() {
             nflTeam: player?.team || pick.metadata.team || '??',
             round: pick.round,
             pickNo: pick.pick_no,
-            isKeeper: pick.is_keeper === true,
+            isKeeper,
             rosterId: pick.roster_id,
             startWeek: 1,
             endWeek: null,

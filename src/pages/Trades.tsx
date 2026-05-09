@@ -169,7 +169,18 @@ export const Trades: React.FC = () => {
                 <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 12 }} />
                 <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11 }} width={80} />
                 <RechartsTooltip cursor={false} contentStyle={{ backgroundColor: 'rgba(15,17,21,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
-                <Legend />
+                <Legend
+                  content={() => (
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', marginTop: '0.5rem', fontSize: '0.8rem' }}>
+                      {[['Won', 'var(--success-color)'], ['Lost', 'var(--danger-color)'], ['Tied', '#64748b']].map(([label, color]) => (
+                        <span key={label} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <span style={{ width: 12, height: 12, borderRadius: 2, background: color, display: 'inline-block' }} />
+                          <span style={{ color: '#94a3b8' }}>{label}</span>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                />
                 <Bar dataKey="Won" stackId="a" fill="var(--success-color)" />
                 <Bar dataKey="Lost" stackId="a" fill="var(--danger-color)" />
                 <Bar dataKey="Tied" stackId="a" fill="#64748b" radius={[0, 4, 4, 0]} />
@@ -190,7 +201,20 @@ export const Trades: React.FC = () => {
                 <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 12 }} />
                 <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11 }} width={80} />
                 <RechartsTooltip cursor={false} contentStyle={{ backgroundColor: 'rgba(15,17,21,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
-                <Legend />
+                <Legend
+                  content={() => (
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', marginTop: '0.5rem', fontSize: '0.8rem' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <span style={{ width: 12, height: 12, borderRadius: 2, background: 'var(--success-color)', display: 'inline-block' }} />
+                        <span style={{ color: '#94a3b8' }}>Pts Received</span>
+                      </span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <span style={{ width: 12, height: 12, borderRadius: 2, background: 'var(--danger-color)', display: 'inline-block' }} />
+                        <span style={{ color: '#94a3b8' }}>Pts Given Away</span>
+                      </span>
+                    </div>
+                  )}
+                />
                 <Bar dataKey="Pts Received" fill="var(--success-color)" />
                 <Bar dataKey="Pts Given Away" fill="var(--danger-color)" />
               </BarChart>

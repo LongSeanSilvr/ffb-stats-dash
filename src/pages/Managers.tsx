@@ -213,7 +213,18 @@ export const Managers: React.FC = () => {
                     <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 12 }} domain={[0, 100]} unit="%" />
                     <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11 }} width={80} />
                     <RechartsTooltip cursor={false} contentStyle={{ backgroundColor: 'rgba(15,17,21,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
-                    <Legend />
+                    <Legend
+                      content={() => (
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', marginTop: '0.5rem', fontSize: '0.8rem', flexWrap: 'wrap' }}>
+                          {[['Draft', '#3b82f6'], ['Keepers', '#8b5cf6'], ['FAAB', '#10b981'], ['Trades', '#f97316'], ['Other', '#475569']].map(([label, color]) => (
+                            <span key={label} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                              <span style={{ width: 12, height: 12, borderRadius: 2, background: color, display: 'inline-block' }} />
+                              <span style={{ color: '#94a3b8' }}>{label}</span>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    />
                     <Bar dataKey="Draft" stackId="a" fill="#3b82f6" />
                     <Bar dataKey="Keepers" stackId="a" fill="#8b5cf6" />
                     <Bar dataKey="FAAB" stackId="a" fill="#10b981" />

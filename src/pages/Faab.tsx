@@ -210,7 +210,20 @@ export const Faab: React.FC = () => {
                 <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 12 }} />
                 <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11 }} width={80} />
                 <RechartsTooltip cursor={false} contentStyle={{ backgroundColor: 'rgba(15,17,21,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
-                <Legend />
+                <Legend
+                  content={() => (
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', marginTop: '0.5rem', fontSize: '0.8rem' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <span style={{ width: 12, height: 12, borderRadius: 2, background: 'var(--success-color)', display: 'inline-block' }} />
+                        <span style={{ color: '#94a3b8' }}>Hits</span>
+                      </span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <span style={{ width: 12, height: 12, borderRadius: 2, background: 'var(--danger-color)', display: 'inline-block' }} />
+                        <span style={{ color: '#94a3b8' }}>Busts</span>
+                      </span>
+                    </div>
+                  )}
+                />
                 <Bar dataKey="Hits" stackId="a" fill="var(--success-color)" radius={[0, 0, 0, 0]} />
                 <Bar dataKey="Busts" stackId="a" fill="var(--danger-color)" radius={[0, 4, 4, 0]} />
               </BarChart>
@@ -250,7 +263,18 @@ export const Faab: React.FC = () => {
                 <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 12 }} />
                 <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11 }} width={80} />
                 <RechartsTooltip cursor={false} contentStyle={{ backgroundColor: 'rgba(15,17,21,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
-                <Legend />
+                <Legend
+                  content={() => (
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '0.5rem', fontSize: '0.8rem', flexWrap: 'wrap' }}>
+                      {allPositions.map(pos => (
+                        <span key={pos} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <span style={{ width: 12, height: 12, borderRadius: 2, background: POS_COLORS[pos] || '#a8a29e', display: 'inline-block' }} />
+                          <span style={{ color: '#94a3b8' }}>{pos}</span>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                />
                 {allPositions.map(pos => (
                   <Bar key={pos} dataKey={pos} stackId="a" fill={POS_COLORS[pos] || '#a8a29e'} />
                 ))}
