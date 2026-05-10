@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Card } from '../components/Card';
 import { useLeagueContext } from '../context/LeagueContext';
 import { useFaabEfficiency } from '../hooks/useFaabEfficiency';
+import { useFreeAgencyEfficiency } from '../hooks/useFreeAgencyEfficiency';
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, LineChart, Line, Legend, Label } from 'recharts';
 
 const CustomAvatarDot = (props: any) => {
@@ -74,6 +75,14 @@ export const Faab: React.FC = () => {
   
   const [pointFilter, setPointFilter] = useState<'all' | 'starters' | 'bench'>('starters');
   const [hiddenTeams, setHiddenTeams] = useState<string[]>([]);
+
+  // Per-pickup FAAB value index
+  const { topAssets: faabTopAssets } = useFreeAgencyEfficiency();
+  const ppdLedger = faabTopAssets.all
+    .filter(a => a.acqType === 'faab' && a.cost > 0 && a.starterPoints > 0)
+    .map(a => ({ ...a, ppd: Number((a.starterPoints / a.cost).toFixed(2)) }))
+    .sort((a, b) => b.ppd - a.ppd)
+    .slice(0, 20);
 
   const toggleTeam = (teamName: string) => {
     if (hiddenTeams.includes(teamName)) {
@@ -414,6 +423,50 @@ export const Faab: React.FC = () => {
                 </BarChart>
               </ResponsiveContainer>
             </div>
+          </div>
+        </Card>
+      </div>
+      {/* Row 6: FAAB Value Index (pts/$) */}
+      <div className="grid grid-cols-1 gap-8 mb-8">
+        <Card>
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold">FAAB Value Index (pts/$)</h2>
+            <div className="text-sm text-muted mt-1">Best return on FAAB investment — starter points generated per dollar spent on a single pickup. Excludes $0 bids.</div>
+          </div>
+          <div className="flex flex-col gap-2 overflow-y-auto pr-2 pb-4" style={{ maxHeight: '520px' }}>
+            {ppdLedger.map((asset, idx) => {
+              const isTop3 = idx < 3;
+              const rankColor = idx === 0 ? '#fbbf24' : idx === 1 ? '#94a3b8' : idx === 2 ? '#cd7f32' : undefined;
+              return (
+                <div key={`ppd-${asset.playerId}-${idx}`}
+                  className="flex justify-between items-center transition-all hover:bg-white/[0.03]"
+                  style={{ background: 'rgba(255,255,255,0.02)', border: `1px solid ${isTop3 ? rankColor + '25' : 'rgba(255,255,255,0.05)'}`, borderRadius: '12px', padding: '12px 24px' }}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="text-sm font-bold text-center shrink-0" style={{ minWidth: '1.25rem', color: rankColor || 'var(--text-secondary)' }}>{idx + 1}</div>
+                    {asset.managerAvatar
+                      ? <img src={`https://sleepercdn.com/avatars/thumbs/${asset.managerAvatar}`} alt="avatar" className="avatar shrink-0" width={32} height={32} />
+                      : <div className="avatar bg-slate-700 shrink-0" style={{ width: 32, height: 32 }} />
+                    }
+                    <div>
+                      <div className="font-semibold">{asset.playerName}</div>
+                      <div className="text-sm text-muted mt-0.5">
+                        {asset.position} · <span style={{ color: 'var(--accent-color)' }}>{asset.managerName}</span> · <span style={{ color: '#4ade80' }}>${asset.cost} FAAB</span> · Wk {asset.weekAcquired} · {asset.weeksStarted} starts
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0 ml-4">
+                    <div className="font-bold text-lg font-mono" style={{ color: 'var(--accent-color)' }}>{asset.ppd.toFixed(2)}<span className="text-xs text-muted font-normal ml-1">pts/$</span></div>
+                    <div className="text-xs text-muted">{asset.starterPoints.toFixed(1)} pts total</div>
+                  </div>
+                </div>
+              );
+            })}
+            {ppdLedger.length === 0 && (
+              <div className="p-12 text-center text-muted italic bg-white/[0.01] rounded-xl border border-dashed border-white/10">
+                No FAAB data available for this season.
+              </div>
+            )}
           </div>
         </Card>
       </div>

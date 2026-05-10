@@ -281,7 +281,7 @@ export const Trades: React.FC = () => {
             <span className="text-xs opacity-80 border-l-2 border-white/10 pl-3 py-1">
               <strong>How points are calculated:</strong><br />
               • <strong>Players:</strong> Points scored in active starting slots after the trade.<br />
-              • <strong>Draft Picks:</strong> Points scored by the player eventually drafted with the pick (but only points scored in an active starting slot for the receiving manager before that player was traded/dropped).<br />
+              • <strong>Draft Picks:</strong> Points scored by the player eventually drafted with the pick (but only points scored in an active starting slot for the receiving manager before that player was traded/dropped). Future picks from upcoming drafts are estimated based on the average points scored by drafted players in that round during the current season.<br />
               • <strong>FAAB:</strong> Evaluated using overall League Average Points per FAAB Dollar for accounting. The (Est. Personal Value) displays the specific projected impact based on that individual manager's personal FAAB efficiency.<br />
             </span>
           </div>

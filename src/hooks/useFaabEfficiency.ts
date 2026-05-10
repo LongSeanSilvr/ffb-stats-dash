@@ -97,11 +97,11 @@ export async function calculateFaabMetrics(selectedSeason: any): Promise<FaabEff
         });
       }
       
-      // Handle waiver additions
-      if (tx.type === 'waiver' && tx.adds && tx.settings?.waiver_bid !== undefined) {
+      // Handle all waiver-type acquisitions: paid FAAB bids AND $0 waivers AND free agent pickups
+      if ((tx.type === 'waiver' || tx.type === 'free_agent') && tx.adds) {
         Object.entries(tx.adds).forEach(([playerId, rosterIdStr]) => {
           const rosterId = Number(rosterIdStr);
-          const cost = tx.settings!.waiver_bid || 0;
+          const cost = tx.settings?.waiver_bid || 0;
           const runnerUp = failedBids[playerId] || 0;
           const overpay = cost > runnerUp ? cost - runnerUp : 0;
           
@@ -293,10 +293,10 @@ export function useFaabEfficiency() {
               });
             }
             
-            // Handle waiver additions
-            if (tx.type === 'waiver' && tx.adds && tx.settings?.waiver_bid !== undefined) {
+            // Handle all waiver-type acquisitions: paid FAAB bids AND $0 waivers AND free agent pickups
+            if ((tx.type === 'waiver' || tx.type === 'free_agent') && tx.adds) {
               Object.entries(tx.adds).forEach(([playerId, rosterId]) => {
-                const cost = tx.settings!.waiver_bid || 0;
+                const cost = tx.settings?.waiver_bid || 0;
                 const runnerUp = failedBids[playerId] || 0;
                 const overpay = cost > runnerUp ? cost - runnerUp : 0;
                 

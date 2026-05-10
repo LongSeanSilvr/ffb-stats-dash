@@ -87,6 +87,34 @@ export function useTradeEfficiency() {
         });
         const leagueAvgPointsPerDollar = totalLeagueFaab > 0 ? totalLeaguePts / totalLeagueFaab : 0;
 
+        // Pre-calculate average points per drafted round to estimate future pick values
+        const roundPoints: Record<number, { total: number; count: number }> = {};
+        if (finalPicks.length > 0) {
+          finalPicks.forEach((p: any) => {
+            if (!roundPoints[p.round]) roundPoints[p.round] = { total: 0, count: 0 };
+            roundPoints[p.round].count++;
+          });
+          
+          weeksData.forEach(weekData => {
+            const matchups = weekData[1];
+            if (!matchups) return;
+            matchups.forEach((m: any) => {
+              const starters = m.starters || [];
+              const playersPoints = (m as any).players_points || {};
+              finalPicks.forEach((p: any) => {
+                if (starters.includes(p.player_id) && playersPoints[p.player_id]) {
+                  roundPoints[p.round].total += Number(playersPoints[p.player_id]);
+                }
+              });
+            });
+          });
+        }
+        
+        const avgRoundPoints: Record<number, number> = {};
+        Object.entries(roundPoints).forEach(([rd, data]) => {
+          avgRoundPoints[Number(rd)] = data.count > 0 ? Number((data.total / data.count).toFixed(2)) : 0;
+        });
+
         // Create mapping of (round, original_roster_id) -> drafted player for current season picks
         const draftPickLookup: Record<string, any> = {};
         if (draftInfo && draftInfo.slot_to_roster_id && finalPicks.length > 0) {
@@ -222,6 +250,12 @@ export function useTradeEfficiency() {
                 ? `Rd ${round} Pick (${finalPlayerInfo.name})`
                 : `${pickItem.season} Rd ${round} Pick`;
 
+              // If it's a future pick (or current season but somehow un-drafted), estimate its value based on the average points of that round this year
+              let estimatedPoints = 0;
+              if (!isCurrentSeason || !finalPlayerInfo) {
+                estimatedPoints = avgRoundPoints[round] || 0;
+              }
+
               // Construct a pseudo asset representing the pick itself
               const asset: TradeAsset = {
                 playerId: finalPlayerInfo ? finalPlayerInfo.playerId : `PICK_${pickItem.season}_${round}_${origRosterId}`,
@@ -231,7 +265,7 @@ export function useTradeEfficiency() {
                 fromRosterId: giverId,
                 toRosterId: receiverId,
                 week,
-                starterPointsAfterTrade: 0,
+                starterPointsAfterTrade: estimatedPoints,
                 isPick: true
               };
 
