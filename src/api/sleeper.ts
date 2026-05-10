@@ -121,3 +121,9 @@ export async function getDraftPicks(draftId: string): Promise<DraftPick[]> {
   if (!res.ok) throw new Error(`Failed to fetch draft picks for draft ${draftId}`);
   return res.json();
 }
+
+export async function getDraft(draftId: string): Promise<any> {
+  const res = await fetch(`${BASE_URL}/draft/${draftId}`);
+  if (!res.ok) throw new Error(`Failed to fetch draft details for draft ${draftId}`);
+  return res.json();
+}
