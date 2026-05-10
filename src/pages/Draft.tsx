@@ -4,7 +4,7 @@ import { useLeagueContext } from '../context/LeagueContext';
 import { useDraftEfficiency } from '../hooks/useDraftEfficiency';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
-  ResponsiveContainer, Legend, ScatterChart, Scatter
+  ResponsiveContainer, Legend, ScatterChart, Scatter, Label
 } from 'recharts';
 
 // Reusable scatter dot with avatar
@@ -517,10 +517,14 @@ export const Draft: React.FC = () => {
           <div className="text-sm text-muted mb-4">Do better drafters generate more total value?</div>
           <div style={{ height: 350 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+              <ScatterChart margin={{ top: 20, right: 30, bottom: 30, left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis type="number" dataKey="hitRate" name="Hit Rate %" stroke="#94a3b8" tick={{ fontSize: 12 }} unit="%" />
-                <YAxis type="number" dataKey="draftPoints" name="Draft Points" stroke="#94a3b8" tick={{ fontSize: 12 }} />
+                <XAxis type="number" dataKey="hitRate" name="Hit Rate %" stroke="#94a3b8" tick={{ fontSize: 12 }} unit="%">
+                  <Label value="Draft Hit Rate (%)" position="insideBottom" offset={-15} fill="#64748b" style={{ fontSize: '0.75rem', fontWeight: 500 }} />
+                </XAxis>
+                <YAxis type="number" dataKey="draftPoints" name="Draft Points" stroke="#94a3b8" tick={{ fontSize: 12 }}>
+                  <Label value="Draft Starter Points" angle={-90} position="insideLeft" offset={10} style={{ textAnchor: 'middle', fill: '#64748b', fontSize: '0.75rem', fontWeight: 500 }} />
+                </YAxis>
                 <RechartsTooltip content={<CustomScatterTooltip />} cursor={{ strokeDasharray: '3 3', stroke: 'rgba(255,255,255,0.1)' }} />
                 <Scatter name="Teams" data={draftValueScatter} shape={<CustomAvatarDot />} />
               </ScatterChart>

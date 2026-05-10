@@ -4,7 +4,7 @@ import { useLeagueContext } from '../context/LeagueContext';
 import { useManagerAnalytics } from '../hooks/useManagerAnalytics';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
-  ResponsiveContainer, Legend, ScatterChart, Scatter
+  ResponsiveContainer, Legend, ScatterChart, Scatter, ReferenceLine, Label
 } from 'recharts';
 
 const CustomAvatarDot = (props: any) => {
@@ -27,6 +27,28 @@ const CustomAvatarDot = (props: any) => {
       )}
     </svg>
   );
+};
+
+const CustomHitRateTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div style={{ background: 'rgba(15,17,21,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '1rem', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
+        <div className="flex items-center gap-3 mb-2">
+          {data.avatar ? (
+            <img src={`https://sleepercdn.com/avatars/thumbs/${data.avatar}`} alt="avatar" className="avatar" width={24} height={24} />
+          ) : (
+             <div className="avatar bg-gray-600" style={{ width: 24, height: 24 }}></div>
+          )}
+          <span className="font-bold text-lg">{data.name}</span>
+        </div>
+        <div className="text-sm text-muted">Draft Hit Rate: <span className="text-accent-color font-bold ml-1">{data.draftHitRate}%</span></div>
+        <div className="text-sm text-muted">FAAB Hit Rate: <span className="text-success-color font-bold ml-1">{data.faabHitRate}%</span></div>
+        <div className="text-sm text-muted">Total Wins: <span className="text-white font-bold ml-1">{data.wins}</span></div>
+      </div>
+    );
+  }
+  return null;
 };
 
 const CustomScatterTooltip = ({ active, payload }: any) => {
@@ -106,14 +128,35 @@ export const Managers: React.FC = () => {
       }))
     : [];
 
-  // 4. Hit Rate comparison (Draft vs FAAB)
+  // 4. Hit Rate comparison (Draft vs FAAB) matrix
   const hitRateComparison = showAnalytics
-    ? [...profiles].sort((a, b) => b.draftHitRate - a.draftHitRate).map(p => ({
+    ? profiles.map(p => ({
         name: p.user?.display_name || `Team ${p.roster_id}`,
-        'Draft Hit Rate': p.draftHitRate,
-        'FAAB Hit Rate': p.faabHitRate,
+        avatar: p.user?.avatar,
+        draftHitRate: p.draftHitRate,
+        faabHitRate: p.faabHitRate,
+        wins: p.wins
       }))
     : [];
+
+  const avgDraftHitRate = showAnalytics && profiles.length > 0 ? Number((profiles.reduce((s, p) => s + p.draftHitRate, 0) / profiles.length).toFixed(1)) : 50;
+  const avgFaabHitRate = showAnalytics && profiles.length > 0 ? Number((profiles.reduce((s, p) => s + p.faabHitRate, 0) / profiles.length).toFixed(1)) : 50;
+
+  const getCenteredBounds = (data: any[], key: string, avg: number, minPadding = 8) => {
+    if (data.length === 0) return [0, 100];
+    const maxDev = Math.max(...data.map(d => Math.abs((d[key] || 0) - avg)), minPadding);
+    const buffer = maxDev * 1.35;
+    return [avg - buffer, avg + buffer];
+  };
+
+  const draftDomain = getCenteredBounds(hitRateComparison, 'draftHitRate', avgDraftHitRate);
+  const faabDomain = getCenteredBounds(hitRateComparison, 'faabHitRate', avgFaabHitRate);
+
+  const avgDraftPts = showAnalytics && matrixData.length > 0 ? Number((matrixData.reduce((s, p) => s + p.draftPts, 0) / matrixData.length).toFixed(1)) : 0;
+  const avgFaabPts = showAnalytics && matrixData.length > 0 ? Number((matrixData.reduce((s, p) => s + p.faabPts, 0) / matrixData.length).toFixed(1)) : 0;
+
+  const matrixDraftDomain = getCenteredBounds(matrixData, 'draftPts', avgDraftPts, 200);
+  const matrixFaabDomain = getCenteredBounds(matrixData, 'faabPts', avgFaabPts, 100);
 
   return (
     <div className="animate-fade-in">
@@ -175,10 +218,16 @@ export const Managers: React.FC = () => {
               <div className="text-sm text-muted mb-4">Draft+Keeper value vs FAAB value. Bubble size = total wins.</div>
               <div style={{ height: 380 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                  <ScatterChart margin={{ top: 20, right: 20, bottom: 30, left: 10 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                    <XAxis type="number" dataKey="draftPts" name="Draft + Keeper Points" stroke="#94a3b8" tick={{ fontSize: 12 }} />
-                    <YAxis type="number" dataKey="faabPts" name="FAAB Points" stroke="#94a3b8" tick={{ fontSize: 12 }} />
+                    <XAxis type="number" dataKey="draftPts" name="Draft + Keeper Points" stroke="#94a3b8" tick={{ fontSize: 12 }} domain={matrixDraftDomain} allowDecimals={false}>
+                      <Label value="Draft + Keeper Points" position="insideBottom" offset={-15} fill="#64748b" style={{ fontSize: '0.75rem', fontWeight: 500 }} />
+                    </XAxis>
+                    <YAxis type="number" dataKey="faabPts" name="FAAB Points" stroke="#94a3b8" tick={{ fontSize: 12 }} domain={matrixFaabDomain} allowDecimals={false} width={70}>
+                      <Label value="FAAB Points" angle={-90} position="insideLeft" offset={5} style={{ textAnchor: 'middle', fill: '#64748b', fontSize: '0.75rem', fontWeight: 500 }} />
+                    </YAxis>
+                    <ReferenceLine x={avgDraftPts} stroke="rgba(255,255,255,0.2)" strokeDasharray="5 5" />
+                    <ReferenceLine y={avgFaabPts} stroke="rgba(255,255,255,0.2)" strokeDasharray="5 5" />
                     <RechartsTooltip content={<CustomScatterTooltip />} cursor={{ strokeDasharray: '3 3', stroke: 'rgba(255,255,255,0.1)' }} />
                     <Scatter name="Teams" data={matrixData} shape={<CustomAvatarDot />} />
                   </ScatterChart>
@@ -187,7 +236,7 @@ export const Managers: React.FC = () => {
             </Card>
 
             <Card title="Manager Composite Score" className="stagger-2">
-              <div className="text-sm text-muted mb-4">Weighted: Draft Value (40%) + FAAB Efficiency (30%) + Trade Savvy (15%) + Win Rate (15%)</div>
+              <div className="text-sm text-muted mb-4">Weighted: Drafting (60%) + FAAB (20%) + Trading (10%) + Free Agency (10%) based on standardized league ranks.</div>
               <div style={{ height: 380 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={compositeData} layout="vertical" margin={{ left: 40, right: 20 }}>
@@ -236,21 +285,31 @@ export const Managers: React.FC = () => {
             </Card>
           </div>
 
-          {/* Row 3: Hit Rate Comparison (Draft vs FAAB) */}
+          {/* Row 3: Hit Rate Comparison Matrix (Draft vs FAAB) */}
           <div className="grid grid-cols-1 gap-8 mb-8">
-            <Card title="Talent Evaluation: Draft Hit Rate vs FAAB Hit Rate" className="stagger-3">
-              <div className="text-sm text-muted mb-4">Do good drafters also make good waiver wire picks, or are they different skills?</div>
-              <div style={{ height: 380 }}>
+            <Card title="The Talent Evaluation Matrix" className="stagger-3">
+              <div className="text-sm text-muted mb-4 flex justify-between items-end">
+                <span>Draft Hit Rate vs FAAB Hit Rate. Dashed lines indicate league averages. Avatar size tracks total wins.</span>
+                <div className="flex gap-6 text-xs">
+                  <span className="text-accent-color opacity-80">← Draft Strength →</span>
+                  <span className="text-success-color opacity-80">↑ FAAB Strength ↓</span>
+                </div>
+              </div>
+              <div style={{ height: 450 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={hitRateComparison} layout="vertical" margin={{ left: 40, right: 20 }}>
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.05)" />
-                    <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 12 }} domain={[0, 100]} unit="%" />
-                    <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11 }} width={80} />
-                    <RechartsTooltip cursor={false} contentStyle={{ backgroundColor: 'rgba(15,17,21,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
-                    <Legend />
-                    <Bar dataKey="Draft Hit Rate" fill="#3b82f6" />
-                    <Bar dataKey="FAAB Hit Rate" fill="#10b981" />
-                  </BarChart>
+                  <ScatterChart margin={{ top: 20, right: 30, bottom: 30, left: 10 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                    <XAxis type="number" dataKey="draftHitRate" name="Draft Hit Rate" stroke="#94a3b8" tick={{ fontSize: 12 }} domain={draftDomain} unit="%" allowDecimals={false}>
+                      <Label value="Draft Hit Rate (%)" position="insideBottom" offset={-15} fill="#64748b" style={{ fontSize: '0.75rem', fontWeight: 500 }} />
+                    </XAxis>
+                    <YAxis type="number" dataKey="faabHitRate" name="FAAB Hit Rate" stroke="#94a3b8" tick={{ fontSize: 12 }} domain={faabDomain} unit="%" allowDecimals={false} width={70}>
+                      <Label value="FAAB Hit Rate (%)" angle={-90} position="insideLeft" offset={5} style={{ textAnchor: 'middle', fill: '#64748b', fontSize: '0.75rem', fontWeight: 500 }} />
+                    </YAxis>
+                    <ReferenceLine x={avgDraftHitRate} stroke="rgba(255,255,255,0.2)" strokeDasharray="5 5" />
+                    <ReferenceLine y={avgFaabHitRate} stroke="rgba(255,255,255,0.2)" strokeDasharray="5 5" />
+                    <RechartsTooltip content={<CustomHitRateTooltip />} cursor={{ strokeDasharray: '3 3', stroke: 'rgba(255,255,255,0.1)' }} />
+                    <Scatter name="Teams" data={hitRateComparison} shape={<CustomAvatarDot />} />
+                  </ScatterChart>
                 </ResponsiveContainer>
               </div>
             </Card>

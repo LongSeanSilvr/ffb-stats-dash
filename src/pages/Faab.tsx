@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card } from '../components/Card';
 import { useLeagueContext } from '../context/LeagueContext';
 import { useFaabEfficiency } from '../hooks/useFaabEfficiency';
-import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, LineChart, Line, Legend } from 'recharts';
+import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, LineChart, Line, Legend, Label } from 'recharts';
 
 const CustomAvatarDot = (props: any) => {
   const { cx, cy, payload } = props;
@@ -190,10 +190,14 @@ export const Faab: React.FC = () => {
           <div className="text-sm text-muted mb-4">Total FAAB Overpay vs. Total Successful Claims</div>
           <div style={{ height: 350 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+              <ScatterChart margin={{ top: 20, right: 30, bottom: 30, left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis type="number" dataKey="acquisitions" name="Acquisitions" stroke="#94a3b8" tick={{ fontSize: 12 }} />
-                <YAxis type="number" dataKey="overpay" name="Overpay Margin" stroke="#94a3b8" tick={{ fontSize: 12 }} />
+                <XAxis type="number" dataKey="acquisitions" name="Acquisitions" stroke="#94a3b8" tick={{ fontSize: 12 }}>
+                  <Label value="Acquisitions" position="insideBottom" offset={-15} fill="#64748b" style={{ fontSize: '0.75rem', fontWeight: 500 }} />
+                </XAxis>
+                <YAxis type="number" dataKey="overpay" name="Overpay Margin" stroke="#94a3b8" tick={{ fontSize: 12 }}>
+                  <Label value="Overpay Margin ($)" angle={-90} position="insideLeft" offset={10} style={{ textAnchor: 'middle', fill: '#64748b', fontSize: '0.75rem', fontWeight: 500 }} />
+                </YAxis>
                 <RechartsTooltip content={<CustomScatterTooltip />} cursor={{ strokeDasharray: '3 3', stroke: 'rgba(255,255,255,0.1)' }} />
                 <Scatter name="Teams" data={scatterDataOverpay} shape={<CustomAvatarDot />} />
               </ScatterChart>
@@ -290,10 +294,12 @@ export const Faab: React.FC = () => {
           <div className="text-sm text-muted mb-4">Cumulative FAAB expenditure by week. Click a team to toggle their line.</div>
           <div style={{ height: 450 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={velocityData} margin={{ top: 10, right: 20, left: -20, bottom: 0 }}>
+              <LineChart data={velocityData} margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                 <XAxis dataKey="week" stroke="#94a3b8" tick={{ fontSize: 11 }} />
-                <YAxis stroke="#94a3b8" tick={{ fontSize: 11 }} />
+                <YAxis stroke="#94a3b8" tick={{ fontSize: 11 }}>
+                  <Label value="Cumulative Spent ($)" angle={-90} position="insideLeft" offset={10} style={{ textAnchor: 'middle', fill: '#64748b', fontSize: '0.75rem', fontWeight: 500 }} />
+                </YAxis>
                 <RechartsTooltip contentStyle={{ backgroundColor: 'rgba(15,17,21,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
                 {faabData.map((d, i) => {
                   const name = d.user?.display_name || `Team ${d.roster_id}`;
@@ -337,10 +343,14 @@ export const Faab: React.FC = () => {
           <div className="text-sm text-muted mb-4">Does spending your budget correlate to winning games?</div>
           <div style={{ height: 350 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+              <ScatterChart margin={{ top: 20, right: 30, bottom: 30, left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis type="number" dataKey="faabSpent" name="FAAB Spent" stroke="#94a3b8" tick={{ fontSize: 12 }} />
-                <YAxis type="number" dataKey="wins" name="Wins" stroke="#94a3b8" tick={{ fontSize: 12 }} />
+                <XAxis type="number" dataKey="faabSpent" name="FAAB Spent" stroke="#94a3b8" tick={{ fontSize: 12 }}>
+                  <Label value="FAAB Spent ($)" position="insideBottom" offset={-15} fill="#64748b" style={{ fontSize: '0.75rem', fontWeight: 500 }} />
+                </XAxis>
+                <YAxis type="number" dataKey="wins" name="Wins" stroke="#94a3b8" tick={{ fontSize: 12 }}>
+                  <Label value="Season Wins" angle={-90} position="insideLeft" offset={10} style={{ textAnchor: 'middle', fill: '#64748b', fontSize: '0.75rem', fontWeight: 500 }} />
+                </YAxis>
                 <RechartsTooltip content={<CustomScatterTooltip />} cursor={{ strokeDasharray: '3 3', stroke: 'rgba(255,255,255,0.1)' }} />
                 <Scatter name="Teams" data={scatterDataWins} shape={<CustomAvatarDot />} />
               </ScatterChart>
