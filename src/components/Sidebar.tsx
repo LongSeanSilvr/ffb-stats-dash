@@ -9,14 +9,11 @@ export const Sidebar: React.FC = () => {
     <aside className="sidebar">
       <div className="sidebar-logo pt-4">
         <LayoutDashboard className="text-accent" />
-        <span>Sleeper Dash</span>
+        <span>Morty Stats</span>
       </div>
-      
+
       <nav className="sidebar-nav mb-8">
-        <NavLink to="/" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <LayoutDashboard size={20} />
-          Dashboard
-        </NavLink>
+
         <NavLink to="/managers" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
           <UserCircle size={20} />
           League Managers
@@ -50,9 +47,8 @@ export const Sidebar: React.FC = () => {
             <button
               key={season.league.league_id}
               onClick={() => setSelectedSeasonId(season.league.league_id)}
-              className={`season-btn ${
-                selectedSeasonId === season.league.league_id ? 'active' : ''
-              }`}
+              className={`season-btn ${selectedSeasonId === season.league.league_id ? 'active' : ''
+                }`}
             >
               {season.league.season}
             </button>
