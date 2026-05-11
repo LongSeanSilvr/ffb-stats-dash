@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, UserCircle, Target, DollarSign, Repeat, Zap } from 'lucide-react';
+import { Users, UserCircle, Target, DollarSign, Repeat, Zap } from 'lucide-react';
 import { useLeagueContext } from '../context/LeagueContext';
 
 export const Sidebar: React.FC = () => {
@@ -8,7 +8,7 @@ export const Sidebar: React.FC = () => {
   return (
     <aside className="sidebar">
       <div className="sidebar-logo pt-4">
-        <LayoutDashboard className="text-accent" />
+        <img src="/favicon.svg?v=5" style={{ width: '24px', height: '24px', borderRadius: '50%' }} alt="logo" />
         <span>Morty Stats</span>
       </div>
 

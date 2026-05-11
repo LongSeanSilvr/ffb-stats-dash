@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <defs>
+    <!-- Liquid glow effect -->
+    <radialGradient id="liquidGlow" cx="50%" cy="80%" r="50%">
+      <stop offset="0%" stop-color="#84cc16" />
+      <stop offset="60%" stop-color="#22c55e" />
+      <stop offset="100%" stop-color="#166534" />
+    </radialGradient>
+    <filter id="neonFlask">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Glass Flask Body -->
+  <path d="M 40 10 
+           L 60 10 
+           L 60 30 
+           L 85 85 
+           C 90 95, 80 95, 75 95 
+           L 25 95 
+           C 20 95, 10 95, 15 85 
+           L 40 30 Z" 
+        fill="rgba(255,255,255,0.05)" 
+        stroke="#94a3b8" 
+        stroke-width="3" 
+        stroke-linejoin="round"/>
+        
+  <!-- Flask Lip -->
+  <rect x="35" y="5" width="30" height="6" rx="2" fill="#94a3b8" />
+
+  <!-- Glowing Neon Liquid -->
+  <path d="M 34 45 
+           L 80 85 
+           C 82 89, 78 92, 75 92 
+           L 25 92 
+           C 22 92, 18 89, 20 85 Z" 
+        fill="url(#liquidGlow)" 
+        opacity="0.9"
+        filter="url(#neonFlask)"/>
+
+  <!-- Liquid Surface / Fill Line -->
+  <ellipse cx="50" cy="45" rx="16" ry="3" fill="#4ade80" opacity="0.8" />
+
+  <!-- Bubbles representing "Stats/Data" -->
+  <circle cx="45" cy="80" r="4" fill="#ffffff" opacity="0.7" />
+  <circle cx="60" cy="65" r="3" fill="#ffffff" opacity="0.6" />
+  <circle cx="35" cy="60" r="2.5" fill="#ffffff" opacity="0.5" />
+  <circle cx="55" cy="85" r="2" fill="#ffffff" opacity="0.8" />
+  <circle cx="50" cy="55" r="1.5" fill="#ffffff" opacity="0.4" />
+  
+  <!-- Subtle glass glare reflection -->
+  <path d="M 28 85 L 43 55" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.3" />
+</svg>
