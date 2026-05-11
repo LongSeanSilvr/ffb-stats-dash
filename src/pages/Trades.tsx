@@ -4,7 +4,7 @@ import { useLeagueContext } from '../context/LeagueContext';
 import { useTradeEfficiency } from '../hooks/useTradeEfficiency';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
-  ResponsiveContainer, Legend, ScatterChart, Scatter, Cell, ReferenceLine, Label
+  ResponsiveContainer, Legend, ScatterChart, Scatter, Cell, Label
 } from 'recharts';
 
 const CustomAvatarDot = (props: any) => {

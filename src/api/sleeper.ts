@@ -96,7 +96,7 @@ export async function getPlayers(): Promise<Record<string, any>> {
   const res = await fetch(`${BASE_URL}/players/nfl`);
   if (!res.ok) throw new Error('Failed to fetch players');
   cachedPlayers = await res.json();
-  return cachedPlayers;
+  return cachedPlayers!;
 }
 
 export interface DraftPick {

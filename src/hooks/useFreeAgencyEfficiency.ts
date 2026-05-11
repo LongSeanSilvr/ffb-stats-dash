@@ -157,7 +157,7 @@ function aggregateViews(
         playerId: a.playerId,
         position: a.position,
         managerName: rosterData[a.rosterId]?.user?.display_name || `Team ${a.rosterId}`,
-        managerAvatar: rosterData[a.rosterId]?.user?.avatar,
+        managerAvatar: rosterData[a.rosterId]?.user?.avatar || undefined,
         starterPoints: Number(a.starterPoints.toFixed(1)),
         weeksStarted: a.weeksStartedCount,
         weekAcquired: a.startWeek,

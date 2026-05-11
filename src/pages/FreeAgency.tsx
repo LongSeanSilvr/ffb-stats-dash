@@ -239,7 +239,7 @@ export const FreeAgency: React.FC = () => {
                 </XAxis>
                 <YAxis type="category" dataKey="user.display_name" stroke="#94a3b8" tick={{ fontSize: 11 }} width={80} />
                 <RechartsTooltip cursor={{ fill: 'rgba(255,255,255,0.03)' }} contentStyle={{ backgroundColor: 'rgba(15,17,21,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
-                  formatter={(value: number) => [`${value}%`, 'Hit Rate']} />
+                  formatter={(value: any) => [`${value}%`, 'Hit Rate']} />
                 <Bar dataKey="hitRate" fill="var(--accent-color)" radius={[0, 4, 4, 0]} barSize={20} />
               </BarChart>
             </ResponsiveContainer>

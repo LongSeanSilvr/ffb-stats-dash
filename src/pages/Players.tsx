@@ -1,5 +1,4 @@
 import React from 'react';
-import { Card } from '../components/Card';
 import { useLeagueContext } from '../context/LeagueContext';
 
 export const Players: React.FC = () => {
