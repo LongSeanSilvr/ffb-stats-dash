@@ -19,6 +19,9 @@ export interface FreeAgencyResult {
   winPct: number;
   totalWins: number;
   totalRosterPoints: number;
+  averageWeeksHeld: number;
+  waiverWins: number;
+  transactionsByDay: Record<string, number>;
   topPickup?: {
     playerName: string;
     points: number;
@@ -69,7 +72,10 @@ function makeEmptyRoster(r: any, rosterToUser: any): FreeAgencyResult {
     pickupVelocity: Array(18).fill(0),
     totalWins: r.settings.wins || 0,
     winPct: r.settings.wins > 0 ? (r.settings.wins / Math.max(1, r.settings.wins + r.settings.losses)) * 100 : 0,
-    totalRosterPoints: (r.settings.fpts || 0) + ((r.settings.fpts_decimal || 0) / 100)
+    totalRosterPoints: (r.settings.fpts || 0) + ((r.settings.fpts_decimal || 0) / 100),
+    averageWeeksHeld: 0,
+    waiverWins: 0,
+    transactionsByDay: {}
   };
 }
 
@@ -97,6 +103,8 @@ function aggregateViews(
         positionalVolume: {},
         positionalPoints: {},
         pickupVelocity: Array(18).fill(0),
+        averageWeeksHeld: 0,
+        transactionsByDay: {},
       };
     });
 
@@ -112,10 +120,22 @@ function aggregateViews(
       rd.positionalVolume[asset.position] = (rd.positionalVolume[asset.position] || 0) + 1;
     });
 
+    const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
     // Aggregate points + hits
     filteredAssets.forEach(asset => {
       const rd = rosterData[asset.rosterId];
       if (!rd) return;
+      
+      const holdTime = (asset.endWeek !== null ? asset.endWeek : 18) - asset.startWeek;
+      rd.averageWeeksHeld += holdTime;
+      
+      if (asset.timestamp) {
+        const day = new Date(asset.timestamp).getDay();
+        const dayStr = daysOfWeek[day];
+        rd.transactionsByDay[dayStr] = (rd.transactionsByDay[dayStr] || 0) + 1;
+      }
+
       rd.pointsGenerated += asset.starterPoints;
       rd.benchPointsGenerated += asset.benchPoints;
 
@@ -148,6 +168,7 @@ function aggregateViews(
       }
       rd.pointsGenerated = Number(rd.pointsGenerated.toFixed(1));
       rd.benchPointsGenerated = Number(rd.benchPointsGenerated.toFixed(1));
+      rd.averageWeeksHeld = rd.totalPickups > 0 ? Number((rd.averageWeeksHeld / rd.totalPickups).toFixed(1)) : 0;
       rd.pointsPerPickup = rd.totalPickups > 0 ? Number((rd.pointsGenerated / rd.totalPickups).toFixed(1)) : 0;
       rd.hitRate = rd.totalPickups > 0 ? Number(((rd.hits / rd.totalPickups) * 100).toFixed(1)) : 0;
     });
@@ -223,6 +244,7 @@ export function useFreeAgencyEfficiency() {
           weeksStartedCount: number;
           cost: number;
           acqType: 'faab' | 'street';
+          timestamp: number;
         }
         const allAssets: Asset[] = [];
 
@@ -252,7 +274,7 @@ export function useFreeAgencyEfficiency() {
                 let pos = playerMeta?.position || 'OTHER';
                 if (['DE', 'DT', 'NT', 'DL', 'ILB', 'OLB', 'LB', 'CB', 'S', 'SAF', 'DB'].includes(pos)) pos = 'IDP';
 
-                allAssets.push({ rosterId, playerId, playerName: name, position: pos, startWeek: weekNum, endWeek: null, starterPoints: 0, benchPoints: 0, weeksStartedCount: 0, cost: bid, acqType });
+                allAssets.push({ rosterId, playerId, playerName: name, position: pos, startWeek: weekNum, endWeek: null, starterPoints: 0, benchPoints: 0, weeksStartedCount: 0, cost: bid, acqType, timestamp: tx.status_updated || 0 });
               });
             }
           });
@@ -265,8 +287,15 @@ export function useFreeAgencyEfficiency() {
           const matchups = weekData[1];
           if (!matchups?.length) return;
 
+          const weeklyWaiverPtsByRoster: Record<number, number> = {};
+          const matchupsById: Record<number, any[]> = {};
+
           matchups.forEach(matchup => {
             const rosterId = matchup.roster_id;
+            if (!matchupsById[matchup.matchup_id]) matchupsById[matchup.matchup_id] = [];
+            matchupsById[matchup.matchup_id].push(matchup);
+            
+            weeklyWaiverPtsByRoster[rosterId] = 0;
             const playersPoints = (matchup as any).players_points || {};
             const starters = matchup.starters || [];
 
@@ -284,10 +313,27 @@ export function useFreeAgencyEfficiency() {
                 a.startWeek <= weekNum && (a.endWeek === null || a.endWeek >= weekNum)
               );
               if (activeAsset) {
-                if (starters.includes(pId)) { activeAsset.starterPoints += pts; activeAsset.weeksStartedCount += 1; }
+                if (starters.includes(pId)) { 
+                  activeAsset.starterPoints += pts; 
+                  activeAsset.weeksStartedCount += 1; 
+                  weeklyWaiverPtsByRoster[rosterId] += pts;
+                }
                 else { activeAsset.benchPoints += pts; }
               }
             });
+          });
+
+          // Calculate Waiver Wins
+          Object.values(matchupsById).forEach(pair => {
+            if (pair.length === 2) {
+              const [r1, r2] = pair;
+              const margin = Math.abs((r1.points || 0) - (r2.points || 0));
+              if ((r1.points || 0) > (r2.points || 0) && margin < weeklyWaiverPtsByRoster[r1.roster_id]) {
+                baseRosters[r1.roster_id].waiverWins += 1;
+              } else if ((r2.points || 0) > (r1.points || 0) && margin < weeklyWaiverPtsByRoster[r2.roster_id]) {
+                baseRosters[r2.roster_id].waiverWins += 1;
+              }
+            }
           });
         });
 
