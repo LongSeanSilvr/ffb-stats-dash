@@ -294,7 +294,7 @@ export const Trades: React.FC = () => {
                   <span className="text-sm text-muted">{trade.rosterIds.length}-team trade</span>
                 </div>
                 <div style={{ overflowX: 'auto', paddingBottom: '0.5rem' }}>
-                  <div className="grid gap-6" style={{ gridTemplateColumns: `repeat(${trade.sides.length}, minmax(320px, 1fr))` }}>
+                  <div className={`grid gap-6 grid-cols-1 md:grid-cols-${Math.min(trade.sides.length, 4)}`}>
                     {trade.sides.map(side => {
                       const user = selectedSeason.rosterToUser[side.rosterId];
                       return (

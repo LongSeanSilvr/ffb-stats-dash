@@ -210,11 +210,15 @@ a:hover {
 .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
 .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
 .grid-cols-1 { grid-template-columns: repeat(1, 1fr); }
+.hidden { display: none !important; }
+.block { display: block; }
 
 @media (min-width: 768px) {
   .md\:hidden { display: none !important; }
+  .md\:block { display: block !important; }
   .md\:grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
   .md\:grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .md\:grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
 }
 
 @media (min-width: 1024px) {

@@ -349,7 +349,66 @@ export const Managers: React.FC = () => {
 
       {/* Row 0: Standings Table */}
       <Card title="Team Standings" className="stagger-1 mb-12">
-        <div className="table-container mt-6">
+        {/* Mobile View: Card Stack */}
+        <div className="md:hidden flex flex-col gap-4 mt-6">
+          {[...selectedSeason.rosters].sort((a,b) => b.settings.wins - a.settings.wins || b.settings.fpts - a.settings.fpts).map((r, i) => {
+            const profile = profiles.find(p => p.roster_id === r.roster_id);
+            const user = selectedSeason.rosterToUser[r.roster_id];
+            const pf = (r.settings.fpts + (r.settings.fpts_decimal/100)).toFixed(1);
+            const pa = (r.settings.fpts_against + (r.settings.fpts_against_decimal/100)).toFixed(1);
+            
+            return (
+              <div key={r.roster_id} className="flex flex-col p-5 relative overflow-hidden" style={{ background: i < 3 ? 'linear-gradient(145deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%)' : 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.15)', position: 'relative', overflow: 'hidden' }}>
+                <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4 relative" style={{ zIndex: 10 }}>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center justify-center" style={{ width: '28px', height: '28px', borderRadius: '50%', background: i === 0 ? 'rgba(251, 191, 36, 0.2)' : i === 1 ? 'rgba(148, 163, 184, 0.2)' : i === 2 ? 'rgba(205, 127, 50, 0.2)' : 'rgba(255,255,255,0.05)', color: i === 0 ? '#fbbf24' : i === 1 ? '#94a3b8' : i === 2 ? '#cd7f32' : 'var(--text-secondary)', border: `1px solid ${i === 0 ? 'rgba(251, 191, 36, 0.3)' : i === 1 ? 'rgba(148, 163, 184, 0.3)' : i === 2 ? 'rgba(205, 127, 50, 0.3)' : 'transparent'}` }}>
+                      <span className="text-sm font-bold">{i + 1}</span>
+                    </div>
+                    {user?.avatar ? (
+                      <img src={`https://sleepercdn.com/avatars/thumbs/${user.avatar}`} alt="avatar" className="shadow-lg" style={{ width: 44, height: 44, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.1)' }} />
+                    ) : (
+                      <div className="bg-slate-700 shadow-lg flex items-center justify-center" style={{ width: 44, height: 44, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.1)' }}>
+                        <span className="text-white/50 text-xs">N/A</span>
+                      </div>
+                    )}
+                    <div>
+                      <div className="font-bold leading-tight truncate text-white" style={{ fontSize: '1.05rem', maxWidth: '140px' }}>{user?.display_name || `Team ${r.roster_id}`}</div>
+                      <div className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.6)' }}>{r.settings.wins}-{r.settings.losses}{r.settings.ties > 0 ? `-${r.settings.ties}` : ''}</div>
+                    </div>
+                  </div>
+                  {showAnalytics && (
+                    <div className="flex flex-col items-end justify-center" style={{ background: 'rgba(255,255,255,0.03)', padding: '6px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <div className="text-muted uppercase" style={{ fontSize: '0.6rem', letterSpacing: '0.1em', marginBottom: '2px' }}>Composite</div>
+                      <div className="font-black tracking-tight" style={{ color: 'var(--accent-color)', fontSize: '1.25rem', lineHeight: 1 }}>{profile?.compositeScore.toFixed(1)}</div>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex justify-between items-center w-full relative" style={{ zIndex: 10 }}>
+                  <div className="flex flex-col" style={{ background: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: '8px', width: '31%', border: '1px solid rgba(255,255,255,0.03)' }}>
+                    <span className="text-muted uppercase" style={{ fontSize: '0.65rem', letterSpacing: '0.05em', marginBottom: '2px' }}>PF</span>
+                    <span className="font-mono font-bold text-accent-color truncate" style={{ fontSize: '0.875rem' }}>{pf}</span>
+                  </div>
+                  <div className="flex flex-col" style={{ background: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: '8px', width: '31%', border: '1px solid rgba(255,255,255,0.03)' }}>
+                    <span className="text-muted uppercase" style={{ fontSize: '0.65rem', letterSpacing: '0.05em', marginBottom: '2px' }}>PA</span>
+                    <span className="font-mono font-medium text-gray-300 truncate" style={{ fontSize: '0.875rem' }}>{pa}</span>
+                  </div>
+                  {showAnalytics ? (
+                    <div className="flex flex-col text-right" style={{ background: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: '8px', width: '31%', border: '1px solid rgba(255,255,255,0.03)' }}>
+                      <span className="text-muted uppercase" style={{ fontSize: '0.65rem', letterSpacing: '0.05em', marginBottom: '2px' }}>Vs League</span>
+                      <span className="font-mono text-success-color font-bold truncate" style={{ fontSize: '0.875rem' }}>{profile?.allPlayWins}-{profile?.allPlayLosses}</span>
+                    </div>
+                  ) : (
+                    <div style={{ width: '31%' }}></div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Desktop View: Traditional Table */}
+        <div className="hidden md:block table-container mt-6">
           <div className="overflow-hidden rounded-lg" style={{ border: '1px solid var(--card-border)' }}>
             <table className="standings-table">
             <thead style={{ background: 'rgba(255,255,255,0.02)' }}>
