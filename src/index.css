@@ -346,6 +346,92 @@ a:hover {
   text-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
 }
 
+/* Manager Card Grid */
+.manager-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .manager-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (min-width: 1024px) {
+  .manager-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (min-width: 1280px) {
+  .manager-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+.manager-card {
+  padding-bottom: 1.5rem;
+}
+
+.manager-card:hover {
+  border-color: var(--accent-color);
+}
+
+.manager-rank-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.25rem 0.75rem;
+  border-bottom-left-radius: 8px;
+}
+
+.manager-avatar {
+  width: 3.5rem;
+  height: 3.5rem;
+  border: 2px solid var(--card-border);
+}
+
+.manager-card:hover .manager-avatar {
+  border-color: var(--accent-color);
+}
+
+.manager-name {
+  line-height: 1.2;
+}
+
+.stat-box {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.btn-deep-dive {
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--accent-color);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  padding: 0.625rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-sans);
+}
+
+.btn-deep-dive:hover {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: var(--accent-color);
+}
+
+.btn-deep-dive .arrow {
+  font-size: 1.125rem;
+  line-height: 1;
+}
+
 /* Avatar */
 .avatar {
   border-radius: 50%;
@@ -392,4 +478,131 @@ a:hover {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* Table Styles */
+.standings-table {
+  width: 100%;
+  text-align: left;
+  border-collapse: collapse;
+}
+.standings-table th, .standings-table td {
+  padding: 1.25rem 1rem;
+}
+.standings-table th {
+  text-transform: uppercase;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.standings-row {
+  border-bottom: 1px solid rgba(255,255,255,0.02);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.standings-row:last-child {
+  border-bottom: none;
+}
+.standings-row:hover {
+  background: rgba(255,255,255,0.08) !important;
+}
+.standings-row.selected {
+  background: rgba(255,255,255,0.05) !important;
+}
+.team-cell {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+.team-rank {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  width: 1.5rem;
+  text-align: right;
+}
+.team-avatar {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--card-border);
+}
+.team-avatar-placeholder {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: #334155;
+  border: 2px solid var(--card-border);
+}
+.text-right {
+  text-align: right;
+}
+.text-center {
+  text-align: center;
+}
+/* Tooltip Component */
+.tooltip-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: help;
+}
+
+.tooltip-text {
+  visibility: hidden;
+  width: 220px;
+  background-color: rgba(15, 17, 21, 0.98);
+  color: #f8fafc;
+  text-align: center;
+  border-radius: 8px;
+  padding: 8px 12px;
+  position: absolute;
+  z-index: 100;
+  bottom: 140%;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.4;
+  pointer-events: none;
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  white-space: normal;
+}
+
+.tooltip-text::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: rgba(255,255,255,0.1) transparent transparent transparent;
+}
+
+.tooltip-container:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+  transform: translateX(-50%) translateY(-4px);
+}
+
+.tooltip-text.align-right {
+  left: auto;
+  right: -12px;
+  transform: translateX(0);
+}
+
+.tooltip-text.align-right::after {
+  left: auto;
+  right: 12px;
+}
+
+.tooltip-container:hover .tooltip-text.align-right {
+  transform: translateY(-4px);
 }

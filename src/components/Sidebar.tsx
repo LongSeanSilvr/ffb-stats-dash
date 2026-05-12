@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Users, UserCircle, Target, DollarSign, Repeat, Zap } from 'lucide-react';
+import { UserCircle, Target, DollarSign, Repeat, Zap } from 'lucide-react';
 import { useLeagueContext } from '../context/LeagueContext';
 
 export const Sidebar: React.FC = () => {
@@ -34,10 +34,7 @@ export const Sidebar: React.FC = () => {
           <Zap size={20} />
           Free Agency
         </NavLink>
-        <NavLink to="/players" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <Users size={20} />
-          Player Deep Dives
-        </NavLink>
+
       </nav>
 
       <div className="seasons-panel flex flex-col min-h-0">

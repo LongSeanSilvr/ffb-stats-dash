@@ -34,6 +34,8 @@ export interface Roster {
     fpts_decimal: number;
     fpts_against: number;
     fpts_against_decimal: number;
+    ppts: number;
+    ppts_decimal: number;
     waiver_budget_used: number;
   };
 }
@@ -58,6 +60,7 @@ export interface Matchup {
   players: string[];
   starters: string[];
   starters_points: number[];
+  players_points: Record<string, number>;
 }
 
 export async function getLeague(leagueId: string): Promise<League> {

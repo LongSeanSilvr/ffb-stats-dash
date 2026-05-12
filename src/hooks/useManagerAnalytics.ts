@@ -3,6 +3,8 @@ import { useLeagueContext } from '../context/LeagueContext';
 import { useFaabEfficiency } from './useFaabEfficiency';
 import { useDraftEfficiency } from './useDraftEfficiency';
 import { useTradeEfficiency } from './useTradeEfficiency';
+import { useCoachingAnalytics } from './useCoachingAnalytics';
+import { useFreeAgencyEfficiency } from './useFreeAgencyEfficiency';
 import type { User } from '../api/sleeper';
 
 export interface ManagerProfile {
@@ -11,6 +13,14 @@ export interface ManagerProfile {
   wins: number;
   losses: number;
   totalPointsFor: number;
+  
+  // Coaching & Luck
+  allPlayWins: number;
+  allPlayLosses: number;
+  allPlayTies: number;
+  coachingEfficiency: number;
+  pointsLeftOnBench: number;
+  positionalPoints: Record<string, number>;
 
   // Acquisition channel contributions (starter points)
   draftPoints: number;
@@ -18,6 +28,7 @@ export interface ManagerProfile {
   faabPoints: number;
   tradeNetPoints: number;
   tradePointsReceived: number;
+  waiverPoints: number;
 
   // Hit rates
   draftHitRate: number;
@@ -40,9 +51,11 @@ export function useManagerAnalytics() {
   const { data: faabData, loading: faabLoading } = useFaabEfficiency();
   const { data: draftData, loading: draftLoading } = useDraftEfficiency();
   const { data: tradeData, loading: tradeLoading } = useTradeEfficiency();
+  const { data: coachingData, loading: coachingLoading } = useCoachingAnalytics();
+  const { views: faViews, loading: faLoading } = useFreeAgencyEfficiency();
 
   const [profiles, setProfiles] = useState<ManagerProfile[]>([]);
-  const loading = faabLoading || draftLoading || tradeLoading;
+  const loading = faabLoading || draftLoading || tradeLoading || coachingLoading || faLoading;
 
   useEffect(() => {
     if (!selectedSeason || loading) return;
@@ -64,12 +77,16 @@ export function useManagerAnalytics() {
       const draftBusts = draft?.draftBusts || 0;
       const draftHitRate = (draftHits + draftBusts) > 0 ? (draftHits / (draftHits + draftBusts)) * 100 : 0;
 
-      // 2. FAAB Sourcing (Transactions specifically with bids > 0)
+      // 2. FAAB Sourcing (Calculates both explicit FAAB and holistic acquisition efficiency)
       const faab = faabData.find(d => d.roster_id === rosterId);
       const faabPoints = faab?.pointsGenerated || 0;
-      const faabHits = faab?.hits || 0;
-      const faabBusts = faab?.busts || 0;
-      const faabHitRate = (faabHits + faabBusts) > 0 ? (faabHits / (faabHits + faabBusts)) * 100 : 0;
+      
+      // Fetch COMPOSITE hits/busts across ALL free agency (FAAB + Street pickups)
+      const combinedFaData = faViews?.all || [];
+      const combinedFa = combinedFaData.find((d: any) => d.roster_id === rosterId);
+      const combinedHits = combinedFa?.hits || 0;
+      const combinedBusts = combinedFa?.busts || 0;
+      const faabHitRate = (combinedHits + combinedBusts) > 0 ? (combinedHits / (combinedHits + combinedBusts)) * 100 : 0;
 
       // 3. Trade Sourcing
       const trade = tradeData.find(d => d.roster_id === rosterId);
@@ -79,9 +96,12 @@ export function useManagerAnalytics() {
       const totalTrades = trade?.totalTrades || 0;
       const tradeWinRate = totalTrades > 0 ? (tradesWon / totalTrades) * 100 : 0;
 
-      // 4. Free Agency (The 'Other' component: absolute points from non-faab waiver pickups/FAs)
-      const attributedTotal = draftPoints + keeperPoints + faabPoints + tradePointsReceived;
-      const freeAgentPoints = Math.max(0, totalPointsFor - attributedTotal);
+      // 4. Free Agency / Waivers Sourcing (Pure non-faab pickups)
+      const streetData = faViews?.street || [];
+      const freeAgent = streetData.find((d: any) => d.roster_id === rosterId);
+      const waiverPoints = freeAgent?.pointsGenerated || 0;
+
+      const attributedTotal = draftPoints + keeperPoints + faabPoints + tradePointsReceived + waiverPoints;
 
       // Standard Display Normalizations
       const totalBasis = Math.max(totalPointsFor, attributedTotal, 1);
@@ -89,7 +109,24 @@ export function useManagerAnalytics() {
       const keeperPct = Number(((keeperPoints / totalBasis) * 100).toFixed(1));
       const faabPct = Number(((faabPoints / totalBasis) * 100).toFixed(1));
       const tradePct = Number(((tradePointsReceived / totalBasis) * 100).toFixed(1));
-      const otherPct = Number(Math.max(0, 100 - draftPct - keeperPct - faabPct - tradePct).toFixed(1));
+      const otherPct = Number(((waiverPoints / totalBasis) * 100).toFixed(1));
+
+      // 5. Coaching & All-Play Metrics
+      const coach = coachingData.find(d => d.roster_id === rosterId);
+      const allPlayWins = coach?.allPlayWins || 0;
+      const allPlayLosses = coach?.allPlayLosses || 0;
+      const allPlayTies = coach?.allPlayTies || 0;
+      const positionalPoints = coach?.positionalPoints || {};
+
+      // Use SLEEPER NATIVE Potential Points (ppts) for the source of truth on efficiency!
+      const totalMaxPoints = roster.settings.ppts + (roster.settings.ppts_decimal / 100);
+      const coachingEfficiency = totalMaxPoints > 0 
+        ? Number(((totalPointsFor / totalMaxPoints) * 100).toFixed(1)) 
+        : coach?.efficiency || 0;
+      
+      const pointsLeftOnBench = totalMaxPoints > 0 
+        ? Number((totalMaxPoints - totalPointsFor).toFixed(1)) 
+        : coach?.plob || 0;
 
       return {
         roster_id: rosterId,
@@ -97,11 +134,20 @@ export function useManagerAnalytics() {
         wins,
         losses,
         totalPointsFor: Number(totalPointsFor.toFixed(2)),
+        
+        allPlayWins,
+        allPlayLosses,
+        allPlayTies,
+        coachingEfficiency,
+        pointsLeftOnBench,
+        positionalPoints,
+
         draftPoints: Number(draftPoints.toFixed(2)),
         keeperPoints: Number(keeperPoints.toFixed(2)),
         faabPoints: Number(faabPoints.toFixed(2)),
         tradeNetPoints: Number(tradeNetPoints.toFixed(2)),
         tradePointsReceived: Number(tradePointsReceived.toFixed(2)),
+        waiverPoints: Number(waiverPoints.toFixed(2)),
         draftHitRate: Number(draftHitRate.toFixed(1)),
         faabHitRate: Number(faabHitRate.toFixed(1)),
         tradeWinRate: Number(tradeWinRate.toFixed(1)),
@@ -112,59 +158,53 @@ export function useManagerAnalytics() {
         otherPct,
         // Intermediate numerical stats for relative indexing
         rawDraftScore: draftPoints + keeperPoints,
-        rawFaabScore: faabPoints,
-        rawTradeScore: tradeNetPoints,
-        rawFreeAgentScore: freeAgentPoints
+        rawAcqScore: faabPoints + waiverPoints,
+        rawTradeScore: tradeNetPoints
       };
     });
 
     // Pass 2: Find global min/max to lock to 0-100 index
-    const getMax = (key: 'rawDraftScore' | 'rawFaabScore' | 'rawTradeScore' | 'rawFreeAgentScore') => Math.max(...intermediate.map(m => m[key]));
-    const getMin = (key: 'rawDraftScore' | 'rawFaabScore' | 'rawTradeScore' | 'rawFreeAgentScore') => Math.min(...intermediate.map(m => m[key]));
+    const getMax = (key: 'rawDraftScore' | 'rawAcqScore' | 'rawTradeScore') => Math.max(...intermediate.map(m => m[key]));
+    const getMin = (key: 'rawDraftScore' | 'rawAcqScore' | 'rawTradeScore') => Math.min(...intermediate.map(m => m[key]));
 
     const ranges = {
       draft: { min: getMin('rawDraftScore'), max: getMax('rawDraftScore') },
-      faab: { min: getMin('rawFaabScore'), max: getMax('rawFaabScore') },
-      trade: { min: getMin('rawTradeScore'), max: getMax('rawTradeScore') },
-      free: { min: getMin('rawFreeAgentScore'), max: getMax('rawFreeAgentScore') }
+      acq: { min: getMin('rawAcqScore'), max: getMax('rawAcqScore') },
+      trade: { min: getMin('rawTradeScore'), max: getMax('rawTradeScore') }
     };
 
     const normalizeToPercentile = (val: number, bounds: { min: number, max: number }) => {
       const span = bounds.max - bounds.min;
-      if (span <= 0) return 50; // tied default
+      if (span <= 0) return 50; 
       return ((val - bounds.min) / span) * 100;
     };
 
     // Pass 3: Apply normalized weights to form the composite index
     const finalProfiles: ManagerProfile[] = intermediate.map(m => {
       const idxDraft = normalizeToPercentile(m.rawDraftScore, ranges.draft);
-      const idxFaab = normalizeToPercentile(m.rawFaabScore, ranges.faab);
+      const idxAcq = normalizeToPercentile(m.rawAcqScore, ranges.acq);
       const idxTrade = normalizeToPercentile(m.rawTradeScore, ranges.trade);
-      const idxFree = normalizeToPercentile(m.rawFreeAgentScore, ranges.free);
 
-      // Handle scenarios where certain channels had ZERO activity (e.g. historic seasons without FAAB)
-      // Dynamically detect if variation exists in the data column.
-      const hasFaabActivity = ranges.faab.max > 0;
+      // Dynamically scale base in case trading/acquisition variation is 0 across the dataset (protect divisions)
       const hasTradeActivity = ranges.trade.max !== ranges.trade.min;
+      const hasAcqActivity = ranges.acq.max !== ranges.acq.min;
 
-      // Core Weights configuration
-      const wDraft = 0.60;
-      const wFaab = hasFaabActivity ? 0.20 : 0;
-      const wTrade = hasTradeActivity ? 0.10 : 0;
-      const wFree = 0.10;
-      const totalBasisWeight = wDraft + wFaab + wTrade + wFree;
+      // Core Weighting Configuration (40/40/20 user request)
+      const wDraft = 0.40;
+      const wAcq = hasAcqActivity ? 0.40 : 0;
+      const wTrade = hasTradeActivity ? 0.20 : 0;
+      const totalBasisWeight = wDraft + wAcq + wTrade;
 
-      // Calculate and scale up dynamically if weight-basis shrank (preserves 0-100 scale universally)
-      const rawIndex = (idxDraft * wDraft) + (idxFaab * wFaab) + (idxTrade * wTrade) + (idxFree * wFree);
+      const rawIndex = (idxDraft * wDraft) + (idxAcq * wAcq) + (idxTrade * wTrade);
       const compositeScore = Number((rawIndex / Math.max(totalBasisWeight, 0.01)).toFixed(1));
 
-      // Omit intermediate variables
-      const { rawDraftScore, rawFaabScore, rawTradeScore, rawFreeAgentScore, ...rest } = m;
+      // Clean up and finalize
+      const { rawDraftScore, rawAcqScore, rawTradeScore, ...rest } = m;
       return { ...rest, compositeScore };
     });
 
     setProfiles(finalProfiles.sort((a, b) => b.compositeScore - a.compositeScore));
-  }, [selectedSeason, faabData, draftData, tradeData, loading]);
+  }, [selectedSeason, faabData, draftData, tradeData, coachingData, loading]);
 
   return { profiles, loading };
 }

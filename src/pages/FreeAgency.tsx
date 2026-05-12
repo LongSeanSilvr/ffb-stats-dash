@@ -84,7 +84,7 @@ const toPosData = (data: FreeAgencyResult[]) =>
   TE:  Number((d.positionalPoints['TE']  || 0).toFixed(1)),
   K:   Number((d.positionalPoints['K']   || 0).toFixed(1)),
   DEF: Number((d.positionalPoints['DEF'] || 0).toFixed(1)),
-  IDP: Number((d.positionalPoints['IDP'] || 0).toFixed(1)),
+  IDP: Number(((d.positionalPoints['IDP'] || 0) + (d.positionalPoints['DL'] || 0) + (d.positionalPoints['LB'] || 0) + (d.positionalPoints['DB'] || 0)).toFixed(1)),
 }));
 
 // ─── Page ────────────────────────────────────────────────────────────────────

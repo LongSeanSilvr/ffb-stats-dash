@@ -346,11 +346,11 @@ export const Faab: React.FC = () => {
         </Card>
       </div>
 
-      {/* Row 4: Spent vs Wins & FAAB Spending Breakdown */}
-      <div className="grid grid-cols-2 gap-8 mb-8">
+      {/* Row 4: Spent vs Wins */}
+      <div className="grid grid-cols-1 gap-8 mb-8">
         <Card title="FAAB Spent vs Wins" className="stagger-4">
           <div className="text-sm text-muted mb-4">Does spending your budget correlate to winning games?</div>
-          <div style={{ height: 350 }}>
+          <div style={{ height: 450 }}>
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ top: 20, right: 30, bottom: 30, left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
@@ -364,25 +364,6 @@ export const Faab: React.FC = () => {
                 <Scatter name="Teams" data={scatterDataWins} shape={<CustomAvatarDot />} />
               </ScatterChart>
             </ResponsiveContainer>
-          </div>
-        </Card>
-
-        <Card title="FAAB Spending Breakdown" className="stagger-4">
-          <div className="flex flex-col gap-4 overflow-y-auto pr-4 mt-6" style={{ height: '350px' }}>
-            {faabData.map((d, i) => (
-              <div key={d.roster_id} className="flex justify-between items-center p-4 transition-all" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px' }}>
-                <div className="flex items-center gap-4">
-                  <div className="text-muted font-bold w-6 text-right">{i + 1}.</div>
-                  {d.user?.avatar ? (
-                    <img src={`https://sleepercdn.com/avatars/thumbs/${d.user.avatar}`} alt="avatar" className="avatar shadow-lg" width={36} height={36} />
-                  ) : (
-                    <div className="avatar bg-gray-600 shadow-lg" style={{ width: 36, height: 36 }}></div>
-                  )}
-                  <span className="font-semibold text-lg">{d.user?.display_name || `Team ${d.roster_id}`}</span>
-                </div>
-                <div className="font-bold text-success-color text-lg">${d.totalFaabSpent}</div>
-              </div>
-            ))}
           </div>
         </Card>
       </div>
