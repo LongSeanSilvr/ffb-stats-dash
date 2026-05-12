@@ -17,13 +17,39 @@ function App() {
       <Router>
         <div className="app-container relative">
           {/* Mobile Header */}
-          <header className="md:hidden sticky top-0 h-16 bg-[#0f1115]/95 backdrop-blur z-50 border-b border-white/10 px-4 flex items-center gap-4">
-            <button onClick={() => setSidebarOpen(true)} className="p-2 text-white/70 hover:text-white -ml-2">
-              <Menu size={24} />
+          <header className="md:hidden fixed top-0 left-0 right-0 h-16 z-50 flex items-center gap-4 px-5" 
+                  style={{ 
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    background: 'rgba(15, 17, 21, 0.8)', 
+                    backdropFilter: 'blur(12px)', 
+                    WebkitBackdropFilter: 'blur(12px)',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+                    zIndex: 990
+                  }}>
+            <button 
+              onClick={() => setSidebarOpen(true)} 
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'rgba(255, 255, 255, 0.8)',
+                padding: '8px',
+                marginLeft: '-8px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                outline: 'none'
+              }}
+            >
+              <Menu size={26} strokeWidth={1.5} />
             </button>
-            <div className="flex items-center gap-2">
-              <img src="/favicon.svg?v=5" style={{ width: '24px', height: '24px', borderRadius: '50%' }} alt="logo" />
-              <span className="font-bold text-white">Morty Stats</span>
+            <div className="flex items-center gap-3">
+              <img src="/favicon.svg?v=5" style={{ width: '28px', height: '28px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.1)', objectFit: 'cover' }} alt="logo" />
+              <span className="font-bold text-lg tracking-tight text-gradient">Morty Stats</span>
             </div>
           </header>
 

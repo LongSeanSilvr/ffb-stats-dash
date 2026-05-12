@@ -124,8 +124,8 @@ const HeatmapTable: React.FC<{ draftData: any[] }> = ({ draftData }) => {
 
   return (
     <div style={{ position: 'relative' }}>
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '3px', tableLayout: 'fixed' }}>
+      <div style={{ overflowX: 'auto' }} className="pb-2">
+        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '3px', minWidth: '850px' }}>
           <thead>
             <tr>
               <th style={{ width: 55, padding: '0.5rem', textAlign: 'left', color: '#94a3b8', fontSize: '0.7rem', fontWeight: 600 }}>Round</th>
