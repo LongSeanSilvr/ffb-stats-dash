@@ -130,3 +130,10 @@ export async function getDraft(draftId: string): Promise<any> {
   if (!res.ok) throw new Error(`Failed to fetch draft details for draft ${draftId}`);
   return res.json();
 }
+
+export async function getSeasonStats(season: string): Promise<Record<string, any>> {
+  const res = await fetch(`${BASE_URL}/stats/nfl/regular/${season}`);
+  if (!res.ok) throw new Error(`Failed to fetch season stats for ${season}`);
+  return res.json();
+}
+

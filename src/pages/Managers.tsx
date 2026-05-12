@@ -508,9 +508,21 @@ export const Managers: React.FC = () => {
             <Card title="Acquisition Production Matrix" className="stagger-3">
               <div className="text-sm text-muted mb-4">
                 Draft+Keeper total pts vs Combined FAAB+Waiver pts generated.
-                <div className="flex gap-4 mt-2 text-xs font-medium">
-                  <span className="opacity-70">↖ Top Left: Relied heavily on Free Agency</span>
-                  <span className="opacity-70">↘ Bottom Right: Draft Dominant</span>
+                <div style={{ display: 'flex', justifyContent: 'center', margin: '16px 0 8px 0', fontSize: '11px', color: 'rgba(255,255,255,0.7)', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '12px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', width: '320px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', padding: '0 16px 8px 0', borderRight: '2px solid rgba(255,255,255,0.15)', borderBottom: '2px solid rgba(255,255,255,0.15)' }}>
+                      🛒 <strong style={{ color: '#fff', fontWeight: 500 }}>FAAB Heavy</strong>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', padding: '0 0 8px 16px', borderBottom: '2px solid rgba(255,255,255,0.15)' }}>
+                      👑 <strong style={{ color: '#fff', fontWeight: 500 }}>Double Threat</strong>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', padding: '8px 16px 0 0', borderRight: '2px solid rgba(255,255,255,0.15)' }}>
+                      📉 <strong style={{ color: '#fff', fontWeight: 500 }}>Struggling Roster</strong>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', padding: '8px 0 0 16px' }}>
+                      🛡️ <strong style={{ color: '#fff', fontWeight: 500 }}>Draft Heavy</strong>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div style={{ height: 380 }}>
@@ -535,9 +547,21 @@ export const Managers: React.FC = () => {
             <Card title="Acquisition Accuracy Matrix" className="stagger-3">
               <div className="text-sm text-muted mb-4">
                 Draft Hit Rate vs Combined FAAB & Waiver Hit Rate.
-                <div className="flex gap-4 mt-2 text-xs font-medium">
-                  <span className="opacity-70">↙ Bottom Left: Lottery Ticket Lovers</span>
-                  <span className="opacity-70">↗ Top Right: Surgical Snipers</span>
+                <div style={{ display: 'flex', justifyContent: 'center', margin: '16px 0 8px 0', fontSize: '11px', color: 'rgba(255,255,255,0.7)', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '12px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', width: '320px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', padding: '0 16px 8px 0', borderRight: '2px solid rgba(255,255,255,0.15)', borderBottom: '2px solid rgba(255,255,255,0.15)' }}>
+                      🧪 <strong style={{ color: '#fff', fontWeight: 500 }}>FAAB Specialist</strong>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', padding: '0 0 8px 16px', borderBottom: '2px solid rgba(255,255,255,0.15)' }}>
+                      🎯 <strong style={{ color: '#fff', fontWeight: 500 }}>Surgical Snipers</strong>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', padding: '8px 16px 0 0', borderRight: '2px solid rgba(255,255,255,0.15)' }}>
+                      🎰 <strong style={{ color: '#fff', fontWeight: 500 }}>Lottery Tickets</strong>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', padding: '8px 0 0 16px' }}>
+                      🛡️ <strong style={{ color: '#fff', fontWeight: 500 }}>Draft Specialist</strong>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div style={{ height: 380 }}>

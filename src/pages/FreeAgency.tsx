@@ -243,11 +243,21 @@ export const FreeAgency: React.FC = () => {
             <ChartToggle value={macroFilter} onChange={setMacroFilter} />
           </div>
           <div className="text-xs text-muted mb-2">Measures total dependency on free agency by charting % of total team points contributed by waivers.</div>
-          <div className="mb-5 grid grid-cols-2 gap-x-6 gap-y-1.5 text-[11px] text-muted/90 border-t border-white/5 pt-2">
-            <span className="flex items-center gap-2">🛡️ <strong className="text-white font-medium">Top-Left</strong> &mdash; Draft Driven</span>
-            <span className="flex items-center gap-2">🛟 <strong className="text-white font-medium">Top-Right</strong> &mdash; Waiver Rescued</span>
-            <span className="flex items-center gap-2">🛑 <strong className="text-white font-medium">Bottom-Left</strong> &mdash; Stagnant</span>
-            <span className="flex items-center gap-2">🌊 <strong className="text-white font-medium">Bottom-Right</strong> &mdash; Treading Water</span>
+          <div style={{ display: 'flex', justifyContent: 'center', margin: '16px 0 8px 0', fontSize: '11px', color: 'rgba(255,255,255,0.7)', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', width: '320px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', padding: '0 16px 8px 0', borderRight: '2px solid rgba(255,255,255,0.15)', borderBottom: '2px solid rgba(255,255,255,0.15)' }}>
+                🛡️ <strong style={{ color: '#fff', fontWeight: 500 }}>Draft Driven</strong>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', padding: '0 0 8px 16px', borderBottom: '2px solid rgba(255,255,255,0.15)' }}>
+                🛟 <strong style={{ color: '#fff', fontWeight: 500 }}>Waiver Rescued</strong>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', padding: '8px 16px 0 0', borderRight: '2px solid rgba(255,255,255,0.15)' }}>
+                🛑 <strong style={{ color: '#fff', fontWeight: 500 }}>Stagnant</strong>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', padding: '8px 0 0 16px' }}>
+                🌊 <strong style={{ color: '#fff', fontWeight: 500 }}>Treading Water</strong>
+              </div>
+            </div>
           </div>
           <div style={{ height: 380 }}>
             <ResponsiveContainer width="100%" height="100%">
@@ -276,11 +286,21 @@ export const FreeAgency: React.FC = () => {
             <ChartToggle value={matrixFilter} onChange={setMatrixFilter} />
           </div>
           <div className="text-xs text-muted mb-2">Total pickups vs. average hold time (weeks). Identifies patient investors vs churners.</div>
-          <div className="mb-5 grid grid-cols-2 gap-x-6 gap-y-1.5 text-[11px] text-muted/90 border-t border-white/5 pt-2">
-            <span className="flex items-center gap-2">⏳ <strong className="text-white font-medium">Top-Left</strong> &mdash; Patient Investors</span>
-            <span className="flex items-center gap-2">💎 <strong className="text-white font-medium">Top-Right</strong> &mdash; Roster Maximizers</span>
-            <span className="flex items-center gap-2">😴 <strong className="text-white font-medium">Bottom-Left</strong> &mdash; Inactive</span>
-            <span className="flex items-center gap-2">🔄 <strong className="text-white font-medium">Bottom-Right</strong> &mdash; High Churn Streamers</span>
+          <div style={{ display: 'flex', justifyContent: 'center', margin: '16px 0 8px 0', fontSize: '11px', color: 'rgba(255,255,255,0.7)', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', width: '360px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', padding: '0 16px 8px 0', borderRight: '2px solid rgba(255,255,255,0.15)', borderBottom: '2px solid rgba(255,255,255,0.15)' }}>
+                ⏳ <strong style={{ color: '#fff', fontWeight: 500 }}>Patient Investors</strong>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', padding: '0 0 8px 16px', borderBottom: '2px solid rgba(255,255,255,0.15)' }}>
+                💎 <strong style={{ color: '#fff', fontWeight: 500 }}>Roster Maximizers</strong>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', padding: '8px 16px 0 0', borderRight: '2px solid rgba(255,255,255,0.15)' }}>
+                😴 <strong style={{ color: '#fff', fontWeight: 500 }}>Inactive</strong>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', padding: '8px 0 0 16px' }}>
+                🔄 <strong style={{ color: '#fff', fontWeight: 500 }}>High Churn Streamers</strong>
+              </div>
+            </div>
           </div>
           <div style={{ height: 380 }}>
             <ResponsiveContainer width="100%" height="100%">

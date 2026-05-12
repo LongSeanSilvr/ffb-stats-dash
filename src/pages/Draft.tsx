@@ -1,11 +1,14 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card } from '../components/Card';
 import { useLeagueContext } from '../context/LeagueContext';
 import { useDraftEfficiency } from '../hooks/useDraftEfficiency';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
-  ResponsiveContainer, Legend, ScatterChart, Scatter, Label, ReferenceLine
+  ResponsiveContainer, Legend, ScatterChart, Scatter, Label, ReferenceLine,
+  RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar
 } from 'recharts';
+
+const CHART_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#84cc16'];
 
 // Reusable scatter dot with avatar
 const CustomAvatarDot = (props: any) => {
@@ -55,6 +58,9 @@ const CustomScatterTooltip = ({ active, payload }: any) => {
           )}
           {data.lateDiff !== undefined && (
             <div className="flex justify-between"><span className="text-muted">Late Rd Value:</span> <span className={`font-bold ${data.lateDiff >= 0 ? 'text-success-color' : 'text-danger-color'}`}>{data.lateDiff >= 0 ? '+' : ''}{data.lateDiff}</span></div>
+          )}
+          {data.gamesMissed !== undefined && (
+            <div className="flex justify-between"><span className="text-muted">Games Missed:</span> <span className="text-danger-color font-bold">{data.gamesMissed}</span></div>
           )}
           <div className="pt-1.5 mt-1.5 border-t border-white/5 flex justify-between text-[10px]">
             <span className="text-muted/70">Actual Total:</span>
@@ -266,6 +272,14 @@ export const Draft: React.FC = () => {
   const { selectedSeason } = useLeagueContext();
   const { data: draftData, loading, error } = useDraftEfficiency();
 
+  const [radarMgrs, setRadarMgrs] = useState<number[]>([]);
+
+  useEffect(() => {
+    if (draftData && draftData.length > 0 && radarMgrs.length === 0) {
+      setRadarMgrs(draftData.slice(0, 4).map(d => d.roster_id));
+    }
+  }, [draftData, radarMgrs.length]);
+
   // --- HOISTED HOOKS: Advanced Analysis Computation ---
   // Calculate global round-by-round league averages dynamically
   const roundAverages = useMemo(() => {
@@ -324,10 +338,21 @@ export const Draft: React.FC = () => {
         earlyDiff: Number(earlyDiff.toFixed(1)),
         lateDiff: Number(lateDiff.toFixed(1)),
         actualTotal: Number(actualTotal.toFixed(1)),
-        expectedTotal: Number(expectedTotal.toFixed(1))
+        expectedTotal: Number(expectedTotal.toFixed(1)),
+        gamesMissed: d.totalGamesMissed || 0
       };
     });
   }, [draftData, roundAverages, selectedSeason]);
+
+  const scatterAvgs = useMemo(() => {
+    if (scatterData.length === 0) return { expectedTotal: 0, actualTotal: 0, wins: 0, gamesMissed: 0 };
+    return {
+      expectedTotal: scatterData.reduce((acc, d) => acc + d.expectedTotal, 0) / scatterData.length,
+      actualTotal: scatterData.reduce((acc, d) => acc + d.actualTotal, 0) / scatterData.length,
+      wins: scatterData.reduce((acc, d) => acc + d.wins, 0) / scatterData.length,
+      gamesMissed: scatterData.reduce((acc, d) => acc + d.gamesMissed, 0) / scatterData.length
+    };
+  }, [scatterData]);
   // --------------------------------------------------
 
   if (loading || !selectedSeason) {
@@ -472,9 +497,234 @@ export const Draft: React.FC = () => {
     }))
   ).sort((a, b) => b.starterPoints - a.starterPoints);
 
+  // 8. Strategy Radar Data
+  const radarProfiles = [...draftData].sort((a, b) => (a.user?.display_name || '').localeCompare(b.user?.display_name || ''));
+  const activeRadarProfiles = radarMgrs.map(id => radarProfiles.find(p => p.roster_id === id)).filter(p => !!p) as any[];
+
+  const buildPosRadarData = (minRound: number, maxRound: number, excludeKeepers: boolean) => {
+    const data: Record<string, any>[] = [
+      { subject: 'QB' },
+      { subject: 'RB' },
+      { subject: 'WR' },
+      { subject: 'TE' },
+      { subject: 'K' },
+      { subject: 'IDP' }
+    ];
+
+    // 1. Calculate raw totals for ALL managers to find the global max for this draft phase
+    const allManagerTotals = radarProfiles.map(p => {
+      let qb = 0, rb = 0, wr = 0, te = 0, k = 0, idp = 0;
+      const picks = p.draftPicks.filter((pick: any) => 
+        pick.round >= minRound && pick.round <= maxRound && (!excludeKeepers || !pick.isKeeper)
+      );
+      picks.forEach((pick: any) => {
+        const pos = pick.position || '??';
+        if (pos === 'QB') qb++;
+        else if (pos === 'RB') rb++;
+        else if (pos === 'WR') wr++;
+        else if (pos === 'TE') te++;
+        else if (pos === 'K') k++;
+        else if (['DL', 'LB', 'DB', 'IDP'].includes(pos)) idp++;
+      });
+      return { qb, rb, wr, te, k, idp };
+    });
+
+    const maxQB = Math.max(...allManagerTotals.map(t => t.qb), 1);
+    const maxRB = Math.max(...allManagerTotals.map(t => t.rb), 1);
+    const maxWR = Math.max(...allManagerTotals.map(t => t.wr), 1);
+    const maxTE = Math.max(...allManagerTotals.map(t => t.te), 1);
+    const maxK = Math.max(...allManagerTotals.map(t => t.k), 1);
+    const maxIDP = Math.max(...allManagerTotals.map(t => t.idp), 1);
+
+    // 2. Map normalized (100-scaled) data for the ACTIVE managers only
+    activeRadarProfiles.forEach((p, idx) => {
+      let qb = 0, rb = 0, wr = 0, te = 0, k = 0, idp = 0;
+      
+      const picks = p.draftPicks.filter((pick: any) => 
+        pick.round >= minRound && 
+        pick.round <= maxRound && 
+        (!excludeKeepers || !pick.isKeeper)
+      );
+
+      picks.forEach((pick: any) => {
+        const pos = pick.position || '??';
+        if (pos === 'QB') qb++;
+        else if (pos === 'RB') rb++;
+        else if (pos === 'WR') wr++;
+        else if (pos === 'TE') te++;
+        else if (pos === 'K') k++;
+        else if (['DL', 'LB', 'DB', 'IDP'].includes(pos)) idp++;
+      });
+
+      // Scaled values for rendering
+      data[0][`manager_${idx}`] = Number(((qb / maxQB) * 100).toFixed(1));
+      data[1][`manager_${idx}`] = Number(((rb / maxRB) * 100).toFixed(1));
+      data[2][`manager_${idx}`] = Number(((wr / maxWR) * 100).toFixed(1));
+      data[3][`manager_${idx}`] = Number(((te / maxTE) * 100).toFixed(1));
+      data[4][`manager_${idx}`] = Number(((k / maxK) * 100).toFixed(1));
+      data[5][`manager_${idx}`] = Number(((idp / maxIDP) * 100).toFixed(1));
+
+      // Raw values for tooltip
+      data[0][`raw_${idx}`] = qb;
+      data[1][`raw_${idx}`] = rb;
+      data[2][`raw_${idx}`] = wr;
+      data[3][`raw_${idx}`] = te;
+      data[4][`raw_${idx}`] = k;
+      data[5][`raw_${idx}`] = idp;
+    });
+
+    return data;
+  };
+
+  const earlyRadarData = buildPosRadarData(1, 4, false);
+  const midRadarData = buildPosRadarData(5, 9, false);
+  const lateRadarData = buildPosRadarData(10, 30, true);
+
+  const handleToggle = (id: number, setFn: React.Dispatch<React.SetStateAction<number[]>>) => {
+    setFn(prev => {
+      if (prev.includes(id)) return prev.filter(x => x !== id);
+      const next = [...prev, id];
+      return next.length > 4 ? next.slice(1) : next;
+    });
+  };
+
+  const renderSelector = (currentIds: number[], setter: React.Dispatch<React.SetStateAction<number[]>>) => {
+    return (
+      <div className="flex flex-wrap justify-center gap-2 mt-6 border-t border-white/5 pt-4 w-full">
+        {radarProfiles.map(p => {
+          const activeIdx = currentIds.indexOf(p.roster_id);
+          const isActive = activeIdx !== -1;
+          const color = isActive ? CHART_COLORS[activeIdx] : '#64748b';
+          
+          return (
+            <div
+              key={p.roster_id}
+              onClick={() => handleToggle(p.roster_id, setter)}
+              className={`legend-toggle ${!isActive ? 'hidden-team' : ''}`}
+              style={{ 
+                borderColor: isActive ? color : 'rgba(255,255,255,0.05)',
+                opacity: isActive ? 1 : undefined,
+                cursor: 'pointer',
+                padding: '4px 12px',
+                borderRadius: '999px',
+                borderWidth: '1px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'all 0.2s ease',
+                background: isActive ? 'rgba(255,255,255,0.03)' : 'transparent'
+              }}
+            >
+              <span style={{ 
+                width: '8px', 
+                height: '8px', 
+                borderRadius: '50%', 
+                background: color, 
+                display: 'inline-block',
+                opacity: isActive ? 1 : 0.5
+              }}></span>
+              <span className="text-sm font-medium" style={{ color: isActive ? '#fff' : 'var(--text-secondary)' }}>
+                {p.user?.display_name || `Team ${p.roster_id}`}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  // 9. Injury & Bust Analyzer Data
+  const injuryBustData = allDraftPicks
+    .filter(p => p.gamesMissed > 0)
+    .sort((a, b) => (b.gamesMissed * b.draftValueExpected) - (a.gamesMissed * a.draftValueExpected))
+    .slice(0, 24); // Top 24 most impactful injuries
+
   return (
     <div className="animate-fade-in">
       <h1 className="text-3xl text-gradient mt-4 mb-10">Draft & Keeper Analytics ({selectedSeason.league.season})</h1>
+
+      {/* Row 0: Draft Strategy Radar */}
+      <div className="grid grid-cols-1 gap-8 mb-8">
+        <Card title="Positional Strategy Maps" className="stagger-0">
+          <div className="text-sm text-muted mb-6 text-center">Concentration of picks by position across different phases of the draft.</div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="flex flex-col items-center">
+              <h3 className="text-md text-white font-medium mb-2">Early (Rds 1-4)</h3>
+              <div style={{ width: '100%', height: 260 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart cx="50%" cy="50%" outerRadius="70%" data={earlyRadarData}>
+                    <PolarGrid stroke="rgba(255,255,255,0.1)" />
+                    <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                    <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                    <RechartsTooltip 
+                      formatter={(_value: any, name: any, entry: any) => {
+                        const rawKey = entry.dataKey?.replace('manager_', 'raw_');
+                        const displayVal = entry.payload[rawKey] !== undefined ? entry.payload[rawKey] : _value;
+                        return [`${displayVal} picks`, name];
+                      }}
+                      contentStyle={{ backgroundColor: 'rgba(15,17,21,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} 
+                    />
+                    {activeRadarProfiles.map((p, i) => (
+                      <Radar key={p.roster_id} name={p.user.display_name} dataKey={`manager_${i}`} stroke={CHART_COLORS[i]} fill={CHART_COLORS[i]} fillOpacity={0.2} />
+                    ))}
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center">
+              <h3 className="text-md text-white font-medium mb-2">Mid (Rds 5-9)</h3>
+              <div style={{ width: '100%', height: 260 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart cx="50%" cy="50%" outerRadius="70%" data={midRadarData}>
+                    <PolarGrid stroke="rgba(255,255,255,0.1)" />
+                    <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                    <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                    <RechartsTooltip 
+                      formatter={(_value: any, name: any, entry: any) => {
+                        const rawKey = entry.dataKey?.replace('manager_', 'raw_');
+                        const displayVal = entry.payload[rawKey] !== undefined ? entry.payload[rawKey] : _value;
+                        return [`${displayVal} picks`, name];
+                      }}
+                      contentStyle={{ backgroundColor: 'rgba(15,17,21,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} 
+                    />
+                    {activeRadarProfiles.map((p, i) => (
+                      <Radar key={p.roster_id} name={p.user.display_name} dataKey={`manager_${i}`} stroke={CHART_COLORS[i]} fill={CHART_COLORS[i]} fillOpacity={0.2} />
+                    ))}
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center">
+              <h3 className="text-md text-white font-medium mb-2">Late (Rds 10+)</h3>
+              <div style={{ width: '100%', height: 260 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart cx="50%" cy="50%" outerRadius="70%" data={lateRadarData}>
+                    <PolarGrid stroke="rgba(255,255,255,0.1)" />
+                    <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                    <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                    <RechartsTooltip 
+                      formatter={(_value: any, name: any, entry: any) => {
+                        const rawKey = entry.dataKey?.replace('manager_', 'raw_');
+                        const displayVal = entry.payload[rawKey] !== undefined ? entry.payload[rawKey] : _value;
+                        return [`${displayVal} picks`, name];
+                      }}
+                      contentStyle={{ backgroundColor: 'rgba(15,17,21,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} 
+                    />
+                    {activeRadarProfiles.map((p, i) => (
+                      <Radar key={p.roster_id} name={p.user.display_name} dataKey={`manager_${i}`} stroke={CHART_COLORS[i]} fill={CHART_COLORS[i]} fillOpacity={0.2} />
+                    ))}
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+          
+          {renderSelector(radarMgrs, setRadarMgrs)}
+        </Card>
+      </div>
 
       {/* Row 1: Draft Points Generated & Draft Hit Rate */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
@@ -541,14 +791,62 @@ export const Draft: React.FC = () => {
 
       {/* Row 2: Advanced Draft Analytics Scatter Plots */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <Card title="Draft Capital vs Yield" className="stagger-2">
+          <div className="text-sm text-muted mb-4 leading-relaxed">
+            Compares total draft capital entering the draft (expected avg value for picks a manager owned) against the actual points generated by those picks.
+            <div style={{ display: 'flex', justifyContent: 'center', margin: '16px 0 8px 0', fontSize: '11px', color: 'rgba(255,255,255,0.7)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', width: '360px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', padding: '0 16px 8px 0', borderRight: '2px solid rgba(255,255,255,0.15)', borderBottom: '2px solid rgba(255,255,255,0.15)' }}>
+                  💎 <strong style={{ color: '#fff', fontWeight: 500 }}>Value Extractors</strong>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', padding: '0 0 8px 16px', borderBottom: '2px solid rgba(255,255,255,0.15)' }}>
+                  🎯 <strong style={{ color: '#fff', fontWeight: 500 }}>Expected Studs</strong>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', padding: '8px 16px 0 0', borderRight: '2px solid rgba(255,255,255,0.15)' }}>
+                  📉 <strong style={{ color: '#fff', fontWeight: 500 }}>Expected Duds</strong>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', padding: '8px 0 0 16px' }}>
+                  ⚠️ <strong style={{ color: '#fff', fontWeight: 500 }}>Squandered Capital</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style={{ height: 350 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <ScatterChart margin={{ top: 20, right: 30, bottom: 40, left: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <XAxis type="number" dataKey="expectedTotal" name="Expected Points" stroke="#94a3b8" tick={{ fontSize: 12 }} domain={['auto', 'auto']}>
+                  <Label value="Total Draft Value (Expected Pts)" position="insideBottom" offset={-20} fill="#64748b" style={{ fontSize: '0.75rem', fontWeight: 500 }} />
+                </XAxis>
+                <YAxis type="number" dataKey="actualTotal" name="Actual Points" stroke="#94a3b8" tick={{ fontSize: 12 }}>
+                  <Label value="Actual Starter Points" angle={-90} position="insideLeft" offset={10} style={{ textAnchor: 'middle', fill: '#64748b', fontSize: '0.75rem', fontWeight: 500 }} />
+                </YAxis>
+                <RechartsTooltip content={<CustomScatterTooltip />} cursor={{ strokeDasharray: '3 3', stroke: 'rgba(255,255,255,0.1)' }} />
+                <Scatter name="Teams" data={scatterData} shape={<CustomAvatarDot />} isAnimationActive={true} />
+                <ReferenceLine x={scatterAvgs.expectedTotal} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" />
+                <ReferenceLine y={scatterAvgs.actualTotal} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" />
+              </ScatterChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
         <Card title="Draft Efficiency vs Wins" className="stagger-2">
           <div className="text-sm text-muted mb-4 leading-relaxed">
-            Correlates total points extracted vs league expected averages against season wins.
-            <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1.5 text-[11px] text-muted/90 border-t border-white/5 pt-2">
-              <span className="flex items-center gap-2">💼 <strong className="text-white font-medium">Top-Left</strong> &mdash; Waiver Gold</span>
-              <span className="flex items-center gap-2">🎯 <strong className="text-white font-medium">Top-Right</strong> &mdash; Solid Draft</span>
-              <span className="flex items-center gap-2">⚠️ <strong className="text-white font-medium">Bottom-Left</strong> &mdash; Rebuilding</span>
-              <span className="flex items-center gap-2">🍀 <strong className="text-white font-medium">Bottom-Right</strong> &mdash; Unlucky</span>
+            Compares Draft ROI (performance relative to draft slot expectations) against total season wins.
+            <div style={{ display: 'flex', justifyContent: 'center', margin: '16px 0 8px 0', fontSize: '11px', color: 'rgba(255,255,255,0.7)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', width: '320px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', padding: '0 16px 8px 0', borderRight: '2px solid rgba(255,255,255,0.15)', borderBottom: '2px solid rgba(255,255,255,0.15)' }}>
+                  💼 <strong style={{ color: '#fff', fontWeight: 500 }}>Waiver Gold</strong>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', padding: '0 0 8px 16px', borderBottom: '2px solid rgba(255,255,255,0.15)' }}>
+                  🎯 <strong style={{ color: '#fff', fontWeight: 500 }}>Solid Draft</strong>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', padding: '8px 16px 0 0', borderRight: '2px solid rgba(255,255,255,0.15)' }}>
+                  ⚠️ <strong style={{ color: '#fff', fontWeight: 500 }}>Rebuilding</strong>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', padding: '8px 0 0 16px' }}>
+                  🍀 <strong style={{ color: '#fff', fontWeight: 500 }}>Unlucky</strong>
+                </div>
+              </div>
             </div>
           </div>
           <div style={{ height: 350 }}>
@@ -564,6 +862,7 @@ export const Draft: React.FC = () => {
                 <RechartsTooltip content={<CustomScatterTooltip />} cursor={{ strokeDasharray: '3 3', stroke: 'rgba(255,255,255,0.1)' }} />
                 <Scatter name="Teams" data={scatterData} shape={<CustomAvatarDot />} isAnimationActive={true} />
                 <ReferenceLine x={0} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" />
+                <ReferenceLine y={scatterAvgs.wins} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" />
               </ScatterChart>
             </ResponsiveContainer>
           </div>
@@ -572,11 +871,21 @@ export const Draft: React.FC = () => {
         <Card title="Early Capital vs Late Value" className="stagger-2">
           <div className="text-sm text-muted mb-4 leading-relaxed">
             Compares points above average in high-capital early rounds (1-5) vs late rounds (6+).
-            <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1.5 text-[11px] text-muted/90 border-t border-white/5 pt-2">
-              <span className="flex items-center gap-2">💎 <strong className="text-white font-medium">Top-Left</strong> &mdash; Late Steals</span>
-              <span className="flex items-center gap-2">🔥 <strong className="text-white font-medium">Top-Right</strong> &mdash; Well Rounded</span>
-              <span className="flex items-center gap-2">📉 <strong className="text-white font-medium">Bottom-Left</strong> &mdash; Below Avg</span>
-              <span className="flex items-center gap-2">⭐ <strong className="text-white font-medium">Bottom-Right</strong> &mdash; Early Value</span>
+            <div style={{ display: 'flex', justifyContent: 'center', margin: '16px 0 8px 0', fontSize: '11px', color: 'rgba(255,255,255,0.7)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', width: '320px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', padding: '0 16px 8px 0', borderRight: '2px solid rgba(255,255,255,0.15)', borderBottom: '2px solid rgba(255,255,255,0.15)' }}>
+                  💎 <strong style={{ color: '#fff', fontWeight: 500 }}>Late Steals</strong>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', padding: '0 0 8px 16px', borderBottom: '2px solid rgba(255,255,255,0.15)' }}>
+                  🔥 <strong style={{ color: '#fff', fontWeight: 500 }}>Well Rounded</strong>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', padding: '8px 16px 0 0', borderRight: '2px solid rgba(255,255,255,0.15)' }}>
+                  📉 <strong style={{ color: '#fff', fontWeight: 500 }}>Below Avg</strong>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', padding: '8px 0 0 16px' }}>
+                  ⭐ <strong style={{ color: '#fff', fontWeight: 500 }}>Early Value</strong>
+                </div>
+              </div>
             </div>
           </div>
           <div style={{ height: 350 }}>
@@ -593,6 +902,45 @@ export const Draft: React.FC = () => {
                 <Scatter name="Teams" data={scatterData} shape={<CustomAvatarDot />} isAnimationActive={true} />
                 <ReferenceLine x={0} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" />
                 <ReferenceLine y={0} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" />
+              </ScatterChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+
+        <Card title="Draft Injury Impact (Luck vs Skill)" className="stagger-2">
+          <div className="text-sm text-muted mb-4 leading-relaxed">
+            Correlates Draft ROI (skill) against total drafted games lost to injury (luck).
+            <div style={{ display: 'flex', justifyContent: 'center', margin: '16px 0 8px 0', fontSize: '11px', color: 'rgba(255,255,255,0.7)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', width: '360px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', padding: '0 16px 8px 0', borderRight: '2px solid rgba(255,255,255,0.15)', borderBottom: '2px solid rgba(255,255,255,0.15)' }}>
+                  🚑 <strong style={{ color: '#fff', fontWeight: 500 }}>Poor Draft, Bad Luck</strong>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', padding: '0 0 8px 16px', borderBottom: '2px solid rgba(255,255,255,0.15)' }}>
+                  💪 <strong style={{ color: '#fff', fontWeight: 500 }}>Great Draft, Bad Luck</strong>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', padding: '8px 16px 0 0', borderRight: '2px solid rgba(255,255,255,0.15)' }}>
+                  📉 <strong style={{ color: '#fff', fontWeight: 500 }}>Poor Draft, Healthy</strong>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', padding: '8px 0 0 16px' }}>
+                  🍀 <strong style={{ color: '#fff', fontWeight: 500 }}>Great Draft, Healthy</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style={{ height: 350 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <ScatterChart margin={{ top: 20, right: 30, bottom: 40, left: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <XAxis type="number" dataKey="roi" name="Draft ROI" stroke="#94a3b8" tick={{ fontSize: 12 }} unit="%" domain={['auto', 'auto']}>
+                  <Label value="Draft ROI (% vs expected)" position="insideBottom" offset={-20} fill="#64748b" style={{ fontSize: '0.75rem', fontWeight: 500 }} />
+                </XAxis>
+                <YAxis type="number" dataKey="gamesMissed" name="Games Missed" stroke="#94a3b8" tick={{ fontSize: 12 }}>
+                  <Label value="Games Lost to Injury" angle={-90} position="insideLeft" offset={10} style={{ textAnchor: 'middle', fill: '#64748b', fontSize: '0.75rem', fontWeight: 500 }} />
+                </YAxis>
+                <RechartsTooltip content={<CustomScatterTooltip />} cursor={{ strokeDasharray: '3 3', stroke: 'rgba(255,255,255,0.1)' }} />
+                <Scatter name="Teams" data={scatterData} shape={<CustomAvatarDot />} isAnimationActive={true} />
+                <ReferenceLine x={0} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" />
+                <ReferenceLine y={scatterAvgs.gamesMissed} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" />
               </ScatterChart>
             </ResponsiveContainer>
           </div>
@@ -687,6 +1035,8 @@ export const Draft: React.FC = () => {
           </div>
         </Card>
       </div>
+
+
 
       {/* Row 5: Value Heatmap */}
       <div className="grid grid-cols-1 gap-8 mb-8">

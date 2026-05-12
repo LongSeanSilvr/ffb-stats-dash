@@ -16,6 +16,9 @@ export interface DraftAsset {
   endWeek: number | null;
   starterPoints: number;
   benchPoints: number;
+  gamesPlayedOnRoster: number;
+  gamesMissed: number;
+  draftValueExpected: number;
 }
 
 export interface DraftEfficiencyResult {
@@ -35,6 +38,10 @@ export interface DraftEfficiencyResult {
   keeperBusts: number;
   // Per-round draft value
   roundValue: Record<number, number>;
+  // Overhaul metrics
+  totalGamesMissed: number;
+  totalDraftValueExpected: number;
+  totalDraftValueActual: number;
 }
 
 export function useDraftEfficiency() {
@@ -54,10 +61,11 @@ export function useDraftEfficiency() {
         const leagueId = selectedSeason.league.league_id;
         const draftId = selectedSeason.league.draft_id;
 
-        // Fetch draft picks and player metadata in parallel
-        const [draftPicks, playersData] = await Promise.all([
+        // Fetch draft picks, player metadata, and full season stats in parallel
+        const [draftPicks, playersData, seasonStats] = await Promise.all([
           getDraftPicks(draftId),
-          getPlayers()
+          getPlayers(),
+          import('../api/sleeper').then(m => m.getSeasonStats(selectedSeason.league.season))
         ]);
 
         // Fetch all week data for tenure tracking
@@ -88,7 +96,10 @@ export function useDraftEfficiency() {
             keeperBenchPoints: 0,
             keeperHits: 0,
             keeperBusts: 0,
-            roundValue: {}
+            roundValue: {},
+            totalGamesMissed: 0,
+            totalDraftValueExpected: 0,
+            totalDraftValueActual: 0
           };
         });
 
@@ -128,7 +139,10 @@ export function useDraftEfficiency() {
             startWeek: 1,
             endWeek: null,
             starterPoints: 0,
-            benchPoints: 0
+            benchPoints: 0,
+            gamesPlayedOnRoster: 0,
+            gamesMissed: 0,
+            draftValueExpected: Math.max(0, draftPicks.length - pick.pick_no)
           };
         });
 
@@ -159,13 +173,11 @@ export function useDraftEfficiency() {
 
           matchups.forEach(matchup => {
             const rosterId = matchup.roster_id;
+            const players = matchup.players || [];
             const playersPoints = (matchup as any).players_points || {};
             const starters = matchup.starters || [];
 
-            Object.entries(playersPoints).forEach(([playerId, points]) => {
-              const pts = Number(points) || 0;
-              if (pts === 0) return;
-
+            players.forEach(playerId => {
               const activeAsset = assets.find(
                 a =>
                   a.playerId === playerId &&
@@ -175,14 +187,31 @@ export function useDraftEfficiency() {
               );
 
               if (activeAsset) {
-                if (starters.includes(playerId)) {
-                  activeAsset.starterPoints += pts;
-                } else {
-                  activeAsset.benchPoints += pts;
+                const pts = Number(playersPoints[playerId]) || 0;
+                if (pts > 0) {
+                  activeAsset.gamesPlayedOnRoster++;
+                  if (starters.includes(playerId)) {
+                    activeAsset.starterPoints += pts;
+                  } else {
+                    activeAsset.benchPoints += pts;
+                  }
                 }
               }
             });
           });
+        });
+
+        // Calculate Games Missed due to Injury/Busts
+        assets.forEach(asset => {
+           const totalSeasonGp = seasonStats[asset.playerId]?.gp || 0;
+           if (asset.gamesPlayedOnRoster === totalSeasonGp && asset.endWeek !== null && asset.endWeek < 18) {
+              // Season ending injury / out of NFL drop
+              asset.gamesMissed = Math.max(0, 17 - totalSeasonGp);
+           } else {
+              // Missed games while on roster
+              const weeksOnRoster = (asset.endWeek || 18) - asset.startWeek + 1;
+              asset.gamesMissed = Math.max(0, weeksOnRoster - asset.gamesPlayedOnRoster - 1); // rough -1 for BYE
+           }
         });
 
         // Aggregate assets into roster data
@@ -215,6 +244,11 @@ export function useDraftEfficiency() {
             // Per-round value
             if (!rd.roundValue[asset.round]) rd.roundValue[asset.round] = 0;
             rd.roundValue[asset.round] += asset.starterPoints;
+
+            // Overhaul metrics
+            rd.totalGamesMissed += asset.gamesMissed;
+            rd.totalDraftValueExpected += asset.draftValueExpected;
+            rd.totalDraftValueActual += asset.starterPoints;
           }
         });
 
