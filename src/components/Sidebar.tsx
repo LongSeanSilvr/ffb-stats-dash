@@ -15,7 +15,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       <div className={`sidebar-overlay ${isOpen ? 'open' : ''}`} onClick={onClose} />
       <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
         <div className="sidebar-logo pt-4">
-          <img src="/favicon.svg?v=5" style={{ width: '24px', height: '24px', borderRadius: '50%' }} alt="logo" />
+          <img src="/logo_clean.png?v=6" style={{ width: '24px', height: '24px', borderRadius: '50%' }} alt="logo" />
           <span>Morty Stats</span>
         </div>
 

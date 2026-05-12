@@ -47,9 +47,9 @@ function App() {
             >
               <Menu size={26} strokeWidth={1.5} />
             </button>
-            <div className="flex items-center gap-3">
-              <img src="/favicon.svg?v=5" style={{ width: '28px', height: '28px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.1)', objectFit: 'cover' }} alt="logo" />
-              <span className="font-bold text-lg tracking-tight text-gradient">Morty Stats</span>
+            <div className="flex items-center gap-4">
+              <img src="/logo_clean.png?v=6" style={{ width: '28px', height: '28px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.1)', objectFit: 'cover' }} alt="logo" />
+              <span className="font-bold text-lg tracking-tight text-gradient ml-1">Morty Stats</span>
             </div>
           </header>
 
