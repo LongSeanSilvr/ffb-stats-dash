@@ -18,6 +18,7 @@ export interface FreeAgencyResult {
   pickupVelocity: number[];
   winPct: number;
   totalWins: number;
+  totalRosterPoints: number;
   topPickup?: {
     playerName: string;
     points: number;
@@ -67,7 +68,8 @@ function makeEmptyRoster(r: any, rosterToUser: any): FreeAgencyResult {
     positionalPoints: {},
     pickupVelocity: Array(18).fill(0),
     totalWins: r.settings.wins || 0,
-    winPct: r.settings.wins > 0 ? (r.settings.wins / Math.max(1, r.settings.wins + r.settings.losses)) * 100 : 0
+    winPct: r.settings.wins > 0 ? (r.settings.wins / Math.max(1, r.settings.wins + r.settings.losses)) * 100 : 0,
+    totalRosterPoints: (r.settings.fpts || 0) + ((r.settings.fpts_decimal || 0) / 100)
   };
 }
 

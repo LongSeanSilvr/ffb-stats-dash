@@ -171,7 +171,7 @@ export const Faab: React.FC = () => {
   });
 
   const allPositions = Array.from(new Set(faabData.flatMap(d => Object.keys(d.positionalSpend))));
-  const posOrder = ['QB', 'RB', 'WR', 'TE', 'K', 'DEF', 'IDP', 'OTHER'];
+  const posOrder = ['QB', 'RB', 'WR', 'TE', 'K', 'IDP', 'OTHER'];
   allPositions.sort((a, b) => {
     const idxA = posOrder.indexOf(a);
     const idxB = posOrder.indexOf(b);
@@ -184,7 +184,6 @@ export const Faab: React.FC = () => {
     WR: '#10b981',
     TE: '#f59e0b',
     K: '#ef4444',
-    DEF: '#64748b',
     IDP: '#06b6d4',
     OTHER: '#a8a29e'
   };

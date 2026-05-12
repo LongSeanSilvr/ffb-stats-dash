@@ -4,8 +4,11 @@ import { useLeagueContext } from '../context/LeagueContext';
 import { useFreeAgencyEfficiency, type AcqFilter, type FreeAgencyResult } from '../hooks/useFreeAgencyEfficiency';
 import {
   ScatterChart, Scatter, XAxis, YAxis, ZAxis, CartesianGrid, Tooltip as RechartsTooltip,
-  ResponsiveContainer, BarChart, Bar, Legend, Label, ReferenceLine
+  ResponsiveContainer, BarChart, Bar, Legend, Label, ReferenceLine,
+  Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis
 } from 'recharts';
+
+const CHART_COLORS = ['#3b82f6', '#10b981', '#8b5cf6', '#f97316', '#ec4899'];
 
 // ─── Shared Components ──────────────────────────────────────────────────────
 
@@ -34,6 +37,25 @@ const CustomAvatarDot = (props: any) => {
         : <circle cx={size/2} cy={size/2} r={size/2} fill="#475569" />
       }
     </svg>
+  );
+};
+
+const RelianceTooltip = ({ active, payload }: any) => {
+  if (!active || !payload?.length) return null;
+  const d = payload[0].payload;
+  return (
+    <div style={{ background: 'rgba(15,17,21,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '1rem', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
+      <div className="flex items-center gap-3 mb-2">
+        {d.avatar
+          ? <img src={`https://sleepercdn.com/avatars/thumbs/${d.avatar}`} alt="avatar" className="avatar" width={24} height={24} />
+          : <div className="avatar bg-gray-600" style={{ width: 24, height: 24 }} />
+        }
+        <span className="font-bold text-lg">{d.name}</span>
+      </div>
+      <div className="text-sm text-muted">Waiver Points: <span className="text-success-color font-bold ml-1">{d.points.toFixed(1)}</span></div>
+      <div className="text-sm text-muted">Roster Reliance: <span className="text-accent-color font-bold ml-1">{d.reliance}%</span></div>
+      <div className="text-sm text-muted mt-2 border-t border-white/10 pt-2">Win Rate: <span className="text-white font-bold ml-1">{d.winPct}%</span></div>
+    </div>
   );
 };
 
@@ -71,6 +93,7 @@ const toScatter = (data: FreeAgencyResult[]) =>
     avatar: d.user?.avatar,
     pickups: d.totalPickups,
     points: d.pointsGenerated,
+    reliance: Number(((d.pointsGenerated / Math.max(1, d.totalRosterPoints)) * 100).toFixed(1)),
     hitRate: d.hitRate,
     winPct: Number(d.winPct.toFixed(1))
   }));
@@ -83,7 +106,6 @@ const toPosData = (data: FreeAgencyResult[]) =>
   WR:  Number((d.positionalPoints['WR']  || 0).toFixed(1)),
   TE:  Number((d.positionalPoints['TE']  || 0).toFixed(1)),
   K:   Number((d.positionalPoints['K']   || 0).toFixed(1)),
-  DEF: Number((d.positionalPoints['DEF'] || 0).toFixed(1)),
   IDP: Number(((d.positionalPoints['IDP'] || 0) + (d.positionalPoints['DL'] || 0) + (d.positionalPoints['LB'] || 0) + (d.positionalPoints['DB'] || 0)).toFixed(1)),
 }));
 
@@ -99,6 +121,56 @@ export const FreeAgency: React.FC = () => {
   const [posFilter, setPosFilter]       = useState<AcqFilter>('all');
   const [hitFilter, setHitFilter]       = useState<AcqFilter>('all');
   const [ledgerFilter, setLedgerFilter] = useState<AcqFilter>('all');
+
+  const [radarMgrs, setRadarMgrs]       = useState<number[]>([]);
+
+  // Initialize Radar select to top performers
+  React.useEffect(() => {
+    if (views.all.length > 0 && !loading) {
+      const top3 = [...views.all].sort((a,b) => b.pointsGenerated - a.pointsGenerated).slice(0, 3).map(v => v.roster_id);
+      if (radarMgrs.length === 0) setRadarMgrs(top3);
+    }
+  }, [views.all.length, loading]);
+
+  const handleToggle = (id: number, setFn: React.Dispatch<React.SetStateAction<number[]>>) => {
+    setFn(prev => {
+      if (prev.includes(id)) return prev.filter(x => x !== id);
+      const next = [...prev, id];
+      return next.length > 4 ? next.slice(1) : next; 
+    });
+  };
+
+  const renderSelector = (currentIds: number[], setter: React.Dispatch<React.SetStateAction<number[]>>) => {
+    const sorted = [...views.all].sort((a, b) => (a.user?.display_name || '').localeCompare(b.user?.display_name || ''));
+    return (
+      <div className="flex flex-wrap justify-center gap-2 mt-4 border-t border-white/5 pt-4 w-full">
+        {sorted.map(v => {
+          const activeIdx = currentIds.indexOf(v.roster_id);
+          const isActive = activeIdx !== -1;
+          const color = isActive ? CHART_COLORS[activeIdx] : '#64748b';
+          return (
+            <div
+              key={v.roster_id}
+              onClick={() => handleToggle(v.roster_id, setter)}
+              className={`legend-toggle ${!isActive ? 'hidden-team' : ''}`}
+              style={{ 
+                borderColor: isActive ? color : 'rgba(255,255,255,0.05)',
+                opacity: isActive ? 1 : 0.5,
+                padding: '4px 8px',
+                cursor: 'pointer',
+                borderRadius: '8px'
+              }}
+            >
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: color, display: 'inline-block', marginRight: '6px' }}></span>
+              <span className="text-xs font-medium" style={{ color: isActive ? '#fff' : 'var(--text-secondary)' }}>
+                {v.user?.display_name || `Team ${v.roster_id}`}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   if (loading) {
     return (
@@ -122,10 +194,36 @@ export const FreeAgency: React.FC = () => {
 
   const avg = (arr: number[]) => arr.reduce((s, v) => s + v, 0) / (arr.length || 1);
 
-  const avgPointsMacro  = avg(macroData.map(d => d.points));
+  const avgRelianceMacro = avg(macroData.map(d => d.reliance));
   const avgWinPct       = avg(macroData.map(d => d.winPct));
   const avgPickups      = avg(matrixData.map(d => d.pickups));
   const avgPointsMatrix = avg(matrixData.map(d => d.points));
+
+  // Construct Radar data: Normalized 0-100 visually, preserving raw for tooltips
+  const radarProfiles = radarMgrs.map(id => views[posFilter].find(v => v.roster_id === id)).filter(p => !!p) as FreeAgencyResult[];
+  
+  const radarSubjects = [
+    { label: 'QB',  keys: ['QB'] },
+    { label: 'RB',  keys: ['RB'] },
+    { label: 'WR',  keys: ['WR'] },
+    { label: 'TE',  keys: ['TE'] },
+    { label: 'K',   keys: ['K'] },
+    { label: 'IDP', keys: ['IDP', 'DL', 'LB', 'DB'] }
+  ];
+
+  const radarChartData = radarSubjects.map(s => {
+    const node: any = { subject: s.label };
+    
+    const getVal = (p: FreeAgencyResult) => s.keys.reduce((tot, k) => tot + (p.positionalPoints[k] || 0), 0);
+    const maxRaw = Math.max(...views[posFilter].map(v => getVal(v)), 10);
+
+    radarProfiles.forEach((p, i) => {
+      const raw = getVal(p);
+      node[`manager_${i}`] = Math.max(5, (raw / maxRaw) * 100); 
+      node[`raw_${i}`] = Number(raw.toFixed(1));
+    });
+    return node;
+  });
 
   return (
     <div className="animate-fade-in">
@@ -139,31 +237,31 @@ export const FreeAgency: React.FC = () => {
 
         <Card className="stagger-1">
           <div className="flex justify-between items-center mb-2">
-            <h2 className="text-base font-semibold">Waiver Points vs. Win Rate</h2>
+            <h2 className="text-base font-semibold">Roster Reliance vs. Win Rate</h2>
             <ChartToggle value={macroFilter} onChange={setMacroFilter} />
           </div>
-          <div className="text-xs text-muted mb-2">Correlation between total starter points added via waivers and season winning percentage.</div>
+          <div className="text-xs text-muted mb-2">Measures total dependency on free agency by charting % of total team points contributed by waivers.</div>
           <div className="mb-5 grid grid-cols-2 gap-x-6 gap-y-1.5 text-[11px] text-muted/90 border-t border-white/5 pt-2">
-            <span className="flex items-center gap-2">🏛️ <strong className="text-white font-medium">Top-Left</strong> &mdash; Strong Core</span>
-            <span className="flex items-center gap-2">👑 <strong className="text-white font-medium">Top-Right</strong> &mdash; Kingmakers</span>
-            <span className="flex items-center gap-2">⚠️ <strong className="text-white font-medium">Bottom-Left</strong> &mdash; Below Avg</span>
-            <span className="flex items-center gap-2">🍀 <strong className="text-white font-medium">Bottom-Right</strong> &mdash; Unlucky</span>
+            <span className="flex items-center gap-2">🛡️ <strong className="text-white font-medium">Top-Left</strong> &mdash; Draft Driven</span>
+            <span className="flex items-center gap-2">🛟 <strong className="text-white font-medium">Top-Right</strong> &mdash; Waiver Rescued</span>
+            <span className="flex items-center gap-2">🛑 <strong className="text-white font-medium">Bottom-Left</strong> &mdash; Stagnant</span>
+            <span className="flex items-center gap-2">🌊 <strong className="text-white font-medium">Bottom-Right</strong> &mdash; Treading Water</span>
           </div>
           <div style={{ height: 380 }}>
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ top: 20, right: 20, bottom: 40, left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis type="number" dataKey="points" name="Points" stroke="#94a3b8"
-                  domain={getCenteredBounds(macroData.map(d => d.points), avgPointsMacro)} tick={{ fontSize: 12 }} allowDecimals={false}>
-                  <Label value="Starter Points Generated" position="insideBottom" offset={-15} fill="#64748b" style={{ fontSize: '0.8rem' }} />
+                <XAxis type="number" dataKey="reliance" name="Reliance" stroke="#94a3b8" unit="%"
+                  domain={getCenteredBounds(macroData.map(d => d.reliance), avgRelianceMacro)} tick={{ fontSize: 12 }} allowDecimals={false}>
+                  <Label value="Waiver Reliance (% of total points)" position="insideBottom" offset={-15} fill="#64748b" style={{ fontSize: '0.8rem' }} />
                 </XAxis>
                 <YAxis type="number" dataKey="winPct" name="Win %" stroke="#94a3b8"
                   domain={getCenteredBounds(macroData.map(d => d.winPct), avgWinPct)} tick={{ fontSize: 12 }} width={55} allowDecimals={false}>
                   <Label value="Win %" angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fill: '#64748b', fontSize: '0.8rem' }} offset={10} />
                 </YAxis>
-                <ReferenceLine x={avgPointsMacro} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" />
+                <ReferenceLine x={avgRelianceMacro} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" />
                 <ReferenceLine y={avgWinPct} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" />
-                <RechartsTooltip cursor={{ strokeDasharray: '3 3' }} contentStyle={{ background: 'rgba(15,17,21,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }} />
+                <RechartsTooltip content={<RelianceTooltip />} cursor={{ strokeDasharray: '3 3' }} />
                 <Scatter name="Managers" data={macroData} shape={<CustomAvatarDot />} />
               </ScatterChart>
             </ResponsiveContainer>
@@ -210,30 +308,31 @@ export const FreeAgency: React.FC = () => {
 
         <Card className="stagger-2">
           <div className="flex justify-between items-center mb-2">
-            <h2 className="text-base font-semibold">Points by Position</h2>
+            <h2 className="text-base font-semibold">Positional Strategy Overlay</h2>
             <ChartToggle value={posFilter} onChange={setPosFilter} />
           </div>
-          <div className="text-xs text-muted mb-5">Starter points generated per position from acquisitions.</div>
-          <div style={{ height: 380 }}>
+          <div className="text-xs text-muted mb-2 text-center">Compares acquisition points per position (scaled to positional peak).</div>
+          <div style={{ width: '100%', height: 340 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={posData} layout="vertical" margin={{ left: 60, bottom: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.05)" />
-                <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 12 }} allowDecimals={false}>
-                  <Label value="Starter Points" position="insideBottom" offset={-10} fill="#64748b" style={{ fontSize: '0.8rem' }} />
-                </XAxis>
-                <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11 }} width={80} />
-                <RechartsTooltip cursor={{ fill: 'rgba(255,255,255,0.03)' }} contentStyle={{ backgroundColor: 'rgba(15,17,21,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
-                <Legend wrapperStyle={{ fontSize: '0.75rem', paddingTop: '10px' }} />
-                <Bar dataKey="RB"  stackId="a" fill="#3b82f6" />
-                <Bar dataKey="WR"  stackId="a" fill="#8b5cf6" />
-                <Bar dataKey="TE"  stackId="a" fill="#ec4899" />
-                <Bar dataKey="QB"  stackId="a" fill="#eab308" />
-                <Bar dataKey="DEF" stackId="a" fill="#10b981" />
-                <Bar dataKey="K"   stackId="a" fill="#f97316" />
-                <Bar dataKey="IDP" stackId="a" fill="#6366f1" />
-              </BarChart>
+              <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarChartData}>
+                <PolarGrid stroke="rgba(255,255,255,0.1)" />
+                <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 600 }} />
+                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                <RechartsTooltip 
+                  formatter={(_value: any, name: any, entry: any) => {
+                    const rawKey = entry.dataKey?.replace('manager_', 'raw_');
+                    const displayVal = entry.payload[rawKey] !== undefined ? entry.payload[rawKey] : _value;
+                    return [`${displayVal} pts`, name];
+                  }}
+                  contentStyle={{ backgroundColor: 'rgba(15,17,21,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }} 
+                />
+                {radarProfiles.map((p, i) => (
+                  <Radar key={p.roster_id} name={p.user?.display_name} dataKey={`manager_${i}`} stroke={CHART_COLORS[i]} fill={CHART_COLORS[i]} fillOpacity={0.2} />
+                ))}
+              </RadarChart>
             </ResponsiveContainer>
           </div>
+          {renderSelector(radarMgrs, setRadarMgrs)}
         </Card>
 
         <Card className="stagger-2">
