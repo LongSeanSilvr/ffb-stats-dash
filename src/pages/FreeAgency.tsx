@@ -142,7 +142,13 @@ export const FreeAgency: React.FC = () => {
             <h2 className="text-base font-semibold">Waiver Points vs. Win Rate</h2>
             <ChartToggle value={macroFilter} onChange={setMacroFilter} />
           </div>
-          <div className="text-xs text-muted mb-5">Acquisition points vs win %. Top-right = Kingmakers.</div>
+          <div className="text-xs text-muted mb-2">Correlation between total starter points added via waivers and season winning percentage.</div>
+          <div className="mb-5 grid grid-cols-2 gap-x-6 gap-y-1.5 text-[11px] text-muted/90 border-t border-white/5 pt-2">
+            <span className="flex items-center gap-2">🏛️ <strong className="text-white font-medium">Top-Left</strong> &mdash; Strong Core</span>
+            <span className="flex items-center gap-2">👑 <strong className="text-white font-medium">Top-Right</strong> &mdash; Kingmakers</span>
+            <span className="flex items-center gap-2">⚠️ <strong className="text-white font-medium">Bottom-Left</strong> &mdash; Below Avg</span>
+            <span className="flex items-center gap-2">🍀 <strong className="text-white font-medium">Bottom-Right</strong> &mdash; Unlucky</span>
+          </div>
           <div style={{ height: 380 }}>
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ top: 20, right: 20, bottom: 40, left: 20 }}>
@@ -169,7 +175,13 @@ export const FreeAgency: React.FC = () => {
             <h2 className="text-base font-semibold">Volume vs. Output</h2>
             <ChartToggle value={matrixFilter} onChange={setMatrixFilter} />
           </div>
-          <div className="text-xs text-muted mb-5">Volume vs points. Bubble size = Hit Rate vs pos. baseline.</div>
+          <div className="text-xs text-muted mb-2">Transaction count vs points output. Bubble size represents player Hit Rate.</div>
+          <div className="mb-5 grid grid-cols-2 gap-x-6 gap-y-1.5 text-[11px] text-muted/90 border-t border-white/5 pt-2">
+            <span className="flex items-center gap-2">🎯 <strong className="text-white font-medium">Top-Left</strong> &mdash; Efficient</span>
+            <span className="flex items-center gap-2">🚜 <strong className="text-white font-medium">Top-Right</strong> &mdash; Heavy Yield</span>
+            <span className="flex items-center gap-2">🔇 <strong className="text-white font-medium">Bottom-Left</strong> &mdash; Inactive</span>
+            <span className="flex items-center gap-2">🔄 <strong className="text-white font-medium">Bottom-Right</strong> &mdash; High Churn</span>
+          </div>
           <div style={{ height: 380 }}>
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ top: 20, right: 20, bottom: 40, left: 20 }}>

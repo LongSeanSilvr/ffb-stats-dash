@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card } from '../components/Card';
 import { useLeagueContext } from '../context/LeagueContext';
 import { useDraftEfficiency } from '../hooks/useDraftEfficiency';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
-  ResponsiveContainer, Legend, ScatterChart, Scatter, Label
+  ResponsiveContainer, Legend, ScatterChart, Scatter, Label, ReferenceLine
 } from 'recharts';
 
 // Reusable scatter dot with avatar
@@ -33,19 +33,34 @@ const CustomScatterTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div style={{ background: 'rgba(15,17,21,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '1rem', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
-        <div className="flex items-center gap-3 mb-2">
+      <div style={{ background: 'rgba(15,17,21,0.96)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '12px', padding: '0.85rem 1rem', minWidth: 220, boxShadow: '0 12px 48px rgba(0,0,0,0.6)' }}>
+        <div className="flex items-center gap-3 mb-3 pb-2 border-b border-white/10">
           {data.avatar ? (
-            <img src={`https://sleepercdn.com/avatars/thumbs/${data.avatar}`} alt="avatar" className="avatar" width={24} height={24} />
+            <img src={`https://sleepercdn.com/avatars/thumbs/${data.avatar}`} alt="avatar" className="avatar" style={{ width: 28, height: 28, borderRadius: '50%' }} />
           ) : (
-             <div className="avatar bg-gray-600" style={{ width: 24, height: 24 }}></div>
+             <div className="avatar bg-gray-700" style={{ width: 28, height: 28, borderRadius: '50%' }}></div>
           )}
-          <span className="font-bold text-lg">{data.name}</span>
+          <span className="font-bold text-md">{data.name}</span>
         </div>
-        {data.draftPoints !== undefined && <div className="text-sm text-muted">Draft Points: <span className="text-accent-color font-bold ml-1">{data.draftPoints.toFixed(1)}</span></div>}
-        {data.keeperPoints !== undefined && <div className="text-sm text-muted">Keeper Points: <span className="text-success-color font-bold ml-1">{data.keeperPoints.toFixed(1)}</span></div>}
-        {data.wins !== undefined && <div className="text-sm text-muted">Wins: <span className="text-white font-bold ml-1">{data.wins}</span></div>}
-         {data.hitRate !== undefined && <div className="text-sm text-muted">Hit Rate: <span className="text-white font-bold ml-1">{data.hitRate}%</span></div>}
+        
+        <div className="space-y-1.5 text-xs">
+          {data.roi !== undefined && (
+            <div className="flex justify-between"><span className="text-muted">Draft ROI:</span> <span className={`font-bold ${data.roi >= 0 ? 'text-success-color' : 'text-danger-color'}`}>{data.roi >= 0 ? '+' : ''}{data.roi}%</span></div>
+          )}
+          {data.wins !== undefined && (
+            <div className="flex justify-between"><span className="text-muted">Season Wins:</span> <span className="text-white font-bold">{data.wins}</span></div>
+          )}
+          {data.earlyDiff !== undefined && (
+            <div className="flex justify-between"><span className="text-muted">Early Rd Value:</span> <span className={`font-bold ${data.earlyDiff >= 0 ? 'text-success-color' : 'text-danger-color'}`}>{data.earlyDiff >= 0 ? '+' : ''}{data.earlyDiff}</span></div>
+          )}
+          {data.lateDiff !== undefined && (
+            <div className="flex justify-between"><span className="text-muted">Late Rd Value:</span> <span className={`font-bold ${data.lateDiff >= 0 ? 'text-success-color' : 'text-danger-color'}`}>{data.lateDiff >= 0 ? '+' : ''}{data.lateDiff}</span></div>
+          )}
+          <div className="pt-1.5 mt-1.5 border-t border-white/5 flex justify-between text-[10px]">
+            <span className="text-muted/70">Actual Total:</span>
+            <span className="text-muted">{data.actualTotal} pts</span>
+          </div>
+        </div>
       </div>
     );
   }
@@ -251,6 +266,70 @@ export const Draft: React.FC = () => {
   const { selectedSeason } = useLeagueContext();
   const { data: draftData, loading, error } = useDraftEfficiency();
 
+  // --- HOISTED HOOKS: Advanced Analysis Computation ---
+  // Calculate global round-by-round league averages dynamically
+  const roundAverages = useMemo(() => {
+    if (!draftData || draftData.length === 0) return {};
+    const allLeaguePicks = draftData.flatMap(d => d.draftPicks || []);
+    const aggregates: Record<number, { sum: number; count: number }> = {};
+    
+    allLeaguePicks.forEach(p => {
+      if (!p || !p.round) return;
+      if (!aggregates[p.round]) aggregates[p.round] = { sum: 0, count: 0 };
+      aggregates[p.round].sum += (p.starterPoints || 0);
+      aggregates[p.round].count += 1;
+    });
+
+    const avgs: Record<number, number> = {};
+    Object.entries(aggregates).forEach(([rd, val]) => {
+      avgs[Number(rd)] = val.count > 0 ? val.sum / val.count : 0;
+    });
+    return avgs;
+  }, [draftData]);
+
+  // Build advanced derived scatter data with multi-perspectives
+  const scatterData = useMemo(() => {
+    if (!draftData || draftData.length === 0) return [];
+    return draftData.map(d => {
+      let expectedTotal = 0;
+      let expectedEarly = 0;
+      let actualEarly = 0;
+      let expectedLate = 0;
+      let actualLate = 0;
+
+      const picks = d.draftPicks || [];
+      picks.forEach(p => {
+        const expected = roundAverages[p.round] || 0;
+        expectedTotal += expected;
+        
+        if (p.round <= 5) {
+          expectedEarly += expected;
+          actualEarly += (p.starterPoints || 0);
+        } else {
+          expectedLate += expected;
+          actualLate += (p.starterPoints || 0);
+        }
+      });
+
+      const actualTotal = d.draftStarterPoints || 0;
+      const roi = expectedTotal > 0 ? ((actualTotal / expectedTotal) * 100) - 100 : 0; 
+      const earlyDiff = actualEarly - expectedEarly;
+      const lateDiff = actualLate - expectedLate;
+      
+      return {
+        name: d.user?.display_name || `Team ${d.roster_id}`,
+        avatar: d.user?.avatar,
+        wins: selectedSeason?.rosters?.find(r => r.roster_id === d.roster_id)?.settings?.wins || 0,
+        roi: Number(roi.toFixed(1)),
+        earlyDiff: Number(earlyDiff.toFixed(1)),
+        lateDiff: Number(lateDiff.toFixed(1)),
+        actualTotal: Number(actualTotal.toFixed(1)),
+        expectedTotal: Number(expectedTotal.toFixed(1))
+      };
+    });
+  }, [draftData, roundAverages, selectedSeason]);
+  // --------------------------------------------------
+
   if (loading || !selectedSeason) {
     return (
       <div className="flex flex-col justify-center items-center h-full min-h-[60vh]">
@@ -371,19 +450,7 @@ export const Draft: React.FC = () => {
     return null;
   };
 
-  // 4. Draft Value vs Pick Position scatter
-  const draftValueScatter = [...draftData]
-    .map(d => {
-      const totalPicks = d.draftPicks.length;
-      const totalHits = d.draftHits;
-      return {
-        name: d.user?.display_name || `Team ${d.roster_id}`,
-        avatar: d.user?.avatar,
-        draftPoints: d.draftStarterPoints,
-        hitRate: totalPicks > 0 ? Number(((totalHits / totalPicks) * 100).toFixed(0)) : 0,
-        wins: selectedSeason.rosters.find(r => r.roster_id === d.roster_id)?.settings.wins || 0
-      };
-    });
+
 
 
 
@@ -472,10 +539,70 @@ export const Draft: React.FC = () => {
         </Card>
       </div>
 
-      {/* Row 2: Keeper ROI & Draft Value vs Hit Rate Scatter */}
+      {/* Row 2: Advanced Draft Analytics Scatter Plots */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <Card title="Draft Efficiency vs Wins" className="stagger-2">
+          <div className="text-sm text-muted mb-4 leading-relaxed">
+            Correlates total points extracted vs league expected averages against season wins.
+            <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1.5 text-[11px] text-muted/90 border-t border-white/5 pt-2">
+              <span className="flex items-center gap-2">💼 <strong className="text-white font-medium">Top-Left</strong> &mdash; Waiver Gold</span>
+              <span className="flex items-center gap-2">🎯 <strong className="text-white font-medium">Top-Right</strong> &mdash; Solid Draft</span>
+              <span className="flex items-center gap-2">⚠️ <strong className="text-white font-medium">Bottom-Left</strong> &mdash; Rebuilding</span>
+              <span className="flex items-center gap-2">🍀 <strong className="text-white font-medium">Bottom-Right</strong> &mdash; Unlucky</span>
+            </div>
+          </div>
+          <div style={{ height: 350 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <ScatterChart margin={{ top: 20, right: 30, bottom: 40, left: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <XAxis type="number" dataKey="roi" name="Draft ROI" stroke="#94a3b8" tick={{ fontSize: 12 }} unit="%" domain={['auto', 'auto']}>
+                  <Label value="Draft ROI (% vs expected)" position="insideBottom" offset={-20} fill="#64748b" style={{ fontSize: '0.75rem', fontWeight: 500 }} />
+                </XAxis>
+                <YAxis type="number" dataKey="wins" name="Wins" stroke="#94a3b8" tick={{ fontSize: 12 }} allowDecimals={false}>
+                  <Label value="Season Wins" angle={-90} position="insideLeft" offset={10} style={{ textAnchor: 'middle', fill: '#64748b', fontSize: '0.75rem', fontWeight: 500 }} />
+                </YAxis>
+                <RechartsTooltip content={<CustomScatterTooltip />} cursor={{ strokeDasharray: '3 3', stroke: 'rgba(255,255,255,0.1)' }} />
+                <Scatter name="Teams" data={scatterData} shape={<CustomAvatarDot />} isAnimationActive={true} />
+                <ReferenceLine x={0} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" />
+              </ScatterChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+
+        <Card title="Early Capital vs Late Value" className="stagger-2">
+          <div className="text-sm text-muted mb-4 leading-relaxed">
+            Compares points above average in high-capital early rounds (1-5) vs late rounds (6+).
+            <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1.5 text-[11px] text-muted/90 border-t border-white/5 pt-2">
+              <span className="flex items-center gap-2">💎 <strong className="text-white font-medium">Top-Left</strong> &mdash; Late Steals</span>
+              <span className="flex items-center gap-2">🔥 <strong className="text-white font-medium">Top-Right</strong> &mdash; Well Rounded</span>
+              <span className="flex items-center gap-2">📉 <strong className="text-white font-medium">Bottom-Left</strong> &mdash; Below Avg</span>
+              <span className="flex items-center gap-2">⭐ <strong className="text-white font-medium">Bottom-Right</strong> &mdash; Early Value</span>
+            </div>
+          </div>
+          <div style={{ height: 350 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <ScatterChart margin={{ top: 20, right: 30, bottom: 40, left: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <XAxis type="number" dataKey="earlyDiff" name="Early Rd Value" stroke="#94a3b8" tick={{ fontSize: 12 }} domain={['auto', 'auto']}>
+                  <Label value="Early Rounds (1-5) vs Expected Pts" position="insideBottom" offset={-20} fill="#64748b" style={{ fontSize: '0.75rem', fontWeight: 500 }} />
+                </XAxis>
+                <YAxis type="number" dataKey="lateDiff" name="Late Rd Value" stroke="#94a3b8" tick={{ fontSize: 12 }}>
+                  <Label value="Late Rounds (6+) vs Expected Pts" angle={-90} position="insideLeft" offset={10} style={{ textAnchor: 'middle', fill: '#64748b', fontSize: '0.75rem', fontWeight: 500 }} />
+                </YAxis>
+                <RechartsTooltip content={<CustomScatterTooltip />} cursor={{ strokeDasharray: '3 3', stroke: 'rgba(255,255,255,0.1)' }} />
+                <Scatter name="Teams" data={scatterData} shape={<CustomAvatarDot />} isAnimationActive={true} />
+                <ReferenceLine x={0} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" />
+                <ReferenceLine y={0} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" />
+              </ScatterChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+      </div>
+
+      {/* Row 3: Consolidated Keeper Analytics */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
         {keeperPointsData.length > 0 ? (
-          <Card title="Keeper Points Generated" className="stagger-2">
+          <Card title="Keeper Points Generated" className="stagger-3">
             <div className="text-sm text-muted mb-4">Total starter points scored by kept players while on your roster.</div>
             <div style={{ height: 350 }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -505,7 +632,7 @@ export const Draft: React.FC = () => {
             </div>
           </Card>
         ) : (
-          <Card title="Keeper Analysis" className="stagger-2">
+          <Card title="Keeper Analysis" className="stagger-3">
             <div className="flex flex-col justify-center items-center h-full min-h-[300px]">
               <div className="text-muted text-lg">No keepers found for this season.</div>
               <div className="text-sm text-muted mt-2">Try selecting a different season in the sidebar.</div>
@@ -513,51 +640,11 @@ export const Draft: React.FC = () => {
           </Card>
         )}
 
-        <Card title="Draft Value vs Hit Rate" className="stagger-2">
-          <div className="text-sm text-muted mb-4">Do better drafters generate more total value?</div>
-          <div style={{ height: 350 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <ScatterChart margin={{ top: 20, right: 30, bottom: 30, left: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis type="number" dataKey="hitRate" name="Hit Rate %" stroke="#94a3b8" tick={{ fontSize: 12 }} unit="%">
-                  <Label value="Draft Hit Rate (%)" position="insideBottom" offset={-15} fill="#64748b" style={{ fontSize: '0.75rem', fontWeight: 500 }} />
-                </XAxis>
-                <YAxis type="number" dataKey="draftPoints" name="Draft Points" stroke="#94a3b8" tick={{ fontSize: 12 }}>
-                  <Label value="Draft Starter Points" angle={-90} position="insideLeft" offset={10} style={{ textAnchor: 'middle', fill: '#64748b', fontSize: '0.75rem', fontWeight: 500 }} />
-                </YAxis>
-                <RechartsTooltip content={<CustomScatterTooltip />} cursor={{ strokeDasharray: '3 3', stroke: 'rgba(255,255,255,0.1)' }} />
-                <Scatter name="Teams" data={draftValueScatter} shape={<CustomAvatarDot />} />
-              </ScatterChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-      </div>
-
-      {/* Row 3: Top Draft Picks & Top Keepers Leaderboard */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-        <Card title="Top Draft Picks (by Starter Points)" className="stagger-3">
-          <div className="text-sm text-muted mb-4">The most valuable draft selections this season.</div>
-          <div className="flex flex-col gap-3 overflow-y-auto pr-4 mt-2" style={{ height: '400px' }}>
-            {allDraftPicks.slice(0, 20).map((pick, i) => (
-              <div key={`${pick.playerId}-${pick.rosterId}`} className="flex justify-between items-center p-4" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px' }}>
-                <div className="flex items-center gap-4">
-                  <div className="text-muted font-bold w-6 text-right">{i + 1}.</div>
-                  <div>
-                    <div className="font-semibold">{pick.playerName}</div>
-                    <div className="text-sm text-muted">{pick.position} · {pick.nflTeam} · Rd {pick.round}, Pick {pick.pickNo} · <span style={{ color: 'var(--accent-color)' }}>{pick.managerName}</span></div>
-                  </div>
-                </div>
-                <div className="font-bold text-accent-color text-lg">{pick.starterPoints.toFixed(1)}</div>
-              </div>
-            ))}
-          </div>
-        </Card>
-
         <Card title={allKeepers.length > 0 ? "Top Keepers (by Starter Points)" : "Keeper Leaderboard"} className="stagger-3">
           {allKeepers.length > 0 ? (
             <>
               <div className="text-sm text-muted mb-4">The most valuable keeper selections this season.</div>
-              <div className="flex flex-col gap-3 overflow-y-auto pr-4 mt-2" style={{ height: '400px' }}>
+              <div className="flex flex-col gap-3 overflow-y-auto pr-4 mt-2" style={{ height: '350px' }}>
                 {allKeepers.slice(0, 20).map((pick, i) => (
                   <div key={`${pick.playerId}-${pick.rosterId}`} className="flex justify-between items-center p-4" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px' }}>
                     <div className="flex items-center gap-4">
@@ -580,7 +667,28 @@ export const Draft: React.FC = () => {
         </Card>
       </div>
 
-      {/* Row 4: Round-by-Round Value Heatmap (full width) */}
+      {/* Row 4: Top Draft Detail View */}
+      <div className="grid grid-cols-1 gap-8 mb-8">
+        <Card title="Top Draft Picks (by Starter Points)" className="stagger-3">
+          <div className="text-sm text-muted mb-4">The most valuable draft selections this season.</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto pr-2" style={{ maxHeight: '500px' }}>
+            {allDraftPicks.slice(0, 24).map((pick, i) => (
+              <div key={`${pick.playerId}-${pick.rosterId}`} className="flex justify-between items-center p-4" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px' }}>
+                <div className="flex items-center gap-4">
+                  <div className="text-muted font-bold w-6 text-right text-sm">{i + 1}.</div>
+                  <div>
+                    <div className="font-bold text-white text-base leading-tight">{pick.playerName}</div>
+                    <div className="text-xs text-muted mt-0.5">{pick.position} · Rd {pick.round}, Pick {pick.pickNo} · <span style={{ color: 'var(--accent-color)' }} className="font-medium">{pick.managerName}</span></div>
+                  </div>
+                </div>
+                <div className="font-bold text-accent-color text-lg tabular-nums">{pick.starterPoints.toFixed(1)}</div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+
+      {/* Row 5: Value Heatmap */}
       <div className="grid grid-cols-1 gap-8 mb-8">
         <Card title="Draft Value by Round" className="stagger-3">
           <div className="text-sm text-muted mb-6">Avg total points per pick in each round — color shows value vs. the round's per-pick average.</div>

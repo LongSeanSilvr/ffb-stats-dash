@@ -4,13 +4,13 @@ import type { ReactNode } from 'react';
 interface CardProps {
   children: ReactNode;
   className?: string;
-  title?: string;
+  title?: ReactNode;
 }
 
 export const Card: React.FC<CardProps> = ({ children, className = '', title }) => {
   return (
     <div className={`glass-card ${className}`}>
-      {title && <h3 className="text-xl mb-4">{title}</h3>}
+      {title && <div className="text-xl mb-4 font-semibold">{title}</div>}
       {children}
     </div>
   );
