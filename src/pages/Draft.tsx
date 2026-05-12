@@ -343,7 +343,7 @@ export const Draft: React.FC = () => {
           </div>
           
           {/* Tier 2: Summary (Grid for perfect safety) */}
-          <div className="grid grid-cols-2 gap-4 text-xs border-b border-white/10 pb-3.5 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs border-b border-white/10 pb-3.5 mb-4">
             <div className="flex items-center">
               <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', flexShrink: 0, marginRight: '8px' }} />
               <span className="text-muted mr-1">Starter:</span>
@@ -410,7 +410,7 @@ export const Draft: React.FC = () => {
       <h1 className="text-3xl text-gradient mt-4 mb-10">Draft & Keeper Analytics ({selectedSeason.league.season})</h1>
 
       {/* Row 1: Draft Points Generated & Draft Hit Rate */}
-      <div className="grid grid-cols-2 gap-8 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
         <Card title="Draft Points Generated" className="stagger-1">
           <div className="text-sm text-muted mb-4">Total starter points scored by drafted players while on your roster.</div>
           <div style={{ height: 350 }}>
@@ -473,7 +473,7 @@ export const Draft: React.FC = () => {
       </div>
 
       {/* Row 2: Keeper ROI & Draft Value vs Hit Rate Scatter */}
-      <div className="grid grid-cols-2 gap-8 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
         {keeperPointsData.length > 0 ? (
           <Card title="Keeper Points Generated" className="stagger-2">
             <div className="text-sm text-muted mb-4">Total starter points scored by kept players while on your roster.</div>
@@ -534,7 +534,7 @@ export const Draft: React.FC = () => {
       </div>
 
       {/* Row 3: Top Draft Picks & Top Keepers Leaderboard */}
-      <div className="grid grid-cols-2 gap-8 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
         <Card title="Top Draft Picks (by Starter Points)" className="stagger-3">
           <div className="text-sm text-muted mb-4">The most valuable draft selections this season.</div>
           <div className="flex flex-col gap-3 overflow-y-auto pr-4 mt-2" style={{ height: '400px' }}>

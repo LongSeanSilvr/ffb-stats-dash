@@ -349,8 +349,9 @@ export const Managers: React.FC = () => {
 
       {/* Row 0: Standings Table */}
       <Card title="Team Standings" className="stagger-1 mb-12">
-        <div className="overflow-hidden rounded-lg mt-6" style={{ border: '1px solid var(--card-border)' }}>
-          <table className="standings-table">
+        <div className="table-container mt-6">
+          <div className="overflow-hidden rounded-lg" style={{ border: '1px solid var(--card-border)' }}>
+            <table className="standings-table">
             <thead style={{ background: 'rgba(255,255,255,0.02)' }}>
               <tr>
                 <th>Team</th>
@@ -422,6 +423,7 @@ export const Managers: React.FC = () => {
               })}
             </tbody>
           </table>
+          </div>
         </div>
       </Card>
 
@@ -443,7 +445,7 @@ export const Managers: React.FC = () => {
             <div className="h-[1px] bg-white/10 flex-1 ml-4"></div>
           </div>
 
-          <div className="grid grid-cols-2 gap-8 mb-8 mt-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 mt-8">
             <Card title="Acquisition Production Matrix" className="stagger-3">
               <div className="text-sm text-muted mb-4">
                 Draft+Keeper total pts vs Combined FAAB+Waiver pts generated.

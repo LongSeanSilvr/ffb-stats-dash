@@ -194,7 +194,7 @@ export const Faab: React.FC = () => {
       <h1 className="text-3xl text-gradient mt-4 mb-10">Advanced FAAB Analytics ({selectedSeason.league.season})</h1>
 
       {/* Row 1: Overpay Index & Hit Rate */}
-      <div className="grid grid-cols-2 gap-8 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
         <Card title="The Overpay Index" className="stagger-1">
           <div className="text-sm text-muted mb-4">Total FAAB Overpay vs. Total Successful Claims</div>
           <div style={{ height: 350 }}>
@@ -246,7 +246,7 @@ export const Faab: React.FC = () => {
       </div>
 
       {/* Row 2: Wasted FAAB & Positional Spending */}
-      <div className="grid grid-cols-2 gap-8 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
         <Card title="Wasted FAAB (The Benchwarmers Fund)" className="stagger-2">
           <div className="text-sm text-muted mb-4">FAAB dollars spent on players who never scored a single starter point.</div>
           <div className="flex flex-col gap-4 overflow-y-auto pr-4 mt-2" style={{ height: '350px' }}>
@@ -380,7 +380,7 @@ export const Faab: React.FC = () => {
             </div>
           </div>
           
-          <div className="grid grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div style={{ height: 300 }}>
               <h3 className="text-sm text-muted text-center mb-4 uppercase tracking-wider">Total Points</h3>
               <ResponsiveContainer width="100%" height="100%">
