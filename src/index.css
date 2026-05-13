@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
 
 :root {
   --bg-color: #0f1115;
@@ -15,6 +16,17 @@
   
   --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
   --glass-backdrop: blur(12px);
+}
+
+@theme {
+  --color-background: var(--bg-color);
+  --color-card: var(--card-bg);
+  --color-primary: var(--text-primary);
+  --color-secondary: var(--text-secondary);
+  --color-accent: var(--accent-color);
+  --color-success: var(--success-color);
+  --color-danger: var(--danger-color);
+  --font-sans: var(--font-sans);
 }
 
 * {
