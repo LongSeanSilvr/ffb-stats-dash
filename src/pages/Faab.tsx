@@ -264,7 +264,7 @@ export const Faab: React.FC = () => {
     name: d.user?.display_name || `Team ${d.roster_id}`,
     Hits: d.hits,
     Busts: d.busts
-  })).sort((a, b) => (b.Hits + b.Busts) - (a.Hits + a.Busts));
+  })).sort((a, b) => b.Hits - a.Hits);
 
   // Wasted FAAB
   const wastedFaabData = [...faabData].sort((a, b) => b.wastedFaab - a.wastedFaab);
@@ -318,20 +318,22 @@ export const Faab: React.FC = () => {
       {/* Row 1: Overpay Index & Hit Rate */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                         <Card title="Bid Aggressiveness Matrix" className="stagger-1">
-          <div className="text-sm text-muted mb-4 leading-relaxed">
-            Compares average FAAB spent per winning bid against the margin of victory (how much more they bid than the runner-up). Identifies who reads the market well and who frequently bids against nobody.
-            <div style={{ display: 'flex', justifyContent: 'center', margin: '16px 0 8px 0', fontSize: '11px', color: 'rgba(255,255,255,0.7)', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '12px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', width: '380px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', padding: '0 16px 8px 0', borderRight: '2px solid rgba(255,255,255,0.15)', borderBottom: '2px solid rgba(255,255,255,0.15)' }}>
+          <div className="chart-header">
+            <div className="chart-description">
+              Compares average FAAB spent per winning bid against the margin of victory (how much more they bid than the runner-up). Identifies who reads the market well and who frequently bids against nobody.
+            </div>
+            <div className="matrix-legend-wrapper">
+              <div className="matrix-legend-grid">
+                <div className="matrix-quadrant top-left">
                   👻 <strong style={{ color: '#fff', fontWeight: 500 }}>Uncontested Overpays</strong>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', padding: '0 0 8px 16px', borderBottom: '2px solid rgba(255,255,255,0.15)' }}>
+                <div className="matrix-quadrant top-right">
                   💥 <strong style={{ color: '#fff', fontWeight: 500 }}>Massive Overpays</strong>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', padding: '8px 16px 0 0', borderRight: '2px solid rgba(255,255,255,0.15)' }}>
+                <div className="matrix-quadrant bottom-left">
                   🛒 <strong style={{ color: '#fff', fontWeight: 500 }}>Bargain Hunters</strong>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', padding: '8px 0 0 16px' }}>
+                <div className="matrix-quadrant bottom-right">
                   🎯 <strong style={{ color: '#fff', fontWeight: 500 }}>Market Experts</strong>
                 </div>
               </div>
@@ -357,7 +359,18 @@ export const Faab: React.FC = () => {
         </Card>
 
         <Card title="FAAB Hit Rate (Starter Conversion)" className="stagger-1">
-          <div className="text-sm text-muted mb-4">"Hits" = Started at least 1 game. "Busts" = 0 games started.</div>
+          <div className="chart-header">
+            <div className="chart-legend-grid" style={{ paddingTop: 0, borderTop: 'none' }}>
+              <div className="legend-item">
+                <div className="legend-item-header"><span style={{ color: 'var(--success-color)' }}>🟩</span> Hits</div>
+                <div className="legend-item-desc">Player started at least 1 game for the manager.</div>
+              </div>
+              <div className="legend-item">
+                <div className="legend-item-header"><span style={{ color: 'var(--danger-color)' }}>🟥</span> Busts</div>
+                <div className="legend-item-desc">Player started 0 games for the manager.</div>
+              </div>
+            </div>
+          </div>
           <div style={{ height: 350 }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={hitRateData} layout="vertical" margin={{ left: 40, right: 20 }}>
@@ -365,20 +378,6 @@ export const Faab: React.FC = () => {
                 <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 12 }} />
                 <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11 }} width={80} />
                 <RechartsTooltip cursor={false} contentStyle={{ backgroundColor: 'rgba(15,17,21,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
-                <Legend
-                  content={() => (
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', marginTop: '0.5rem', fontSize: '0.8rem' }}>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <span style={{ width: 12, height: 12, borderRadius: 2, background: 'var(--success-color)', display: 'inline-block' }} />
-                        <span style={{ color: '#94a3b8' }}>Hits</span>
-                      </span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <span style={{ width: 12, height: 12, borderRadius: 2, background: 'var(--danger-color)', display: 'inline-block' }} />
-                        <span style={{ color: '#94a3b8' }}>Busts</span>
-                      </span>
-                    </div>
-                  )}
-                />
                 <Bar dataKey="Hits" stackId="a" fill="var(--success-color)" radius={[0, 0, 0, 0]} />
                 <Bar dataKey="Busts" stackId="a" fill="var(--danger-color)" radius={[0, 4, 4, 0]} />
               </BarChart>
@@ -390,7 +389,11 @@ export const Faab: React.FC = () => {
       {/* Row 2: Wasted FAAB & Positional Spending */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
         <Card title="Wasted FAAB (The Benchwarmers Fund)" className="stagger-2">
-          <div className="text-sm text-muted mb-4">FAAB dollars spent on players who never scored a single starter point.</div>
+          <div className="chart-header">
+            <div className="chart-description">
+              Total FAAB dollars spent on players who never scored a single starter point for the manager.
+            </div>
+          </div>
           <div className="flex flex-col overflow-y-auto pr-4 mt-2" style={{ height: '350px' }}>
             {(() => {
               const maxWasted = Math.max(...wastedFaabData.map(d => d.wastedFaab));
@@ -422,8 +425,10 @@ export const Faab: React.FC = () => {
         </Card>
 
                 <Card title="Positional FAAB Strategy Map" className="stagger-2">
-          <div className="text-sm text-muted mb-4 leading-relaxed">
-            Distribution of FAAB spending by position. Axes are normalized (0-100%) against the league's maximum spender at each position.
+          <div className="chart-header">
+            <div className="chart-description">
+              Distribution of FAAB spending by position. Axes are normalized (0-100%) against the league's maximum spender at each position.
+            </div>
           </div>
           <div style={{ height: 320 }}>
             <ResponsiveContainer width="100%" height="100%">
@@ -478,7 +483,11 @@ export const Faab: React.FC = () => {
       {/* Row 3: Spending Velocity (Full Width) */}
       <div className="grid grid-cols-1 gap-8 mb-8">
         <Card title="Spending Velocity" className="stagger-3">
-          <div className="text-sm text-muted mb-4">Cumulative FAAB expenditure by week. Click a team to toggle their line.</div>
+          <div className="chart-header">
+            <div className="chart-description">
+              Cumulative FAAB expenditure by week. Click a team name below the chart to toggle their line.
+            </div>
+          </div>
           <div style={{ height: 450 }}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={velocityData} margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>

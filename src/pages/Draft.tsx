@@ -876,20 +876,22 @@ export const Draft: React.FC = () => {
         </Card>
 
         <Card title="Early Capital vs Late Value" className="stagger-2">
-          <div className="text-sm text-muted mb-4 leading-relaxed">
-            Compares points above average in high-capital early rounds (1-5) vs late rounds (6+).
-            <div style={{ display: 'flex', justifyContent: 'center', margin: '16px 0 8px 0', fontSize: '11px', color: 'rgba(255,255,255,0.7)' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', width: '320px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', padding: '0 16px 8px 0', borderRight: '2px solid rgba(255,255,255,0.15)', borderBottom: '2px solid rgba(255,255,255,0.15)' }}>
+          <div className="chart-header">
+            <div className="chart-description">
+              Compares points above average in high-capital early rounds (1-5) vs late rounds (6+).
+            </div>
+            <div className="matrix-legend-wrapper">
+              <div className="matrix-legend-grid">
+                <div className="matrix-quadrant top-left">
                   💎 <strong style={{ color: '#fff', fontWeight: 500 }}>Late Steals</strong>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', padding: '0 0 8px 16px', borderBottom: '2px solid rgba(255,255,255,0.15)' }}>
+                <div className="matrix-quadrant top-right">
                   🔥 <strong style={{ color: '#fff', fontWeight: 500 }}>Well Rounded</strong>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', padding: '8px 16px 0 0', borderRight: '2px solid rgba(255,255,255,0.15)' }}>
+                <div className="matrix-quadrant bottom-left">
                   📉 <strong style={{ color: '#fff', fontWeight: 500 }}>Below Avg</strong>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', padding: '8px 0 0 16px' }}>
+                <div className="matrix-quadrant bottom-right">
                   ⭐ <strong style={{ color: '#fff', fontWeight: 500 }}>Early Value</strong>
                 </div>
               </div>
@@ -915,20 +917,22 @@ export const Draft: React.FC = () => {
         </Card>
 
         <Card title="Draft Injury Impact (Luck vs Skill)" className="stagger-2">
-          <div className="text-sm text-muted mb-4 leading-relaxed">
-            Correlates Draft ROI (skill) against total drafted games lost to injury (luck).
-            <div style={{ display: 'flex', justifyContent: 'center', margin: '16px 0 8px 0', fontSize: '11px', color: 'rgba(255,255,255,0.7)' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', width: '360px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', padding: '0 16px 8px 0', borderRight: '2px solid rgba(255,255,255,0.15)', borderBottom: '2px solid rgba(255,255,255,0.15)' }}>
+          <div className="chart-header">
+            <div className="chart-description">
+              Correlates Draft ROI (skill) against total drafted games lost to injury (luck).
+            </div>
+            <div className="matrix-legend-wrapper">
+              <div className="matrix-legend-grid">
+                <div className="matrix-quadrant top-left">
                   🚑 <strong style={{ color: '#fff', fontWeight: 500 }}>Poor Draft, Bad Luck</strong>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', padding: '0 0 8px 16px', borderBottom: '2px solid rgba(255,255,255,0.15)' }}>
+                <div className="matrix-quadrant top-right">
                   💪 <strong style={{ color: '#fff', fontWeight: 500 }}>Great Draft, Bad Luck</strong>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', padding: '8px 16px 0 0', borderRight: '2px solid rgba(255,255,255,0.15)' }}>
+                <div className="matrix-quadrant bottom-left">
                   📉 <strong style={{ color: '#fff', fontWeight: 500 }}>Poor Draft, Healthy</strong>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', padding: '8px 0 0 16px' }}>
+                <div className="matrix-quadrant bottom-right">
                   🍀 <strong style={{ color: '#fff', fontWeight: 500 }}>Great Draft, Healthy</strong>
                 </div>
               </div>

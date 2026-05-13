@@ -506,20 +506,22 @@ export const Managers: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 mt-8">
             <Card title="Acquisition Production Matrix" className="stagger-3">
-              <div className="text-sm text-muted mb-4">
-                Draft+Keeper total pts vs Combined FAAB+Waiver pts generated.
-                <div style={{ display: 'flex', justifyContent: 'center', margin: '16px 0 8px 0', fontSize: '11px', color: 'rgba(255,255,255,0.7)', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '12px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', width: '320px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', padding: '0 16px 8px 0', borderRight: '2px solid rgba(255,255,255,0.15)', borderBottom: '2px solid rgba(255,255,255,0.15)' }}>
+              <div className="chart-header">
+                <div className="chart-description">
+                  Draft & Keeper total pts vs Combined FAAB & Waiver pts generated.
+                </div>
+                <div className="matrix-legend-wrapper">
+                  <div className="matrix-legend-grid">
+                    <div className="matrix-quadrant top-left">
                       🛒 <strong style={{ color: '#fff', fontWeight: 500 }}>FAAB Heavy</strong>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', padding: '0 0 8px 16px', borderBottom: '2px solid rgba(255,255,255,0.15)' }}>
+                    <div className="matrix-quadrant top-right">
                       👑 <strong style={{ color: '#fff', fontWeight: 500 }}>Double Threat</strong>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', padding: '8px 16px 0 0', borderRight: '2px solid rgba(255,255,255,0.15)' }}>
+                    <div className="matrix-quadrant bottom-left">
                       📉 <strong style={{ color: '#fff', fontWeight: 500 }}>Struggling Roster</strong>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', padding: '8px 0 0 16px' }}>
+                    <div className="matrix-quadrant bottom-right">
                       🛡️ <strong style={{ color: '#fff', fontWeight: 500 }}>Draft Heavy</strong>
                     </div>
                   </div>

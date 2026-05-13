@@ -255,16 +255,22 @@ export const Trades: React.FC = () => {
       {/* Row 2: Fleecing Index */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "2rem", marginBottom: "2rem" }}>
         <Card title="The Market Timing Matrix" className="stagger-2">
-          <div style={{ fontSize: "0.875rem", marginBottom: "1.5rem" }} className="text-muted">
-            <div style={{ marginBottom: "12px", opacity: 0.85, lineHeight: "1.5" }}>
+          <div className="chart-header">
+            <div className="chart-description">
               Did you buy low or sell high? Compares a player's avg production BEFORE the trade vs AFTER.
             </div>
-            <div style={{ display: 'flex', gap: '2rem', fontSize: '0.8rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ color: 'var(--success-color)', fontSize: '1rem' }}>📈</span> <strong style={{ color: '#f8fafc', fontWeight: 500 }}>Above Line (Breakout):</strong> Acquired before an upward trend
+            <div className="chart-legend-grid">
+              <div className="legend-item">
+                <div className="legend-item-header">
+                  <span style={{ color: 'var(--success-color)', fontSize: '1.2rem' }}>📈</span> Above Line (Breakout)
+                </div>
+                <div className="legend-item-desc">Acquired before an upward trend</div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ color: 'var(--danger-color)', fontSize: '1rem' }}>📉</span> <strong style={{ color: '#f8fafc', fontWeight: 500 }}>Below Line (Regression):</strong> Traded away before a downward trend
+              <div className="legend-item">
+                <div className="legend-item-header">
+                  <span style={{ color: 'var(--danger-color)', fontSize: '1.2rem' }}>📉</span> Below Line (Regression)
+                </div>
+                <div className="legend-item-desc">Traded away before a downward trend</div>
               </div>
             </div>
           </div>
@@ -297,34 +303,32 @@ export const Trades: React.FC = () => {
 {/* Row 3: The Trade Ledger (full width) */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "2rem", marginBottom: "2rem" }}>
         <Card title="The Trade Ledger" className="stagger-3">
-          <div style={{ fontSize: "0.875rem", marginBottom: "1.5rem" }} className="text-muted">
-            <div style={{ marginBottom: "16px", opacity: 0.85, lineHeight: "1.5" }}>
+          <div className="chart-header">
+            <div className="chart-description">
               Every trade this season, evaluated by post-trade starter performance.
             </div>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px' }}>
-              <div style={{ color: '#fff', fontWeight: 600, fontSize: '0.75rem', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.5 }}>How points are calculated</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
-                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-                    <span style={{ fontSize: '1rem' }}>🏈</span> <strong style={{ color: '#f8fafc', fontWeight: 500 }}>Players</strong>
-                  </div>
-                  <div style={{ fontSize: '0.8rem', color: '#94a3b8', lineHeight: '1.4' }}>Points scored in active starting slots after the trade.</div>
+            <div style={{ color: '#f8fafc', fontWeight: 600, fontSize: '0.75rem', marginBottom: '8px', marginTop: '16px', textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.5 }}>How points are calculated</div>
+            <div className="chart-legend-grid" style={{ paddingTop: 0, borderTop: 'none' }}>
+              <div className="legend-item">
+                <div className="legend-item-header">
+                  <span style={{ fontSize: '1.2rem' }}>🏈</span> Players
                 </div>
-                
-                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-                    <span style={{ fontSize: '1rem' }}>🎯</span> <strong style={{ color: '#f8fafc', fontWeight: 500 }}>Draft Picks</strong>
-                  </div>
-                  <div style={{ fontSize: '0.8rem', color: '#94a3b8', lineHeight: '1.4' }}>Points scored by the drafted player while starting for the receiving manager. Future picks use round averages.</div>
+                <div className="legend-item-desc">Points scored in active starting slots after the trade.</div>
+              </div>
+              
+              <div className="legend-item">
+                <div className="legend-item-header">
+                  <span style={{ fontSize: '1.2rem' }}>🎯</span> Draft Picks
                 </div>
-                
-                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-                    <span style={{ fontSize: '1rem' }}>💰</span> <strong style={{ color: '#f8fafc', fontWeight: 500 }}>FAAB</strong>
-                  </div>
-                  <div style={{ fontSize: '0.8rem', color: '#94a3b8', lineHeight: '1.4' }}>Evaluated using League Average Points per FAAB Dollar. Personal FAAB efficiency is used for projected impact.</div>
+                <div className="legend-item-desc">Points scored by the drafted player while starting for the receiving manager. Future picks use round averages.</div>
+              </div>
+              
+              <div className="legend-item">
+                <div className="legend-item-header">
+                  <span style={{ fontSize: '1.2rem' }}>💰</span> FAAB
                 </div>
+                <div className="legend-item-desc">Evaluated using League Average Points per FAAB Dollar. Personal FAAB efficiency is used for projected impact.</div>
               </div>
             </div>
           </div>
