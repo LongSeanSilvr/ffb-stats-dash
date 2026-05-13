@@ -62,7 +62,7 @@ export interface TradeEfficiencyResult {
   trades: TradeRecord[];
 }
 
-export function getOptimalLineupPoints(players: string[], playersPoints: Record<string, number>, rosterPositions: string[], playersData: any): number {
+export function getOptimalLineupPoints(players: string[], playersPoints: Record<string, number>, rosterPositions: string[], playersData: any, forcedStarters: string[] = []): number {
   if (!players || players.length === 0) return 0;
   
   const availablePlayers = players.map(pid => {
@@ -74,7 +74,13 @@ export function getOptimalLineupPoints(players: string[], playersPoints: Record<
       pos: pData.position || '??',
       fantasyPos: fantasyPos
     };
-  }).sort((a, b) => b.pts - a.pts);
+  }).sort((a, b) => {
+    const aForced = forcedStarters.includes(a.id);
+    const bForced = forcedStarters.includes(b.id);
+    if (aForced && !bForced) return -1;
+    if (!aForced && bForced) return 1;
+    return b.pts - a.pts;
+  });
 
   let totalPoints = 0;
   const usedPlayerIds = new Set<string>();
@@ -545,48 +551,59 @@ export function useTradeEfficiency() {
               
               if (myMatchup.points === 0 && oppMatchup.points === 0) continue;
               
-              const actualOptimal = getOptimalLineupPoints(myMatchup.players || [], myMatchup.players_points || {}, selectedSeason.league.roster_positions || [], playersData);
-              const oppOptimal = getOptimalLineupPoints(oppMatchup.players || [], oppMatchup.players_points || {}, selectedSeason.league.roster_positions || [], playersData);
+              // 1. Identify Retained Starters
+              const actualStarters = myMatchup.starters || [];
+              const receivedIds = side.received.map(a => a.playerId);
+              const gaveIds = side.gave.filter(a => !a.isPick && a.position !== 'FAAB').map(a => a.playerId);
               
+              const retainedStarters = actualStarters.filter((pid: string) => pid !== "0" && !receivedIds.includes(pid));
+              
+              // 2. Build Hypothetical Bench/Roster
               const hypotheticalPlayers = [...(myMatchup.players || [])];
-              side.received.forEach(asset => {
-                const idx = hypotheticalPlayers.indexOf(asset.playerId);
+              receivedIds.forEach(id => {
+                const idx = hypotheticalPlayers.indexOf(id);
                 if (idx > -1) hypotheticalPlayers.splice(idx, 1);
               });
-              side.gave.forEach(asset => {
-                if (!asset.isPick && asset.position !== 'FAAB' && !hypotheticalPlayers.includes(asset.playerId)) {
-                  hypotheticalPlayers.push(asset.playerId);
+              gaveIds.forEach(id => {
+                if (!hypotheticalPlayers.includes(id)) {
+                  hypotheticalPlayers.push(id);
                 }
               });
               
               const hypotheticalPoints = { ...(myMatchup.players_points || {}) };
-              side.gave.forEach(asset => {
+              gaveIds.forEach(id => {
                 let pts = 0;
                 matchups.forEach((m: any) => {
-                  if (m.players_points && m.players_points[asset.playerId] !== undefined) {
-                    pts = m.players_points[asset.playerId];
+                  if (m.players_points && m.players_points[id] !== undefined) {
+                    pts = m.players_points[id];
                   }
                 });
-                hypotheticalPoints[asset.playerId] = pts;
+                hypotheticalPoints[id] = pts;
               });
               
-              const hypotheticalOptimal = getOptimalLineupPoints(hypotheticalPlayers, hypotheticalPoints, selectedSeason.league.roster_positions || [], playersData);
+              // 3. Compute ERV Score (Hypothetical Score) by forcing Retained Starters
+              const hypotheticalScore = getOptimalLineupPoints(
+                hypotheticalPlayers, 
+                hypotheticalPoints, 
+                selectedSeason.league.roster_positions || [], 
+                playersData,
+                retainedStarters
+              );
               
               const actualMargin = myMatchup.points - oppMatchup.points;
-              const optimalDelta = actualOptimal - hypotheticalOptimal;
-              const hypotheticalMargin = actualMargin - optimalDelta;
+              const hypotheticalMargin = hypotheticalScore - oppMatchup.points;
               
               const s = record.sides.find(s => s.rosterId === rosterId);
               if (s) {
                 // If we won reality, but would have lost hypothetically -> Trade Added a Win
                 if (actualMargin > 0 && hypotheticalMargin <= 0) {
                   s.matchupsFlippedAdded += 1;
-                  s.flippedMatchups.push({ week: w, type: 'added', actualMargin, hypotheticalMargin, oppRosterId: oppMatchup.roster_id });
+                  s.flippedMatchups.push({ week: w, type: 'added', actualMargin: Number(actualMargin.toFixed(2)), hypotheticalMargin: Number(hypotheticalMargin.toFixed(2)), oppRosterId: oppMatchup.roster_id });
                 }
                 // If we lost reality, but would have won hypothetically -> Trade Lost a Win
                 else if (actualMargin <= 0 && hypotheticalMargin > 0) {
                   s.matchupsFlippedLost += 1;
-                  s.flippedMatchups.push({ week: w, type: 'lost', actualMargin, hypotheticalMargin, oppRosterId: oppMatchup.roster_id });
+                  s.flippedMatchups.push({ week: w, type: 'lost', actualMargin: Number(actualMargin.toFixed(2)), hypotheticalMargin: Number(hypotheticalMargin.toFixed(2)), oppRosterId: oppMatchup.roster_id });
                 }
               }
             }
