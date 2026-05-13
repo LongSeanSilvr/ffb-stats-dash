@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { UserCircle, Target, DollarSign, Repeat, Zap } from 'lucide-react';
+import { UserCircle, Target, DollarSign, Repeat, Zap, Trophy } from 'lucide-react';
 import { useLeagueContext } from '../context/LeagueContext';
 
 interface SidebarProps {
@@ -40,6 +40,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           <NavLink to="/freeagency" onClick={onClose} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
             <Zap size={20} />
             Free Agency
+          </NavLink>
+          <NavLink to="/playoffs" onClick={onClose} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+            <Trophy size={20} />
+            Playoffs
           </NavLink>
 
         </nav>

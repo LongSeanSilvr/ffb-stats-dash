@@ -7,6 +7,7 @@ import { Faab } from './pages/Faab';
 import { Draft } from './pages/Draft';
 import { Trades } from './pages/Trades';
 import { FreeAgency } from './pages/FreeAgency';
+import Playoffs from './pages/Playoffs';
 import { LeagueProvider } from './context/LeagueContext';
 
 function App() {
@@ -62,6 +63,7 @@ function App() {
               <Route path="/trades" element={<Trades />} />
               <Route path="/faab" element={<Faab />} />
               <Route path="/freeagency" element={<FreeAgency />} />
+              <Route path="/playoffs" element={<Playoffs />} />
             </Routes>
           </main>
         </div>

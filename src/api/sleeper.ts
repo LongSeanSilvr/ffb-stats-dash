@@ -137,3 +137,26 @@ export async function getSeasonStats(season: string): Promise<Record<string, any
   return res.json();
 }
 
+export interface PlayoffMatchup {
+  r: number;
+  m: number;
+  t1: number;
+  t2: number;
+  w: number;
+  l: number;
+  t1_from?: any;
+  t2_from?: any;
+}
+
+export async function getWinnersBracket(leagueId: string): Promise<PlayoffMatchup[]> {
+  const res = await fetch(`${BASE_URL}/league/${leagueId}/winners_bracket`);
+  if (!res.ok) throw new Error('Failed to fetch winners bracket');
+  return res.json();
+}
+
+export async function getLosersBracket(leagueId: string): Promise<PlayoffMatchup[]> {
+  const res = await fetch(`${BASE_URL}/league/${leagueId}/losers_bracket`);
+  if (!res.ok) throw new Error('Failed to fetch losers bracket');
+  return res.json();
+}
+

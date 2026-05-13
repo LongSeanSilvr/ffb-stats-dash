@@ -28,8 +28,9 @@ export interface FaabEfficiencyResult {
 export async function calculateFaabMetrics(selectedSeason: any): Promise<FaabEfficiencyResult[]> {
   const leagueId = selectedSeason.league.league_id;
   
+  const lastRegularWeek = selectedSeason.league.settings.playoff_week_start ? selectedSeason.league.settings.playoff_week_start - 1 : 14;
   const weekPromises = [];
-  for (let week = 1; week <= 18; week++) {
+  for (let week = 1; week <= lastRegularWeek; week++) {
     weekPromises.push(
       Promise.all([
         getTransactions(leagueId, week).catch(() => []),
@@ -236,8 +237,9 @@ export function useFaabEfficiency() {
         
         const leagueId = selectedSeason.league.league_id;
         
-        const weekPromises = [];
-        for (let week = 1; week <= 18; week++) {
+        const lastRegularWeek = selectedSeason.league.settings.playoff_week_start ? selectedSeason.league.settings.playoff_week_start - 1 : 14;
+  const weekPromises = [];
+  for (let week = 1; week <= lastRegularWeek; week++) {
           weekPromises.push(
             Promise.all([
               getTransactions(leagueId, week).catch(() => []),

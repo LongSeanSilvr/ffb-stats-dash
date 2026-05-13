@@ -69,8 +69,9 @@ export function useDraftEfficiency() {
         ]);
 
         // Fetch all week data for tenure tracking
-        const weekPromises = [];
-        for (let week = 1; week <= 18; week++) {
+        const lastRegularWeek = selectedSeason.league.settings.playoff_week_start ? selectedSeason.league.settings.playoff_week_start - 1 : 14;
+  const weekPromises = [];
+  for (let week = 1; week <= lastRegularWeek; week++) {
           weekPromises.push(
             Promise.all([
               getTransactions(leagueId, week).catch(() => []),
