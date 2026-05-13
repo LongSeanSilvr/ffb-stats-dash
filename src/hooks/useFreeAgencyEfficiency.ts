@@ -275,7 +275,7 @@ export function useFreeAgencyEfficiency() {
                 let pos = playerMeta?.position || 'OTHER';
                 if (['DE', 'DT', 'NT', 'DL', 'ILB', 'OLB', 'LB', 'CB', 'S', 'SAF', 'DB'].includes(pos)) pos = 'IDP';
 
-                allAssets.push({ rosterId, playerId, playerName: name, position: pos, startWeek: weekNum, endWeek: null, starterPoints: 0, benchPoints: 0, weeksStartedCount: 0, cost: bid, acqType, timestamp: tx.status_updated || 0 });
+                allAssets.push({ rosterId, playerId, playerName: name, position: pos, startWeek: weekNum, endWeek: null, starterPoints: 0, benchPoints: 0, weeksStartedCount: 0, cost: bid, acqType, timestamp: (tx as any).status_updated || 0 });
               });
             }
           });

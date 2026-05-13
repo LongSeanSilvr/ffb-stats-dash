@@ -29,7 +29,10 @@ export interface TradeRecord {
     gave: TradeAsset[];
     received: TradeAsset[];
     netPoints: number;
-    optimalMatchupsFlipped: number;
+    optimalMatchupsFlipped?: number;
+    matchupsFlippedAdded: number;
+    matchupsFlippedLost: number;
+    flippedMatchups: FlippedMatchup[];
   }[];
 }
 

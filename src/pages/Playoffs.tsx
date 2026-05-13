@@ -77,7 +77,7 @@ export const Playoffs = () => {
   const season = selectedSeason?.league?.season;
   const league = selectedSeason?.league;
   const leagueId = league?.league_id;
-  const { mvps, benchBlues, matchupsFlipped, playerSplits, teamPerformances, loserBracketTeams, champion, loading, error } = usePlayoffAnalytics(leagueId, league);
+  const { mvps, benchBlues, matchupsFlipped, playerSplits, teamPerformances, loserBracketTeams, champion, loading, error } = usePlayoffAnalytics(leagueId || '', league);
 
   if (loading) {
     return (
