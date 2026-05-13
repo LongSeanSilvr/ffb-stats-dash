@@ -2,7 +2,7 @@ import React from 'react';
 import { useLeagueContext } from '../context/LeagueContext';
 import { usePlayoffAnalytics } from '../hooks/usePlayoffAnalytics';
 import { Card } from '../components/Card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, Tooltip as RechartsTooltip } from 'recharts';
+import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, Tooltip as RechartsTooltip, ReferenceLine, ComposedChart, BarChart, Bar } from 'recharts';
 import { Trophy, TrendingDown, TrendingUp, AlertCircle, ArrowRightLeft, UserPlus, Shield, User } from 'lucide-react';
 
 const CustomBarTooltip = ({ active, payload }: any) => {
@@ -27,12 +27,57 @@ const CustomBarTooltip = ({ active, payload }: any) => {
   return null;
 };
 
+const CustomAvatarDot = (props: any) => {
+  const { cx, cy, payload } = props;
+  if (!payload || cx === undefined || cy === undefined) return null;
+
+  return (
+    <g transform={`translate(${cx},${cy})`} style={{ cursor: 'pointer' }}>
+      {payload.managerAvatar ? (
+        <image
+          href={`https://sleepercdn.com/avatars/thumbs/${payload.managerAvatar}`}
+          x={-16}
+          y={-16}
+          height={32}
+          width={32}
+          style={{ clipPath: 'circle(16px at center)' }}
+        />
+      ) : (
+        <circle cx={0} cy={0} r={16} fill="#475569" />
+      )}
+      <circle cx={0} cy={0} r={16} fill="none" stroke={payload.diff >= 0 ? "var(--success-color)" : "var(--danger-color)"} strokeWidth={2} />
+    </g>
+  );
+};
+
+const CustomScatterTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div style={{ background: 'rgba(15,17,21,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '1rem', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
+        <div className="flex items-center gap-4 mb-2">
+          {data.managerAvatar ? (
+            <img src={`https://sleepercdn.com/avatars/thumbs/${data.managerAvatar}`} alt="avatar" style={{ width: 24, height: 24, borderRadius: '50%' }} />
+          ) : (
+            <div style={{ width: 24, height: 24, borderRadius: '50%', backgroundColor: '#475569' }}></div>
+          )}
+          <span style={{ fontWeight: 'bold', fontSize: '1.125rem', color: '#fff' }}>{data.managerName}</span>
+        </div>
+        <div className="text-sm text-muted">Regular Season: <span style={{ color: '#fff', fontWeight: 'bold', marginLeft: '0.25rem' }}>{data.regAvg} pts/game</span></div>
+        <div className="text-sm text-muted mt-1">Playoffs: <span style={{ color: '#fff', fontWeight: 'bold', marginLeft: '0.25rem' }}>{data.playAvg} pts/game</span></div>
+        <div className="text-sm text-muted mt-2 pt-2 border-t border-white/10" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>Net Difference: <span style={{ color: data.diff >= 0 ? 'var(--success-color)' : 'var(--danger-color)', fontWeight: 'bold', marginLeft: '0.25rem' }}>{data.diff >= 0 ? '+' : ''}{data.diff} pts</span></div>
+      </div>
+    );
+  }
+  return null;
+};
+
 export const Playoffs = () => {
   const { selectedSeason } = useLeagueContext();
   const season = selectedSeason?.league?.season;
   const league = selectedSeason?.league;
   const leagueId = league?.league_id;
-  const { mvps, benchBlues, matchupsFlipped, playerSplits, loserBracketTeams, champion, loading, error } = usePlayoffAnalytics(leagueId, league);
+  const { mvps, benchBlues, matchupsFlipped, playerSplits, teamPerformances, loserBracketTeams, champion, loading, error } = usePlayoffAnalytics(leagueId, league);
 
   if (loading) {
     return (
@@ -129,6 +174,69 @@ export const Playoffs = () => {
             </ResponsiveContainer>
           </div>
         </Card>
+
+        {/* TEAM AVERAGES SCATTER PLOT */}
+        {(() => {
+          const allPoints = teamPerformances ? teamPerformances.flatMap((t: any) => [t.regAvg, t.playAvg]) : [];
+          const minAvg = allPoints.length > 0 ? Math.floor(Math.min(...allPoints) - 5) : 0;
+          const maxAvg = allPoints.length > 0 ? Math.ceil(Math.max(...allPoints) + 5) : 200;
+          
+          return (
+            <Card title="Regular Season vs Playoff Performance" className="stagger-1">
+              <div className="chart-header">
+                <div className="chart-description">
+                  Did your team show up when it mattered most? This compares every team's regular season average to their playoff average. Teams <strong>above the diagonal line</strong> overperformed their expectations in the playoffs. Teams <strong>below the line</strong> choked.
+                </div>
+                <div className="chart-legend-grid">
+                  <div className="legend-item">
+                    <div className="legend-item-header"><span style={{ width: 12, height: 12, borderRadius: 2, background: 'var(--success-color)', display: 'inline-block' }} /> Overperformed</div>
+                    <div className="legend-item-desc">Playoff Average &gt; Regular Season Average</div>
+                  </div>
+                  <div className="legend-item">
+                    <div className="legend-item-header"><span style={{ width: 12, height: 12, borderRadius: 2, background: 'var(--danger-color)', display: 'inline-block' }} /> Underperformed</div>
+                    <div className="legend-item-desc">Playoff Average &lt; Regular Season Average</div>
+                  </div>
+                </div>
+              </div>
+              <div style={{ height: 500, width: '100%', marginTop: '1rem' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                    <XAxis 
+                      type="number" 
+                      dataKey="regAvg" 
+                      name="Regular Season Avg" 
+                      stroke="var(--text-secondary)" 
+                      tick={{ fontSize: 12 }} 
+                      domain={[minAvg, maxAvg]}
+                      label={{ value: "Regular Season Avg", position: "insideBottom", offset: -10, fill: "var(--text-secondary)" }}
+                    />
+                    <YAxis 
+                      type="number" 
+                      dataKey="playAvg" 
+                      name="Playoff Avg" 
+                      stroke="var(--text-secondary)" 
+                      tick={{ fontSize: 12 }} 
+                      domain={[minAvg, maxAvg]}
+                      label={{ value: "Playoff Avg", angle: -90, position: "insideLeft", fill: "var(--text-secondary)" }}
+                    />
+                    <RechartsTooltip content={<CustomScatterTooltip />} cursor={{ strokeDasharray: '3 3', stroke: 'rgba(255,255,255,0.2)' }} />
+                    
+                    {/* Diagonal Expectation Line */}
+                    <Scatter 
+                      data={[{ regAvg: minAvg, playAvg: minAvg }, { regAvg: maxAvg, playAvg: maxAvg }]} 
+                      line={{ stroke: "rgba(255,255,255,0.2)", strokeDasharray: "5 5", strokeWidth: 2 }} 
+                      shape={() => null} 
+                      isAnimationActive={false}
+                    />
+
+                    <Scatter data={teamPerformances} shape={<CustomAvatarDot />} animationDuration={1500} />
+                  </ScatterChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
+          );
+        })()}
 
         <div className="grid lg:grid-cols-2 gap-8">
            {/* MATCHUPS FLIPPED */}

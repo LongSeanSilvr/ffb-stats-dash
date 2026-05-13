@@ -21,6 +21,8 @@ export interface BenchwarmerBlue {
   actualScore: number;
   optimalScore: number;
   opponentScore: number;
+  opponentName: string;
+  opponentAvatar: string | null;
   pointsLeftOnBench: number;
   lostDueToLineup: boolean;
 }
@@ -60,11 +62,20 @@ export interface LoserBracketTeam {
   isToiletBowlChamp: boolean;
 }
 
+export interface TeamPlayoffPerformance {
+  managerName: string;
+  managerAvatar: string | null;
+  regAvg: number;
+  playAvg: number;
+  diff: number;
+}
+
 export interface PlayoffAnalytics {
   mvps: PlayoffMVP[];
   benchBlues: BenchwarmerBlue[];
   matchupsFlipped: MatchupFlipped[];
   playerSplits: PlayerSplit[];
+  teamPerformances: TeamPlayoffPerformance[];
   loserBracketTeams: LoserBracketTeam[];
   champion: { rosterId: number; name: string; avatar: string | null } | null;
   loading: boolean;
@@ -77,6 +88,7 @@ export function usePlayoffAnalytics(leagueId: string, league: any) {
     benchBlues: [],
     matchupsFlipped: [],
     playerSplits: [],
+    teamPerformances: [],
     loserBracketTeams: [],
     champion: null,
     loading: true,
@@ -149,6 +161,11 @@ export function usePlayoffAnalytics(leagueId: string, league: any) {
         const matchupsFlipped: MatchupFlipped[] = [];
         const losersPoints: Record<number, number> = {};
 
+        const teamScores: Record<number, { regPts: number, regGames: number, playPts: number, playGames: number }> = {};
+        rosters.forEach(r => {
+           teamScores[r.roster_id] = { regPts: 0, regGames: 0, playPts: 0, playGames: 0 };
+        });
+
         // Helper to find acq type
         const getAcquisitionType = (playerId: string, rosterId: number) => {
           let acqType = 'Draft';
@@ -170,6 +187,10 @@ export function usePlayoffAnalytics(leagueId: string, league: any) {
           const matchups = allMatchups[w - 1];
           if (!matchups) continue;
           matchups.forEach(m => {
+            if (teamScores[m.roster_id]) {
+                teamScores[m.roster_id].regPts += m.points;
+                teamScores[m.roster_id].regGames += 1;
+            }
             m.starters.forEach((playerId: string, idx: number) => {
               if (playerId !== '0') {
                 const pts = m.starters_points[idx] || 0;
@@ -189,6 +210,10 @@ export function usePlayoffAnalytics(leagueId: string, league: any) {
 
           // Track losers bracket points
           matchups.forEach(m => {
+             if (teamScores[m.roster_id]) {
+                teamScores[m.roster_id].playPts += m.points;
+                teamScores[m.roster_id].playGames += 1;
+             }
              const currentRound = w - playoffStartWeek + 1;
              const isLosersBracket = losersBracket.some(b => b.r === currentRound && (b.t1 === m.roster_id || b.t2 === m.roster_id));
              if (isLosersBracket) {
@@ -346,6 +371,20 @@ export function usePlayoffAnalytics(leagueId: string, league: any) {
            }
         });
 
+
+        const teamPerformances: TeamPlayoffPerformance[] = Object.entries(teamScores).map(([rIdStr, stats]) => {
+           const rId = parseInt(rIdStr);
+           const regAvg = stats.regGames > 0 ? stats.regPts / stats.regGames : 0;
+           const playAvg = stats.playGames > 0 ? stats.playPts / stats.playGames : 0;
+           return {
+              managerName: rosterToUser[rId] || 'Unknown',
+              managerAvatar: rosterToAvatar[rId] || null,
+              regAvg: Number(regAvg.toFixed(1)),
+              playAvg: Number(playAvg.toFixed(1)),
+              diff: Number((playAvg - regAvg).toFixed(1))
+           };
+        });
+
         const loserBracketTeams: LoserBracketTeam[] = Object.entries(losersPoints).map(([rosterIdStr, totalPoints]) => {
            const rId = parseInt(rosterIdStr);
            return {
@@ -361,7 +400,8 @@ export function usePlayoffAnalytics(leagueId: string, league: any) {
           mvps: mvpList,
           benchBlues: benchBlues.sort((a,b) => b.pointsLeftOnBench - a.pointsLeftOnBench),
           matchupsFlipped: matchupsFlipped.sort((a,b) => b.pointsScored - a.pointsScored),
-          playerSplits: playerSplits.sort((a, b) => a.diff - b.diff), // Chokers at top (negative diff), then winners (positive diff)
+          playerSplits: playerSplits.sort((a, b) => a.diff - b.diff),
+          teamPerformances, // Chokers at top (negative diff), then winners (positive diff)
           loserBracketTeams,
           champion,
           loading: false,
