@@ -13,6 +13,8 @@ export interface TradeAsset {
   toRosterId: number;
   week: number;
   starterPointsAfterTrade: number;
+  avgPointsBeforeTrade?: number;
+  avgPointsAfterTrade?: number;
   isPick?: boolean;
   actualProjectedPoints?: number;
 }
@@ -26,8 +28,17 @@ export interface TradeRecord {
     rosterId: number;
     gave: TradeAsset[];
     received: TradeAsset[];
-    netPoints: number; // received points - gave points (positive = won trade)
+    netPoints: number;
+    optimalMatchupsFlipped: number;
   }[];
+}
+
+export interface FlippedMatchup {
+  week: number;
+  type: 'added' | 'lost';
+  actualMargin: number;
+  hypotheticalMargin: number;
+  oppRosterId: number;
 }
 
 export interface TradeEfficiencyResult {
@@ -40,7 +51,72 @@ export interface TradeEfficiencyResult {
   totalNetPoints: number; // cumulative net from all trades
   totalPointsReceived: number;
   totalPointsGiven: number;
+  totalAssetsGiven: number;
+  totalAssetsReceived: number;
+  totalMatchupsFlippedAdded: number;
+  totalMatchupsFlippedLost: number;
+  flippedMatchups: FlippedMatchup[];
   trades: TradeRecord[];
+}
+
+function getOptimalLineupPoints(players: string[], playersPoints: Record<string, number>, rosterPositions: string[], playersData: any): number {
+  if (!players || players.length === 0) return 0;
+  
+  const availablePlayers = players.map(pid => {
+    const pData = playersData[pid] || {};
+    const fantasyPos = pData.fantasy_positions || [pData.position];
+    return {
+      id: pid,
+      pts: Number(playersPoints[pid]) || 0,
+      pos: pData.position || '??',
+      fantasyPos: fantasyPos
+    };
+  }).sort((a, b) => b.pts - a.pts);
+
+  let totalPoints = 0;
+  const usedPlayerIds = new Set<string>();
+
+  const useBestPlayer = (validPositions: string[], isIdpFlex = false) => {
+    for (const p of availablePlayers) {
+      if (!usedPlayerIds.has(p.id)) {
+        if (isIdpFlex && p.fantasyPos.some((fp: string) => ['DL', 'LB', 'DB'].includes(fp))) {
+          usedPlayerIds.add(p.id);
+          totalPoints += p.pts;
+          return true;
+        }
+        if (p.fantasyPos.some((fp: string) => validPositions.includes(fp)) || validPositions.includes(p.pos)) {
+          usedPlayerIds.add(p.id);
+          totalPoints += p.pts;
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+
+  const standardSlots = rosterPositions.filter(p => !['BN', 'IR', 'TAXI', 'FLEX', 'SUPER_FLEX', 'REC_FLEX', 'WRRB_FLEX', 'IDP_FLEX'].includes(p));
+  const flexSlots = rosterPositions.filter(p => ['FLEX', 'SUPER_FLEX', 'REC_FLEX', 'WRRB_FLEX', 'IDP_FLEX'].includes(p));
+
+  const idpSlots = standardSlots.filter(p => p === 'IDP');
+  const strictSlots = standardSlots.filter(p => p !== 'IDP');
+
+  strictSlots.forEach(slotPos => {
+    useBestPlayer([slotPos]);
+  });
+
+  idpSlots.forEach(() => {
+    useBestPlayer([], true);
+  });
+
+  flexSlots.forEach(flexType => {
+    if (flexType === 'FLEX') useBestPlayer(['RB', 'WR', 'TE']);
+    else if (flexType === 'SUPER_FLEX') useBestPlayer(['QB', 'RB', 'WR', 'TE']);
+    else if (flexType === 'REC_FLEX') useBestPlayer(['WR', 'TE']);
+    else if (flexType === 'WRRB_FLEX') useBestPlayer(['WR', 'RB']);
+    else if (flexType === 'IDP_FLEX') useBestPlayer([], true);
+  });
+
+  return Number(totalPoints.toFixed(2));
 }
 
 export function useTradeEfficiency() {
@@ -145,6 +221,11 @@ export function useTradeEfficiency() {
             totalNetPoints: 0,
             totalPointsReceived: 0,
             totalPointsGiven: 0,
+            totalAssetsGiven: 0,
+            totalAssetsReceived: 0,
+            totalMatchupsFlippedAdded: 0,
+            totalMatchupsFlippedLost: 0,
+            flippedMatchups: [],
             trades: []
           };
         });
@@ -366,6 +447,38 @@ export function useTradeEfficiency() {
 
             side.received.forEach(asset => {
               // Sum starter points from trade week onwards on this roster
+
+              if (!asset.isPick && asset.position !== 'FAAB') {
+                let ptsBefore = 0;
+                let weeksBefore = week - 1;
+                for (let w = 1; w < week; w++) {
+                  const matchups = weeksData[w - 1]?.[1] || [];
+                  let foundPts = 0;
+                  matchups.forEach((m: any) => {
+                    const playersPoints = m.players_points || {};
+                    if (playersPoints[asset.playerId] !== undefined) {
+                      foundPts = Number(playersPoints[asset.playerId]);
+                    }
+                  });
+                  ptsBefore += foundPts;
+                }
+                asset.avgPointsBeforeTrade = weeksBefore > 0 ? Number((ptsBefore / weeksBefore).toFixed(2)) : 0;
+
+                let ptsAfter = 0;
+                let weeksAfter = 18 - week + 1;
+                for (let w = week; w <= 18; w++) {
+                  const matchups = weeksData[w - 1]?.[1] || [];
+                  let foundPts = 0;
+                  matchups.forEach((m: any) => {
+                    const playersPoints = m.players_points || {};
+                    if (playersPoints[asset.playerId] !== undefined) {
+                      foundPts = Number(playersPoints[asset.playerId]);
+                    }
+                  });
+                  ptsAfter += foundPts;
+                }
+                asset.avgPointsAfterTrade = weeksAfter > 0 ? Number((ptsAfter / weeksAfter).toFixed(2)) : 0;
+              }
               for (let w = week; w <= 18; w++) {
                 const matchups = weeksData[w - 1]?.[1] || [];
                 const matchup = matchups.find((m: any) => m.roster_id === rosterId);
@@ -408,10 +521,72 @@ export function useTradeEfficiency() {
               rosterId,
               gave: side.gave,
               received: side.received,
-              netPoints: Number((receivedPts - gavePts).toFixed(2))
+              netPoints: Number((receivedPts - gavePts).toFixed(2)),
+              matchupsFlippedAdded: 0,
+              matchupsFlippedLost: 0,
+              flippedMatchups: []
             });
           });
 
+          // Calculate Matchups Flipped
+          Object.entries(rosterSides).forEach(([rosterIdStr, side]) => {
+            const rosterId = Number(rosterIdStr);
+            for (let w = week; w <= 18; w++) {
+              const matchups = weeksData[w - 1]?.[1] || [];
+              const myMatchup = matchups.find((m: any) => m.roster_id === rosterId);
+              if (!myMatchup) continue;
+              
+              const oppMatchup = matchups.find((m: any) => m.matchup_id === myMatchup.matchup_id && m.roster_id !== rosterId);
+              if (!oppMatchup) continue;
+              
+              if (myMatchup.points === 0 && oppMatchup.points === 0) continue;
+              
+              const actualOptimal = getOptimalLineupPoints(myMatchup.players || [], myMatchup.players_points || {}, selectedSeason.league.roster_positions || [], playersData);
+              const oppOptimal = getOptimalLineupPoints(oppMatchup.players || [], oppMatchup.players_points || {}, selectedSeason.league.roster_positions || [], playersData);
+              
+              const hypotheticalPlayers = [...(myMatchup.players || [])];
+              side.received.forEach(asset => {
+                const idx = hypotheticalPlayers.indexOf(asset.playerId);
+                if (idx > -1) hypotheticalPlayers.splice(idx, 1);
+              });
+              side.gave.forEach(asset => {
+                if (!asset.isPick && asset.position !== 'FAAB' && !hypotheticalPlayers.includes(asset.playerId)) {
+                  hypotheticalPlayers.push(asset.playerId);
+                }
+              });
+              
+              const hypotheticalPoints = { ...(myMatchup.players_points || {}) };
+              side.gave.forEach(asset => {
+                let pts = 0;
+                matchups.forEach((m: any) => {
+                  if (m.players_points && m.players_points[asset.playerId] !== undefined) {
+                    pts = m.players_points[asset.playerId];
+                  }
+                });
+                hypotheticalPoints[asset.playerId] = pts;
+              });
+              
+              const hypotheticalOptimal = getOptimalLineupPoints(hypotheticalPlayers, hypotheticalPoints, selectedSeason.league.roster_positions || [], playersData);
+              
+              const actualMargin = myMatchup.points - oppMatchup.points;
+              const optimalDelta = actualOptimal - hypotheticalOptimal;
+              const hypotheticalMargin = actualMargin - optimalDelta;
+              
+              const s = record.sides.find(s => s.rosterId === rosterId);
+              if (s) {
+                // If we won reality, but would have lost hypothetically -> Trade Added a Win
+                if (actualMargin > 0 && hypotheticalMargin <= 0) {
+                  s.matchupsFlippedAdded += 1;
+                  s.flippedMatchups.push({ week: w, type: 'added', actualMargin, hypotheticalMargin, oppRosterId: oppMatchup.roster_id });
+                }
+                // If we lost reality, but would have won hypothetically -> Trade Lost a Win
+                else if (actualMargin <= 0 && hypotheticalMargin > 0) {
+                  s.matchupsFlippedLost += 1;
+                  s.flippedMatchups.push({ week: w, type: 'lost', actualMargin, hypotheticalMargin, oppRosterId: oppMatchup.roster_id });
+                }
+              }
+            }
+          });
           tradeRecords.push(record);
         });
 
@@ -432,6 +607,12 @@ export function useTradeEfficiency() {
 
             if (!isFaabOnly) {
               rd.totalTrades++;
+
+              rd.totalAssetsGiven += side.gave.filter(a => a.position !== 'FAAB').length;
+              rd.totalAssetsReceived += side.received.filter(a => a.position !== 'FAAB').length;
+              rd.totalMatchupsFlippedAdded += side.matchupsFlippedAdded;
+              rd.totalMatchupsFlippedLost += side.matchupsFlippedLost;
+              if (side.flippedMatchups) rd.flippedMatchups.push(...side.flippedMatchups);
 
               const receivedPts = side.received.reduce((sum, a) => sum + a.starterPointsAfterTrade, 0);
               const gavePts = side.gave.reduce((sum, a) => sum + a.starterPointsAfterTrade, 0);

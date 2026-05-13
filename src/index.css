@@ -679,3 +679,19 @@ a:hover {
     padding: 1.25rem;
   }
 }
+
+/* Remove default focus outlines on charts and SVGs */
+.recharts-wrapper,
+.recharts-surface,
+.recharts-layer {
+  outline: none !important;
+}
+
+*:focus {
+  outline: none;
+}
+
+*:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.2);
+  outline-offset: 2px;
+}
