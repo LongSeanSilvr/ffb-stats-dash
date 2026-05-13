@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getWinnersBracket, getLosersBracket, getMatchups, getRosters, getUsers, getTransactions, getPlayers, getDraftPicks } from '../api/sleeper';
-import { getOptimalLineupPoints } from './useTradeEfficiency';
+import { getOptimalLineupPoints } from '../utils/roster';
 
 export interface PlayoffMVP {
   playerId: string;
@@ -269,9 +269,10 @@ export function usePlayoffAnalytics(leagueId: string, league: any) {
                             const acq = getAcquisitionType(playerId, team.roster_id);
                             if (acq !== 'Draft') {
                                const ptsScored = team.starters_points[idx] || 0;
-                               // Calculate optimal WITHOUT this player
+                               // Calculate ERV (Expected Replacement Value) WITHOUT this player
                                const hypotheticalPlayers = team.players.filter((p: string) => p !== playerId);
-                               const hypotheticalOptimal = getOptimalLineupPoints(hypotheticalPlayers, team.players_points || {}, league.roster_positions || [], playersMap);
+                               const retainedStarters = team.starters.filter((p: string) => p !== '0' && p !== playerId);
+                               const hypotheticalOptimal = getOptimalLineupPoints(hypotheticalPlayers, team.players_points || {}, league.roster_positions || [], playersMap, retainedStarters);
                                if (hypotheticalOptimal < oppPts) {
                                   matchupsFlipped.push({
                                      rosterId: team.roster_id,

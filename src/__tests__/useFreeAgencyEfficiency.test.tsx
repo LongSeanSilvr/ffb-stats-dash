@@ -27,5 +27,14 @@ describe('Free Agency Efficiency', () => {
     const { result } = renderHook(() => useFreeAgencyEfficiency());
     await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 10000 });
     expect(result.current.error).toBeNull();
+    
+    // Verify specific Waiver Impact: Wins Created (Matchups Flipped by FA) calculations
+    const roster6 = result.current.views.all.find(r => r.roster_id === 6);
+    expect(roster6).toBeDefined();
+    expect(roster6?.waiverWins).toBe(11);
+
+    const roster4 = result.current.views.all.find(r => r.roster_id === 4);
+    expect(roster4).toBeDefined();
+    expect(roster4?.waiverWins).toBe(7);
   });
 });

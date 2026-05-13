@@ -35,5 +35,18 @@ describe('Trade Efficiency', () => {
     const { result } = renderHook(() => useTradeEfficiency());
     await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 10000 });
     expect(result.current.error).toBeNull();
+
+    const roster11 = result.current.data.find(d => d.roster_id === 11);
+    expect(roster11).toBeDefined();
+
+    // Verify Market Timing logic for a specific trade (Player 8110 in Week 4)
+    // This locks in the dynamic `lastPlayedWeek` average division
+    const week4Trade = roster11?.trades.find(t => t.week === 4);
+    const side11 = week4Trade?.sides.find(s => s.rosterId === 11);
+    const asset8110 = side11?.received.find(a => a.playerId === "8110");
+    
+    expect(asset8110).toBeDefined();
+    expect(asset8110?.avgPointsBeforeTrade).toBe(3.4);
+    expect(asset8110?.avgPointsAfterTrade).toBe(8.38);
   });
 });

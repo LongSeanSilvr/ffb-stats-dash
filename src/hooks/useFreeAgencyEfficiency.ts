@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getTransactions, getMatchups, getPlayers } from '../api/sleeper';
+import { getOptimalLineupPoints } from '../utils/roster';
 import { useLeagueContext } from '../context/LeagueContext';
 import type { User } from '../api/sleeper';
 
@@ -288,7 +289,7 @@ export function useFreeAgencyEfficiency() {
           const matchups = weekData[1];
           if (!matchups?.length) return;
 
-          const weeklyWaiverPtsByRoster: Record<number, number> = {};
+          const weeklyWaiverStartersByRoster: Record<number, string[]> = {};
           const matchupsById: Record<number, any[]> = {};
 
           matchups.forEach(matchup => {
@@ -296,7 +297,7 @@ export function useFreeAgencyEfficiency() {
             if (!matchupsById[matchup.matchup_id]) matchupsById[matchup.matchup_id] = [];
             matchupsById[matchup.matchup_id].push(matchup);
             
-            weeklyWaiverPtsByRoster[rosterId] = 0;
+            weeklyWaiverStartersByRoster[rosterId] = [];
             const playersPoints = (matchup as any).players_points || {};
             const starters = matchup.starters || [];
 
@@ -317,7 +318,7 @@ export function useFreeAgencyEfficiency() {
                 if (starters.includes(pId)) { 
                   activeAsset.starterPoints += pts; 
                   activeAsset.weeksStartedCount += 1; 
-                  weeklyWaiverPtsByRoster[rosterId] += pts;
+                  weeklyWaiverStartersByRoster[rosterId].push(pId);
                 }
                 else { activeAsset.benchPoints += pts; }
               }
@@ -325,14 +326,33 @@ export function useFreeAgencyEfficiency() {
           });
 
           // Calculate Waiver Wins
+          const rosterPositions = selectedSeason.league.roster_positions || [];
           Object.values(matchupsById).forEach(pair => {
             if (pair.length === 2) {
               const [r1, r2] = pair;
-              const margin = Math.abs((r1.points || 0) - (r2.points || 0));
-              if ((r1.points || 0) > (r2.points || 0) && margin < weeklyWaiverPtsByRoster[r1.roster_id]) {
-                baseRosters[r1.roster_id].waiverWins += 1;
-              } else if ((r2.points || 0) > (r1.points || 0) && margin < weeklyWaiverPtsByRoster[r2.roster_id]) {
-                baseRosters[r2.roster_id].waiverWins += 1;
+              const r1Score = r1.points || 0;
+              const r2Score = r2.points || 0;
+
+              if (r1Score > r2Score) {
+                const r1WaiverStarters = weeklyWaiverStartersByRoster[r1.roster_id] || [];
+                if (r1WaiverStarters.length > 0) {
+                  const retainedStarters = (r1.starters || []).filter((id: string) => id !== '0' && !r1WaiverStarters.includes(id));
+                  const hypotheticalPlayers = (r1.players || []).filter((id: string) => !r1WaiverStarters.includes(id));
+                  const hypotheticalScore = getOptimalLineupPoints(hypotheticalPlayers, r1.players_points || {}, rosterPositions, playersData, retainedStarters);
+                  if (hypotheticalScore < r2Score) {
+                    baseRosters[r1.roster_id].waiverWins += 1;
+                  }
+                }
+              } else if (r2Score > r1Score) {
+                const r2WaiverStarters = weeklyWaiverStartersByRoster[r2.roster_id] || [];
+                if (r2WaiverStarters.length > 0) {
+                  const retainedStarters = (r2.starters || []).filter((id: string) => id !== '0' && !r2WaiverStarters.includes(id));
+                  const hypotheticalPlayers = (r2.players || []).filter((id: string) => !r2WaiverStarters.includes(id));
+                  const hypotheticalScore = getOptimalLineupPoints(hypotheticalPlayers, r2.players_points || {}, rosterPositions, playersData, retainedStarters);
+                  if (hypotheticalScore < r1Score) {
+                    baseRosters[r2.roster_id].waiverWins += 1;
+                  }
+                }
               }
             }
           });

@@ -10,7 +10,14 @@ vi.mock('../context/LeagueContext', () => ({ useLeagueContext: () => ({ selected
 vi.mock('../api/sleeper', () => ({
   getTransactions: async (l: string, w: number) => { try { const { default: data } = await import(`./mockData/transactions_${w}.json`); return data; } catch { return []; } },
   getMatchups: async (l: string, w: number) => { try { const { default: data } = await import(`./mockData/matchups_${w}.json`); return data; } catch { return []; } },
-  getPlayers: async () => { try { const { default: data } = await import(`./mockData/players.json`); return data; } catch { return {}; } }
+  getPlayers: async () => { try { const { default: data } = await import(`./mockData/players.json`); return data; } catch { return {}; } },
+  getWinnersBracket: async () => [],
+  getLosersBracket: async () => [],
+  getRosters: async () => [],
+  getUsers: async () => [],
+
+  getDraftPicks: async () => [],
+  getDrafts: async () => []
 }));
 
 const loadMock = async (f: string) => JSON.parse(await fs.readFile(path.resolve(__dirname, 'mockData', f), 'utf-8'));
