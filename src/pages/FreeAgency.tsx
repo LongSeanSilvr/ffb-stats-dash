@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Card } from '../components/Card';
+import { MobileTapHint } from '../components/MobileTapHint';
 import { useLeagueContext } from '../context/LeagueContext';
 import { useFreeAgencyEfficiency, type AcqFilter, type FreeAgencyResult } from '../hooks/useFreeAgencyEfficiency';
 import {
@@ -264,6 +265,7 @@ export const FreeAgency: React.FC = () => {
               </div>
             </div>
           </div>
+          <MobileTapHint />
           <div style={{ height: 380 }}>
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ top: 20, right: 20, bottom: 40, left: 20 }}>
@@ -307,6 +309,7 @@ export const FreeAgency: React.FC = () => {
               </div>
             </div>
           </div>
+          <MobileTapHint />
           <div style={{ height: 380 }}>
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ top: 20, right: 20, bottom: 40, left: 20 }}>
@@ -338,6 +341,7 @@ export const FreeAgency: React.FC = () => {
             <ChartToggle value={posFilter} onChange={setPosFilter} />
           </div>
           <div className="text-xs text-muted mb-2 text-center">Compares acquisition points per position (scaled to positional peak).</div>
+          <MobileTapHint />
           <div style={{ width: '100%', height: 340 }}>
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarChartData}>
@@ -367,6 +371,7 @@ export const FreeAgency: React.FC = () => {
             <ChartToggle value={hitFilter} onChange={setHitFilter} />
           </div>
           <div className="text-xs text-muted mb-5">Number of matchups won where the margin of victory was smaller than the points supplied by waiver starters.</div>
+          <MobileTapHint />
           <div style={{ height: 380 }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={hitData} layout="vertical" margin={{ left: 60, bottom: 20 }}>
@@ -393,6 +398,7 @@ export const FreeAgency: React.FC = () => {
           </div>
           <ChartToggle value={hitFilter} onChange={setHitFilter} />
         </div>
+        <div className="md:hidden text-xs text-muted mb-2 italic">Swipe to view full table</div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse table-fixed min-w-[600px]">
             <thead>

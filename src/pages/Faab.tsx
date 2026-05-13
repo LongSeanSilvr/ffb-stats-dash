@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Card } from '../components/Card';
+import { MobileTapHint } from '../components/MobileTapHint';
 import { useLeagueContext } from '../context/LeagueContext';
 import { useFaabEfficiency } from '../hooks/useFaabEfficiency';
 import { useFreeAgencyEfficiency } from '../hooks/useFreeAgencyEfficiency';
@@ -339,6 +340,7 @@ export const Faab: React.FC = () => {
               </div>
             </div>
           </div>
+          <MobileTapHint />
           <div style={{ height: 350 }}>
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ top: 20, right: 30, bottom: 30, left: 20 }}>
@@ -370,13 +372,15 @@ export const Faab: React.FC = () => {
                 <div className="legend-item-desc">Player started 0 games for the manager.</div>
               </div>
             </div>
+            <div className="text-sm text-muted mb-4">% of FAAB acquisitions that started ≥1 game.</div>
           </div>
+          <MobileTapHint />
           <div style={{ height: 350 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={hitRateData} layout="vertical" margin={{ left: 40, right: 20 }}>
+              <BarChart data={hitRateData} layout="vertical" margin={{ left: 40, right: 40 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.05)" />
-                <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 12 }} />
-                <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11 }} width={80} />
+                <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 12 }} domain={[0, 100]} unit="%" />
+                <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11 }} width={90} tickMargin={4} />
                 <RechartsTooltip cursor={false} contentStyle={{ backgroundColor: 'rgba(15,17,21,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
                 <Bar dataKey="Hits" stackId="a" fill="var(--success-color)" radius={[0, 0, 0, 0]} />
                 <Bar dataKey="Busts" stackId="a" fill="var(--danger-color)" radius={[0, 4, 4, 0]} />
@@ -555,6 +559,7 @@ export const Faab: React.FC = () => {
               </div>
             </div>
           </div>
+          <MobileTapHint />
           <div style={{ height: 450 }}>
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ top: 20, right: 30, bottom: 30, left: 20 }}>

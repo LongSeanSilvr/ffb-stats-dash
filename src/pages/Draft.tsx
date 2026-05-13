@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card } from '../components/Card';
+import { MobileTapHint } from '../components/MobileTapHint';
 import { useLeagueContext } from '../context/LeagueContext';
 import { useDraftEfficiency } from '../hooks/useDraftEfficiency';
 import {
@@ -654,6 +655,7 @@ export const Draft: React.FC = () => {
       <div className="grid grid-cols-1 gap-8 mb-8">
         <Card title="Positional Strategy Maps" className="stagger-0">
           <div className="text-sm text-muted mb-6 text-center">Concentration of picks by position across different phases of the draft.</div>
+          <MobileTapHint />
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="flex flex-col items-center">
@@ -737,12 +739,13 @@ export const Draft: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
         <Card title="Draft Points Generated" className="stagger-1">
           <div className="text-sm text-muted mb-4">Total starter points scored by drafted players while on your roster.</div>
+          <MobileTapHint />
           <div style={{ height: 350 }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={draftPointsData} layout="vertical" margin={{ left: 40, right: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.05)" />
                 <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 12 }} />
-                <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11 }} width={80} />
+                <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11 }} width={90} tickMargin={4} />
                 <RechartsTooltip cursor={false} contentStyle={{ backgroundColor: 'rgba(15,17,21,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
                 <Legend
                   content={() => (
@@ -767,12 +770,13 @@ export const Draft: React.FC = () => {
 
         <Card title="Draft Hit Rate %" className="stagger-1">
           <div className="text-sm text-muted mb-4">% of draft picks that started ≥1 game.</div>
+          <MobileTapHint />
           <div style={{ height: 350 }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={draftHitRateData} layout="vertical" margin={{ left: 40, right: 40 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.05)" />
                 <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 12 }} domain={[0, 100]} unit="%" />
-                <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11 }} width={80} />
+                <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11 }} width={90} tickMargin={4} />
                 <RechartsTooltip content={<HitRateTooltip />} cursor={false} />
                 <Legend
                   content={() => (
@@ -818,6 +822,7 @@ export const Draft: React.FC = () => {
               </div>
             </div>
           </div>
+          <MobileTapHint />
           <div style={{ height: 350 }}>
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ top: 20, right: 30, bottom: 40, left: 20 }}>
@@ -856,6 +861,7 @@ export const Draft: React.FC = () => {
               </div>
             </div>
           </div>
+          <MobileTapHint />
           <div style={{ height: 350 }}>
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ top: 20, right: 30, bottom: 40, left: 20 }}>
@@ -897,6 +903,7 @@ export const Draft: React.FC = () => {
               </div>
             </div>
           </div>
+          <MobileTapHint />
           <div style={{ height: 350 }}>
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ top: 20, right: 30, bottom: 40, left: 20 }}>
@@ -938,6 +945,7 @@ export const Draft: React.FC = () => {
               </div>
             </div>
           </div>
+          <MobileTapHint />
           <div style={{ height: 350 }}>
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ top: 20, right: 30, bottom: 40, left: 20 }}>
@@ -963,12 +971,13 @@ export const Draft: React.FC = () => {
         {keeperPointsData.length > 0 ? (
           <Card title="Keeper Points Generated" className="stagger-3">
             <div className="text-sm text-muted mb-4">Total starter points scored by kept players while on your roster.</div>
+            <MobileTapHint />
             <div style={{ height: 350 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={keeperPointsData} layout="vertical" margin={{ left: 40, right: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.05)" />
                   <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 12 }} />
-                  <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11 }} width={80} />
+                  <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11 }} width={90} tickMargin={4} />
                   <RechartsTooltip content={<KeeperPointsTooltip />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
                   <Legend
                     content={() => (
