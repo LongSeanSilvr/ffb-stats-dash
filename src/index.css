@@ -692,12 +692,12 @@ a:hover {
   }
   
   .main-content {
-    padding: 1rem;
+    padding: 0.5rem;
     padding-top: 5rem;
   }
   
   .glass-card {
-    padding: 1.25rem;
+    padding: 1rem;
   }
 }
 
@@ -731,16 +731,18 @@ a:hover {
 }
 
 .chart-legend-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   border-top: 1px solid rgba(255,255,255,0.05);
   padding-top: 16px;
 }
 
 .legend-item {
+  flex: 1 1 calc(50% - 8px);
+  min-width: 140px;
   background: rgba(255,255,255,0.02);
-  padding: 12px;
+  padding: 10px;
   border-radius: 8px;
   border: 1px solid rgba(255,255,255,0.05);
 }

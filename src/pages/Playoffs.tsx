@@ -2,6 +2,7 @@ import React from 'react';
 import { useLeagueContext } from '../context/LeagueContext';
 import { usePlayoffAnalytics } from '../hooks/usePlayoffAnalytics';
 import { Card } from '../components/Card';
+import { MobileTapHint } from '../components/MobileTapHint';
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, Tooltip as RechartsTooltip, ReferenceLine, ComposedChart, BarChart, Bar } from 'recharts';
 import { Trophy, TrendingDown, TrendingUp, AlertCircle, ArrowRightLeft, UserPlus, Shield, User } from 'lucide-react';
 
@@ -108,7 +109,7 @@ export const Playoffs = () => {
   return (
     <div className="animate-fade-in" style={{ maxWidth: '80rem', margin: '0 auto', paddingBottom: '3rem' }}>
       <header className="mb-8">
-        <h1 className="text-3xl text-gradient" style={{ fontWeight: 800, letterSpacing: '-0.025em', marginBottom: '0.75rem' }}>The Playoff Run ({season})</h1>
+        <h1 className="text-2xl md:text-3xl text-gradient" style={{ fontWeight: 800, letterSpacing: '-0.025em', marginBottom: '0.75rem' }}>The Playoff Run ({season})</h1>
         <p className="text-muted text-lg" style={{ maxWidth: '48rem', lineHeight: 1.625 }}>
           The regular season is about proficiency. The playoffs are about peaking at exactly the right time. 
           Here is the story of how the championship was truly won.
@@ -125,7 +126,7 @@ export const Playoffs = () => {
               )}
               <div>
                 <div style={{ color: 'rgba(234, 179, 8, 0.8)', textTransform: 'uppercase', letterSpacing: '0.1em', fontSize: '0.875rem', fontWeight: 700, marginBottom: '0.25rem' }}>League Champion</div>
-                <div className="text-3xl" style={{ fontWeight: 900, color: '#fff' }}>{champion.name}</div>
+                <div className="text-xl md:text-3xl" style={{ fontWeight: 900, color: '#fff' }}>{champion.name}</div>
               </div>
             </div>
           </div>
@@ -155,6 +156,7 @@ export const Playoffs = () => {
               </div>
             </div>
           </div>
+          <MobileTapHint />
           <div style={{ height: 450, width: '100%' }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={mvps.slice(0, 15)} layout="vertical" margin={{ left: 130, right: 30, top: 10, bottom: 10 }}>
@@ -198,6 +200,7 @@ export const Playoffs = () => {
                   </div>
                 </div>
               </div>
+              <MobileTapHint />
               <div style={{ height: 500, width: '100%', marginTop: '1rem' }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>

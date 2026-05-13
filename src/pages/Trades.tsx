@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Card } from '../components/Card';
 import { useLeagueContext } from '../context/LeagueContext';
 import { useTradeEfficiency } from '../hooks/useTradeEfficiency';
+import { MobileTapHint } from '../components/MobileTapHint';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
   ResponsiveContainer, Legend, ScatterChart, Scatter, Cell, Label, ReferenceLine
@@ -98,7 +99,7 @@ export const Trades: React.FC = () => {
   if (!hasTrades) {
     return (
       <div style={{ animation: "fadeIn 0.5s ease-out" }}>
-        <h1 style={{ fontSize: "1.875rem", lineHeight: "2.25rem", marginTop: "1rem", marginBottom: "2.5rem" }} className="text-gradient">Trade Analytics ({selectedSeason.league.season})</h1>
+        <h1 className="text-2xl md:text-3xl font-bold mb-6 text-gradient">Trade Analytics ({selectedSeason.league.season})</h1>
         <Card className="stagger-1 text-center py-12">
           <h2 className="text-2xl font-semibold mb-2 text-gradient">No Trades This Season</h2>
           <p className="text-muted text-lg">No completed trades were found for this season. Try selecting a different season in the sidebar.</p>
@@ -180,7 +181,7 @@ export const Trades: React.FC = () => {
 
   return (
     <div style={{ animation: "fadeIn 0.5s ease-out" }}>
-      <h1 style={{ fontSize: "1.875rem", lineHeight: "2.25rem", marginTop: "1rem", marginBottom: "2.5rem" }} className="text-gradient">Trade Analytics ({selectedSeason.league.season})</h1>
+      <h1 className="text-2xl md:text-3xl font-bold mb-6 text-gradient">Trade Analytics ({selectedSeason.league.season})</h1>
 
       {/* Row 1: Trade Typology Matrix & Matchups Flipped */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", gap: "2rem", marginBottom: "2rem" }}>
@@ -198,6 +199,7 @@ export const Trades: React.FC = () => {
               </div>
             </div>
           </div>
+          <MobileTapHint />
           <div style={{ height: 350 }}>
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ top: 20, right: 30, bottom: 30, left: 20 }}>
@@ -225,6 +227,7 @@ export const Trades: React.FC = () => {
 
         <Card title="Matchups Flipped by Trades" className="stagger-1">
           <div style={{ fontSize: "0.875rem", marginBottom: "1rem" }} className="text-muted">Calculates if the optimal lineup delta from acquired vs lost players changed the outcome of a matchup.</div>
+          <MobileTapHint text="Tap columns for detailed breakdown" />
           <div style={{ height: 350 }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={matchupsFlippedData} layout="vertical" margin={{ left: 40, right: 20 }}>
@@ -274,6 +277,7 @@ export const Trades: React.FC = () => {
               </div>
             </div>
           </div>
+          <MobileTapHint />
           <div style={{ height: 450 }}>
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ top: 20, right: 30, bottom: 30, left: 20 }}>
@@ -366,9 +370,9 @@ export const Trades: React.FC = () => {
                             <div style={{ backgroundColor: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.1)', borderRadius: '8px', padding: '0.75rem', marginBottom: '0.75rem' }}>
                               <div className="text-sm text-success-color mb-2 font-medium">↓ Received</div>
                               {side.received.map(a => (
-                                <div key={a.playerId} className="text-sm flex justify-between py-1 border-b border-white/5 last:border-0">
-                                  <span>{a.playerName} <span className="text-muted">({a.position})</span></span>
-                                  <div className="flex items-center gap-2">
+                                <div key={a.playerId} className="text-sm flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 py-2 border-b border-white/5 last:border-0">
+                                  <span className="font-medium truncate">{a.playerName} <span className="text-muted font-normal">({a.position})</span></span>
+                                  <div className="flex items-center justify-start sm:justify-end gap-2 w-full sm:w-auto">
                                     {a.position === 'FAAB' && a.actualProjectedPoints !== undefined && (
                                       <span className="text-xs text-muted italic">
                                         (Est. Personal Value: {a.actualProjectedPoints.toFixed(1)} pts)
@@ -384,9 +388,9 @@ export const Trades: React.FC = () => {
                             <div style={{ backgroundColor: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.1)', borderRadius: '8px', padding: '0.75rem' }}>
                               <div className="text-sm text-danger-color mb-2 font-medium">↑ Gave Away</div>
                               {side.gave.map(a => (
-                                <div key={a.playerId} className="text-sm flex justify-between py-1 border-b border-white/5 last:border-0">
-                                  <span>{a.playerName} <span className="text-muted">({a.position})</span></span>
-                                  <div className="flex items-center gap-2">
+                                <div key={a.playerId} className="text-sm flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 py-2 border-b border-white/5 last:border-0">
+                                  <span className="font-medium truncate">{a.playerName} <span className="text-muted font-normal">({a.position})</span></span>
+                                  <div className="flex items-center justify-start sm:justify-end gap-2 w-full sm:w-auto">
                                     {a.position === 'FAAB' && a.actualProjectedPoints !== undefined && (
                                       <span className="text-xs text-muted italic">
                                         (Est. Personal Value: {a.actualProjectedPoints.toFixed(1)} pts)
