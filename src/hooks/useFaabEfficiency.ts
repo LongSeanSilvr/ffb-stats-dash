@@ -16,6 +16,11 @@ export interface FaabEfficiencyResult {
   busts: number;
   wastedFaab: number;
   overpayAmount: number;
+  totalPaidBids: number;
+  totalBidAmount: number;
+  totalRunnerUpDelta: number;
+  averageBidAmount: number;
+  averageRunnerUpDelta: number;
   positionalSpend: Record<string, number>;
   spendingVelocity: number[]; // Index 0 is week 1
 }
@@ -52,6 +57,11 @@ export async function calculateFaabMetrics(selectedSeason: any): Promise<FaabEff
       busts: 0,
       wastedFaab: 0,
       overpayAmount: 0,
+      totalPaidBids: 0,
+      totalBidAmount: 0,
+      totalRunnerUpDelta: 0,
+      averageBidAmount: 0,
+      averageRunnerUpDelta: 0,
       positionalSpend: {},
       spendingVelocity: Array(18).fill(0)
     };
@@ -182,6 +192,12 @@ export async function calculateFaabMetrics(selectedSeason: any): Promise<FaabEff
     rd.benchPointsGenerated += asset.benchPoints;
     rd.overpayAmount += asset.overpay;
     
+    if (asset.cost > 0) {
+      rd.totalPaidBids += 1;
+      rd.totalBidAmount += asset.cost;
+      rd.totalRunnerUpDelta += asset.overpay;
+    }
+    
     if (asset.starterPoints > 0) {
       rd.hits += 1;
     } else {
@@ -196,6 +212,8 @@ export async function calculateFaabMetrics(selectedSeason: any): Promise<FaabEff
     rd.pointsGenerated = Number(rd.pointsGenerated.toFixed(2));
     rd.benchPointsGenerated = Number(rd.benchPointsGenerated.toFixed(2));
     rd.pointsPerDollar = rd.totalFaabSpent > 0 ? Number((totalPts / rd.totalFaabSpent).toFixed(2)) : 0;
+    rd.averageBidAmount = rd.totalPaidBids > 0 ? Number((rd.totalBidAmount / rd.totalPaidBids).toFixed(2)) : 0;
+    rd.averageRunnerUpDelta = rd.totalPaidBids > 0 ? Number((rd.totalRunnerUpDelta / rd.totalPaidBids).toFixed(2)) : 0;
     return rd;
   });
   
@@ -247,6 +265,11 @@ export function useFaabEfficiency() {
             busts: 0,
             wastedFaab: 0,
             overpayAmount: 0,
+            totalPaidBids: 0,
+            totalBidAmount: 0,
+            totalRunnerUpDelta: 0,
+            averageBidAmount: 0,
+            averageRunnerUpDelta: 0,
             positionalSpend: {},
             spendingVelocity: Array(18).fill(0)
           };
@@ -373,9 +396,16 @@ export function useFaabEfficiency() {
         // Aggregate Assets into Roster Data
         assets.forEach(asset => {
           const rd = rosterData[asset.rosterId];
+          if (!rd) return;
           rd.pointsGenerated += asset.starterPoints;
           rd.benchPointsGenerated += asset.benchPoints;
           rd.overpayAmount += asset.overpay;
+          
+          if (asset.cost > 0) {
+            rd.totalPaidBids += 1;
+            rd.totalBidAmount += asset.cost;
+            rd.totalRunnerUpDelta += asset.overpay;
+          }
           
           if (asset.starterPoints > 0) {
             rd.hits += 1;
@@ -391,6 +421,8 @@ export function useFaabEfficiency() {
           rd.pointsGenerated = Number(rd.pointsGenerated.toFixed(2));
           rd.benchPointsGenerated = Number(rd.benchPointsGenerated.toFixed(2));
           rd.pointsPerDollar = rd.totalFaabSpent > 0 ? Number((totalPts / rd.totalFaabSpent).toFixed(2)) : 0;
+          rd.averageBidAmount = rd.totalPaidBids > 0 ? Number((rd.totalBidAmount / rd.totalPaidBids).toFixed(2)) : 0;
+          rd.averageRunnerUpDelta = rd.totalPaidBids > 0 ? Number((rd.totalRunnerUpDelta / rd.totalPaidBids).toFixed(2)) : 0;
           return rd;
         });
         

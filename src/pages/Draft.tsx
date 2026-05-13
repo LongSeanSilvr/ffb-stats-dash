@@ -344,13 +344,20 @@ export const Draft: React.FC = () => {
     });
   }, [draftData, roundAverages, selectedSeason]);
 
+  const getMedian = (arr: number[]) => {
+    if (arr.length === 0) return 0;
+    const sorted = [...arr].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+  };
+
   const scatterAvgs = useMemo(() => {
     if (scatterData.length === 0) return { expectedTotal: 0, actualTotal: 0, wins: 0, gamesMissed: 0 };
     return {
-      expectedTotal: scatterData.reduce((acc, d) => acc + d.expectedTotal, 0) / scatterData.length,
-      actualTotal: scatterData.reduce((acc, d) => acc + d.actualTotal, 0) / scatterData.length,
-      wins: scatterData.reduce((acc, d) => acc + d.wins, 0) / scatterData.length,
-      gamesMissed: scatterData.reduce((acc, d) => acc + d.gamesMissed, 0) / scatterData.length
+      expectedTotal: getMedian(scatterData.map(d => d.expectedTotal)),
+      actualTotal: getMedian(scatterData.map(d => d.actualTotal)),
+      wins: getMedian(scatterData.map(d => d.wins)),
+      gamesMissed: getMedian(scatterData.map(d => d.gamesMissed))
     };
   }, [scatterData]);
   // --------------------------------------------------

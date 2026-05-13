@@ -194,12 +194,17 @@ export const FreeAgency: React.FC = () => {
   const hitData = toScatter(views[hitFilter]).sort((a, b) => b.waiverWins - a.waiverWins);
   const ledger     = topAssets[ledgerFilter];
 
-  const avg = (arr: number[]) => arr.reduce((s, v) => s + v, 0) / (arr.length || 1);
+  const getMedian = (arr: number[]) => {
+    if (arr.length === 0) return 0;
+    const sorted = [...arr].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+  };
 
-  const avgRelianceMacro = avg(macroData.map(d => d.reliance));
-  const avgWinPct       = avg(macroData.map(d => d.winPct));
-  const avgPickups      = avg(matrixData.map(d => d.pickups));
-  const avgPointsMatrix = avg(matrixData.map(d => d.points));
+  const avgRelianceMacro = getMedian(macroData.map(d => d.reliance));
+  const avgWinPct       = getMedian(macroData.map(d => d.winPct));
+  const avgPickups      = getMedian(matrixData.map(d => d.pickups));
+  const avgPointsMatrix = getMedian(matrixData.map(d => d.points));
 
   // Construct Radar data: Normalized 0-100 visually, preserving raw for tooltips
   const radarProfiles = radarMgrs.map(id => views[posFilter].find(v => v.roster_id === id)).filter(p => !!p) as FreeAgencyResult[];
@@ -311,11 +316,11 @@ export const FreeAgency: React.FC = () => {
                   <Label value="Total Pickups" position="insideBottom" offset={-15} fill="#64748b" style={{ fontSize: '0.8rem' }} />
                 </XAxis>
                 <YAxis type="number" dataKey="averageWeeksHeld" name="Avg Hold" stroke="#94a3b8"
-                  domain={getCenteredBounds(matrixData.map(d => d.averageWeeksHeld), avg(matrixData.map(d => d.averageWeeksHeld)))} tick={{ fontSize: 12 }} width={55} allowDecimals={false}>
+                  domain={getCenteredBounds(matrixData.map(d => d.averageWeeksHeld), getMedian(matrixData.map(d => d.averageWeeksHeld)))} tick={{ fontSize: 12 }} width={55} allowDecimals={false}>
                   <Label value="Avg Weeks Held" angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fill: '#64748b', fontSize: '0.8rem' }} offset={10} />
                 </YAxis>
                 <ReferenceLine x={avgPickups} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" />
-                <ReferenceLine y={avg(matrixData.map(d => d.averageWeeksHeld))} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" />
+                <ReferenceLine y={getMedian(matrixData.map(d => d.averageWeeksHeld))} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" />
                 <RechartsTooltip content={<MatrixTooltip />} cursor={{ strokeDasharray: '3 3' }} />
                 <Scatter name="Managers" data={matrixData} shape={<CustomAvatarDot />} />
               </ScatterChart>

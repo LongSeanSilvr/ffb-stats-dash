@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card } from '../components/Card';
 import { useLeagueContext } from '../context/LeagueContext';
 import { useFaabEfficiency } from '../hooks/useFaabEfficiency';
 import { useFreeAgencyEfficiency } from '../hooks/useFreeAgencyEfficiency';
-import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, LineChart, Line, Legend, Label } from 'recharts';
+import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, LineChart, Line, Legend, Label, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ReferenceLine } from 'recharts';
 
 const CustomAvatarDot = (props: any) => {
   const { cx, cy, payload } = props;
   const size = 28;
   const avatarUrl = payload.avatar ? `https://sleepercdn.com/avatars/thumbs/${payload.avatar}` : null;
   
-  if (!cx || !cy) return null;
+  if (cx === undefined || cy === undefined || isNaN(cx) || isNaN(cy)) return null;
   
   return (
     <svg x={cx - size/2} y={cy - size/2} width={size} height={size}>
@@ -41,10 +41,10 @@ const CustomScatterTooltip = ({ active, payload }: any) => {
           )}
           <span className="font-bold text-lg">{data.name}</span>
         </div>
-        {data.wins !== undefined && <div className="text-sm text-muted">Wins: <span className="text-success-color font-bold ml-1">{data.wins}</span></div>}
-        {data.faabSpent !== undefined && <div className="text-sm text-muted">FAAB Spent: <span className="text-white font-bold ml-1">${data.faabSpent}</span></div>}
-        {data.overpay !== undefined && <div className="text-sm text-muted">Total Overpay: <span className="text-danger-color font-bold ml-1">${data.overpay}</span></div>}
-        {data.acquisitions !== undefined && <div className="text-sm text-muted">Acquisitions: <span className="text-white font-bold ml-1">{data.acquisitions}</span></div>}
+        {data.winPct !== undefined && <div className="text-sm text-muted">Win %: <span className="text-success-color font-bold ml-1">{data.winPct}%</span></div>}
+        {data.faabEfficiency !== undefined && <div className="text-sm text-muted">Efficiency: <span className="text-white font-bold ml-1">{data.faabEfficiency} pts/$</span></div>}
+        {data.averageBidAmount !== undefined && <div className="text-sm text-muted">Avg Winning Bid: <span className="text-white font-bold ml-1">${data.averageBidAmount}</span></div>}
+        {data.averageRunnerUpDelta !== undefined && <div className="text-sm text-muted">Avg Margin of Victory: <span className="text-danger-color font-bold ml-1">${data.averageRunnerUpDelta}</span></div>}
       </div>
     );
   }
@@ -52,6 +52,29 @@ const CustomScatterTooltip = ({ active, payload }: any) => {
 };
 
 // Generate an array of 14 strictly distinct colors to prevent visual collisions
+
+const CHART_COLORS = ['#3b82f6', '#ec4899', '#10b981', '#f59e0b'];
+
+const CustomRadarTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div style={{ background: 'rgba(15,17,21,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '1rem', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
+        <div className="font-bold mb-2 text-white/80 border-b border-white/10 pb-2">{payload[0].payload.subject}</div>
+        {payload.map((entry: any, index: number) => {
+          const raw = entry.payload[`raw${index}`] || 0;
+          return (
+            <div key={index} className="flex justify-between gap-4 mb-1 text-sm font-medium" style={{ color: entry.color }}>
+              <span>{entry.name}:</span>
+              <span>${raw}</span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+  return null;
+};
+
 const TEAM_COLORS = [
   '#ef4444', // Red
   '#f97316', // Orange
@@ -73,8 +96,102 @@ export const Faab: React.FC = () => {
   const { selectedSeason } = useLeagueContext();
   const { data: faabData, loading, error } = useFaabEfficiency();
   
-  const [pointFilter, setPointFilter] = useState<'all' | 'starters' | 'bench'>('starters');
+    const [pointFilter, setPointFilter] = useState<'all' | 'starters' | 'bench'>('starters');
   const [hiddenTeams, setHiddenTeams] = useState<string[]>([]);
+  
+  // Try to default to top 2 spenders
+  const defaultMgrs = faabData.length >= 2 ? [faabData[0].roster_id, faabData[1].roster_id] : [];
+  const [radarMgrs, setRadarMgrs] = useState<number[]>(defaultMgrs);
+
+  useEffect(() => {
+    if (faabData.length >= 2 && radarMgrs.length === 0) {
+      setRadarMgrs([faabData[0].roster_id, faabData[1].roster_id]);
+    }
+  }, [faabData, radarMgrs.length]);
+
+  const getMedian = (arr: number[]) => {
+    if (arr.length === 0) return 0;
+    const sorted = [...arr].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+  };
+
+  const scatterAvgs = useMemo(() => {
+    if (faabData.length === 0 || !selectedSeason) return { winPct: 0, faabEfficiency: 0, averageBidAmount: 0, averageRunnerUpDelta: 0 };
+    
+    // We need to calculate wins avg separately if it's not in faabData
+    const tempWinsData = selectedSeason.rosters.map(r => {
+      const wins = r.settings.wins || 0;
+      const losses = r.settings.losses || 0;
+      const ties = r.settings.ties || 0;
+      const totalGames = wins + losses + ties;
+      const winPct = totalGames > 0 ? (wins / totalGames) * 100 : 0;
+      return { winPct };
+    });
+
+    const sumBid = faabData.reduce((acc, d) => acc + d.averageBidAmount, 0);
+    const sumDelta = faabData.reduce((acc, d) => acc + d.averageRunnerUpDelta, 0);
+    
+    const winPcts = tempWinsData.map(d => d.winPct);
+    const effs = faabData.map(d => d.pointsPerDollar);
+    
+    const medianWinPct = getMedian(winPcts);
+    const medianEff = getMedian(effs);
+    const avgBid = faabData.length > 0 ? sumBid / faabData.length : 0;
+    const avgDelta = faabData.length > 0 ? sumDelta / faabData.length : 0;
+    
+    return {
+      winPct: isNaN(medianWinPct) ? 0 : medianWinPct,
+      faabEfficiency: isNaN(medianEff) ? 0 : medianEff,
+      averageBidAmount: isNaN(avgBid) ? 0 : avgBid,
+      averageRunnerUpDelta: isNaN(avgDelta) ? 0 : avgDelta
+    };
+  }, [faabData, selectedSeason]);
+
+  const radarProfiles = [...faabData].sort((a, b) => (a.user?.display_name || '').localeCompare(b.user?.display_name || ''));
+  const activeRadarProfiles = radarMgrs.map(id => radarProfiles.find(p => p.roster_id === id)).filter(p => !!p) as any[];
+
+  const buildPosRadarData = () => {
+    const data: Record<string, any>[] = [
+      { subject: 'QB' },
+      { subject: 'RB' },
+      { subject: 'WR' },
+      { subject: 'TE' },
+      { subject: 'K' },
+      { subject: 'IDP' }
+    ];
+
+    const maxSpend: Record<string, number> = { QB: 1, RB: 1, WR: 1, TE: 1, K: 1, IDP: 1 };
+    
+    radarProfiles.forEach(p => {
+      Object.entries(p.positionalSpend).forEach(([pos, spend]) => {
+        if (pos === 'OTHER') return;
+        if ((spend as number) > maxSpend[pos]) maxSpend[pos] = spend as number;
+      });
+    });
+
+    data.forEach(d => {
+      const pos = d.subject;
+      activeRadarProfiles.forEach((p, idx) => {
+        const spend = p.positionalSpend[pos] || 0;
+        const normalized = (spend / maxSpend[pos]) * 100;
+        d[`data${idx}`] = normalized;
+        d[`raw${idx}`] = spend;
+      });
+    });
+
+    return data;
+  };
+  const radarData = buildPosRadarData();
+
+  const handleToggle = (id: number) => {
+    setRadarMgrs(prev => {
+      if (prev.includes(id)) return prev.filter(x => x !== id);
+      const next = [...prev, id];
+      return next.length > 4 ? next.slice(1) : next;
+    });
+  };
+
 
   // Per-pickup FAAB value index
   const { topAssets: faabTopAssets } = useFreeAgencyEfficiency();
@@ -103,23 +220,29 @@ export const Faab: React.FC = () => {
 
   if (error) return <div className="text-danger-color">Error loading FAAB data: {error}</div>;
 
-  // Scatter Chart 1: Spent vs Wins
+  // Scatter Chart 1: FAAB ROI vs Win Rate
   const scatterDataWins = selectedSeason.rosters.map(r => {
     const user = selectedSeason.rosterToUser[r.roster_id];
+    const faabStats = faabData.find(d => d.roster_id === r.roster_id);
+    const wins = r.settings.wins || 0;
+    const losses = r.settings.losses || 0;
+    const ties = r.settings.ties || 0;
+    const totalGames = wins + losses + ties;
+    const winPct = totalGames > 0 ? (wins / totalGames) * 100 : 0;
     return {
       name: user?.display_name || `Team ${r.roster_id}`,
       avatar: user?.avatar,
-      wins: r.settings.wins,
-      faabSpent: r.settings.waiver_budget_used || 0
+      winPct: Number(winPct.toFixed(1)),
+      faabEfficiency: faabStats?.pointsPerDollar || 0
     };
   });
 
-  // Scatter Chart 2: The Overpay Index
+  // Scatter Chart 2: Bid Aggressiveness Matrix
   const scatterDataOverpay = faabData.map(d => ({
     name: d.user?.display_name || `Team ${d.roster_id}`,
     avatar: d.user?.avatar,
-    acquisitions: d.hits + d.busts,
-    overpay: d.overpayAmount
+    averageBidAmount: typeof d.averageBidAmount === 'number' && !isNaN(d.averageBidAmount) ? d.averageBidAmount : 0,
+    averageRunnerUpDelta: typeof d.averageRunnerUpDelta === 'number' && !isNaN(d.averageRunnerUpDelta) ? d.averageRunnerUpDelta : 0
   }));
 
   // Bar Charts (Efficiency)
@@ -194,19 +317,39 @@ export const Faab: React.FC = () => {
 
       {/* Row 1: Overpay Index & Hit Rate */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-        <Card title="The Overpay Index" className="stagger-1">
-          <div className="text-sm text-muted mb-4">Total FAAB Overpay vs. Total Successful Claims</div>
+                        <Card title="Bid Aggressiveness Matrix" className="stagger-1">
+          <div className="text-sm text-muted mb-4 leading-relaxed">
+            Compares average FAAB spent per winning bid against the margin of victory (how much more they bid than the runner-up). Identifies who reads the market well and who frequently bids against nobody.
+            <div style={{ display: 'flex', justifyContent: 'center', margin: '16px 0 8px 0', fontSize: '11px', color: 'rgba(255,255,255,0.7)', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '12px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', width: '380px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', padding: '0 16px 8px 0', borderRight: '2px solid rgba(255,255,255,0.15)', borderBottom: '2px solid rgba(255,255,255,0.15)' }}>
+                  👻 <strong style={{ color: '#fff', fontWeight: 500 }}>Uncontested Overpays</strong>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', padding: '0 0 8px 16px', borderBottom: '2px solid rgba(255,255,255,0.15)' }}>
+                  💥 <strong style={{ color: '#fff', fontWeight: 500 }}>Massive Overpays</strong>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', padding: '8px 16px 0 0', borderRight: '2px solid rgba(255,255,255,0.15)' }}>
+                  🛒 <strong style={{ color: '#fff', fontWeight: 500 }}>Bargain Hunters</strong>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', padding: '8px 0 0 16px' }}>
+                  🎯 <strong style={{ color: '#fff', fontWeight: 500 }}>Market Experts</strong>
+                </div>
+              </div>
+            </div>
+          </div>
           <div style={{ height: 350 }}>
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ top: 20, right: 30, bottom: 30, left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis type="number" dataKey="acquisitions" name="Acquisitions" stroke="#94a3b8" tick={{ fontSize: 12 }}>
-                  <Label value="Acquisitions" position="insideBottom" offset={-15} fill="#64748b" style={{ fontSize: '0.75rem', fontWeight: 500 }} />
+                <XAxis type="number" dataKey="averageBidAmount" name="Avg Bid" stroke="#94a3b8" tick={{ fontSize: 12 }}>
+                  <Label value="Avg Winning Bid ($)" position="insideBottom" offset={-15} fill="#64748b" style={{ fontSize: '0.75rem', fontWeight: 500 }} />
                 </XAxis>
-                <YAxis type="number" dataKey="overpay" name="Overpay Margin" stroke="#94a3b8" tick={{ fontSize: 12 }}>
-                  <Label value="Overpay Margin ($)" angle={-90} position="insideLeft" offset={10} style={{ textAnchor: 'middle', fill: '#64748b', fontSize: '0.75rem', fontWeight: 500 }} />
+                <YAxis type="number" dataKey="averageRunnerUpDelta" name="Margin of Victory" stroke="#94a3b8" tick={{ fontSize: 12 }}>
+                  <Label value="Avg Runner-Up Delta ($)" angle={-90} position="insideLeft" offset={10} style={{ textAnchor: 'middle', fill: '#64748b', fontSize: '0.75rem', fontWeight: 500 }} />
                 </YAxis>
                 <RechartsTooltip content={<CustomScatterTooltip />} cursor={{ strokeDasharray: '3 3', stroke: 'rgba(255,255,255,0.1)' }} />
+                <ReferenceLine x={scatterAvgs.averageBidAmount} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" />
+                <ReferenceLine y={scatterAvgs.averageRunnerUpDelta} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" />
                 <Scatter name="Teams" data={scatterDataOverpay} shape={<CustomAvatarDot />} />
               </ScatterChart>
             </ResponsiveContainer>
@@ -248,50 +391,86 @@ export const Faab: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
         <Card title="Wasted FAAB (The Benchwarmers Fund)" className="stagger-2">
           <div className="text-sm text-muted mb-4">FAAB dollars spent on players who never scored a single starter point.</div>
-          <div className="flex flex-col gap-4 overflow-y-auto pr-4 mt-2" style={{ height: '350px' }}>
-            {wastedFaabData.map((d, i) => (
-              <div key={d.roster_id} className="flex justify-between items-center p-4 transition-all" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px' }}>
-                <div className="flex items-center gap-4">
-                  <div className="text-muted font-bold w-6 text-right">{i + 1}.</div>
-                  {d.user?.avatar ? (
-                    <img src={`https://sleepercdn.com/avatars/thumbs/${d.user.avatar}`} alt="avatar" className="avatar shadow-lg" width={36} height={36} />
-                  ) : (
-                    <div className="avatar bg-gray-600 shadow-lg" style={{ width: 36, height: 36 }}></div>
-                  )}
-                  <span className="font-semibold text-lg">{d.user?.display_name || `Team ${d.roster_id}`}</span>
-                </div>
-                <div className="font-bold text-danger-color text-lg">${d.wastedFaab}</div>
-              </div>
-            ))}
+          <div className="flex flex-col overflow-y-auto pr-4 mt-2" style={{ height: '350px' }}>
+            {(() => {
+              const maxWasted = Math.max(...wastedFaabData.map(d => d.wastedFaab));
+              return wastedFaabData.map((d, i) => {
+                const widthPct = maxWasted > 0 ? (d.wastedFaab / maxWasted) * 100 : 0;
+                return (
+                  <div key={d.roster_id} style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', marginBottom: '12px', overflow: 'hidden', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px' }}>
+                    <div 
+                      style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: `${widthPct}%`, background: 'linear-gradient(90deg, transparent, var(--danger-color))', zIndex: 0, opacity: 0.2, transition: 'width 1s ease-out' }} 
+                    />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', position: 'relative', zIndex: 10 }}>
+                      <div style={{ color: '#94a3b8', fontWeight: 'bold', width: '24px', textAlign: 'right' }}>{i + 1}.</div>
+                      {d.user?.avatar ? (
+                        <img src={`https://sleepercdn.com/avatars/thumbs/${d.user.avatar}`} alt="avatar" className="avatar shadow-lg" width={36} height={36} />
+                      ) : (
+                        <div className="avatar" style={{ width: 36, height: 36, background: '#475569', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}></div>
+                      )}
+                      <span style={{ fontWeight: 600, fontSize: '1.125rem', color: '#fff' }}>{d.user?.display_name || `Team ${d.roster_id}`}</span>
+                    </div>
+                    <div style={{ fontWeight: 'bold', color: 'var(--danger-color)', fontSize: '1.125rem', position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {d.wastedFaab > 0 && <span style={{ filter: 'drop-shadow(0 0 8px rgba(239, 68, 68, 0.5))' }}>🔥</span>}
+                      ${d.wastedFaab}
+                    </div>
+                  </div>
+                );
+              });
+            })()}
           </div>
         </Card>
 
-        <Card title="Positional Spending" className="stagger-2">
-          <div className="text-sm text-muted mb-4">Total FAAB spent categorized by player position.</div>
-          <div style={{ height: 350 }}>
+                <Card title="Positional FAAB Strategy Map" className="stagger-2">
+          <div className="text-sm text-muted mb-4 leading-relaxed">
+            Distribution of FAAB spending by position. Axes are normalized (0-100%) against the league's maximum spender at each position.
+          </div>
+          <div style={{ height: 320 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={positionalData} layout="vertical" margin={{ left: 40, right: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.05)" />
-                <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 12 }} />
-                <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11 }} width={80} />
-                <RechartsTooltip cursor={false} contentStyle={{ backgroundColor: 'rgba(15,17,21,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
-                <Legend
-                  content={() => (
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '0.5rem', fontSize: '0.8rem', flexWrap: 'wrap' }}>
-                      {allPositions.map(pos => (
-                        <span key={pos} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                          <span style={{ width: 12, height: 12, borderRadius: 2, background: POS_COLORS[pos] || '#a8a29e', display: 'inline-block' }} />
-                          <span style={{ color: '#94a3b8' }}>{pos}</span>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                />
-                {allPositions.map(pos => (
-                  <Bar key={pos} dataKey={pos} stackId="a" fill={POS_COLORS[pos] || '#a8a29e'} />
+              <RadarChart outerRadius="75%" data={radarData}>
+                <PolarGrid stroke="rgba(255,255,255,0.1)" />
+                <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 500 }} />
+                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                <RechartsTooltip content={<CustomRadarTooltip />} cursor={false} />
+                {activeRadarProfiles.map((p, idx) => (
+                  <Radar
+                    key={p.roster_id}
+                    name={p.user?.display_name || `Team ${p.roster_id}`}
+                    dataKey={`data${idx}`}
+                    stroke={CHART_COLORS[idx]}
+                    fill={CHART_COLORS[idx]}
+                    fillOpacity={0.25}
+                    strokeWidth={2}
+                  />
                 ))}
-              </BarChart>
+              </RadarChart>
             </ResponsiveContainer>
+          </div>
+          
+          <div className="flex flex-wrap justify-center gap-2 mt-6 border-t border-white/5 pt-4 w-full">
+            {radarProfiles.map(p => {
+              const activeIdx = radarMgrs.indexOf(p.roster_id);
+              const isActive = activeIdx !== -1;
+              const color = isActive ? CHART_COLORS[activeIdx] : '#64748b';
+              
+              return (
+                <div
+                  key={p.roster_id}
+                  onClick={() => handleToggle(p.roster_id)}
+                  className={`legend-toggle ${!isActive ? 'hidden-team' : ''}`}
+                  style={{ 
+                    borderColor: isActive ? color : 'rgba(255,255,255,0.05)',
+                    opacity: isActive ? 1 : undefined,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <div className="legend-color-box" style={{ background: color }}></div>
+                  <span style={{ color: isActive ? '#fff' : '#94a3b8' }}>
+                    {p.user?.display_name || `Team ${p.roster_id}`}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </Card>
       </div>
@@ -347,19 +526,39 @@ export const Faab: React.FC = () => {
 
       {/* Row 4: Spent vs Wins */}
       <div className="grid grid-cols-1 gap-8 mb-8">
-        <Card title="FAAB Spent vs Wins" className="stagger-4">
-          <div className="text-sm text-muted mb-4">Does spending your budget correlate to winning games?</div>
+                        <Card title="FAAB ROI vs Win Rate" className="stagger-4">
+          <div className="text-sm text-muted mb-4 leading-relaxed">
+            Compares FAAB Efficiency (Starter points generated per dollar spent) against Season Win Percentage.
+            <div style={{ display: 'flex', justifyContent: 'center', margin: '16px 0 8px 0', fontSize: '11px', color: 'rgba(255,255,255,0.7)', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '12px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', width: '380px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', padding: '0 16px 8px 0', borderRight: '2px solid rgba(255,255,255,0.15)', borderBottom: '2px solid rgba(255,255,255,0.15)' }}>
+                  🏋️‍♂️ <strong style={{ color: '#fff', fontWeight: 500 }}>Won Despite Bad Pickups</strong>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', padding: '0 0 8px 16px', borderBottom: '2px solid rgba(255,255,255,0.15)' }}>
+                  👑 <strong style={{ color: '#fff', fontWeight: 500 }}>Waiver Wire Masters</strong>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', padding: '8px 16px 0 0', borderRight: '2px solid rgba(255,255,255,0.15)' }}>
+                  🗑️ <strong style={{ color: '#fff', fontWeight: 500 }}>Complete Whiffs</strong>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', padding: '8px 0 0 16px' }}>
+                  💎 <strong style={{ color: '#fff', fontWeight: 500 }}>Great Pickups, Bad Team</strong>
+                </div>
+              </div>
+            </div>
+          </div>
           <div style={{ height: 450 }}>
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ top: 20, right: 30, bottom: 30, left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis type="number" dataKey="faabSpent" name="FAAB Spent" stroke="#94a3b8" tick={{ fontSize: 12 }}>
-                  <Label value="FAAB Spent ($)" position="insideBottom" offset={-15} fill="#64748b" style={{ fontSize: '0.75rem', fontWeight: 500 }} />
+                <XAxis type="number" dataKey="faabEfficiency" name="FAAB Efficiency" stroke="#94a3b8" tick={{ fontSize: 12 }}>
+                  <Label value="FAAB Efficiency (pts/$)" position="insideBottom" offset={-15} fill="#64748b" style={{ fontSize: '0.75rem', fontWeight: 500 }} />
                 </XAxis>
-                <YAxis type="number" dataKey="wins" name="Wins" stroke="#94a3b8" tick={{ fontSize: 12 }}>
-                  <Label value="Season Wins" angle={-90} position="insideLeft" offset={10} style={{ textAnchor: 'middle', fill: '#64748b', fontSize: '0.75rem', fontWeight: 500 }} />
+                <YAxis type="number" dataKey="winPct" name="Win %" stroke="#94a3b8" tick={{ fontSize: 12 }}>
+                  <Label value="Win %" angle={-90} position="insideLeft" offset={10} style={{ textAnchor: 'middle', fill: '#64748b', fontSize: '0.75rem', fontWeight: 500 }} />
                 </YAxis>
                 <RechartsTooltip content={<CustomScatterTooltip />} cursor={{ strokeDasharray: '3 3', stroke: 'rgba(255,255,255,0.1)' }} />
+                <ReferenceLine x={scatterAvgs.faabEfficiency} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" />
+                <ReferenceLine y={scatterAvgs.winPct} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" />
                 <Scatter name="Teams" data={scatterDataWins} shape={<CustomAvatarDot />} />
               </ScatterChart>
             </ResponsiveContainer>
