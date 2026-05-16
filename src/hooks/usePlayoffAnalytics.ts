@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getWinnersBracket, getLosersBracket, getMatchups, getRosters, getUsers, getTransactions, getPlayers, getDraftPicks } from '../api/sleeper';
-import { getOptimalLineupPoints } from '../utils/roster';
+import { getOptimalLineupPoints, calculateWeeklyReplacementBaselines } from '../utils/roster';
+import type { MatchupFlipped } from '../types/playoffs';
 
 export interface PlayoffMVP {
   playerId: string;
@@ -25,19 +26,11 @@ export interface BenchwarmerBlue {
   opponentAvatar: string | null;
   pointsLeftOnBench: number;
   lostDueToLineup: boolean;
+  actualStarters: { id: string; pts: number; name: string; avatar: string; rosterSlot?: string }[];
+  optimalStarters: { id: string; pts: number; name: string; avatar: string; rosterSlot?: string }[];
 }
 
-export interface MatchupFlipped {
-  rosterId: number;
-  managerName: string;
-  managerAvatar: string | null;
-  playerAvatar?: string;
-  week: number;
-  playerName: string;
-  acquisitionType: string;
-  pointsScored: number;
-  margin: number;
-}
+
 
 export interface PlayerSplit {
   playerId: string;
@@ -208,6 +201,8 @@ export function usePlayoffAnalytics(leagueId: string, league: any) {
           const matchups = allMatchups[weekIdx];
           if (!matchups || matchups.length === 0) continue;
 
+          const replacementBaselines = calculateWeeklyReplacementBaselines(matchups, playersMap);
+
           // Track losers bracket points
           matchups.forEach(m => {
              if (teamScores[m.roster_id]) {
@@ -242,27 +237,65 @@ export function usePlayoffAnalytics(leagueId: string, league: any) {
 
               if (isWinnersBracket) {
                 const teamA_starterPts = teamA.points;
-                const teamA_optimal = getOptimalLineupPoints(teamA.players || [], teamA.players_points || {}, league.roster_positions || [], playersMap);
+                const teamA_optimalRes = getOptimalLineupPoints(teamA.players || [], teamA.players_points || {}, league.roster_positions || [], playersMap, [], replacementBaselines);
+                const teamA_optimal = teamA_optimalRes.totalPoints;
                 
                 const teamB_starterPts = teamB.points;
-                const teamB_optimal = getOptimalLineupPoints(teamB.players || [], teamB.players_points || {}, league.roster_positions || [], playersMap);
+                const teamB_optimalRes = getOptimalLineupPoints(teamB.players || [], teamB.players_points || {}, league.roster_positions || [], playersMap, [], replacementBaselines);
+                const teamB_optimal = teamB_optimalRes.totalPoints;
+
+                const mapStarters = (starters: string[], pointsMap: Record<string, number>) => {
+                  return starters.map((pid, idx) => {
+                    if (pid === '0') return null;
+                    const pData = playersMap[pid];
+                    const slot = league.roster_positions[idx] || 'BN';
+                    return {
+                      id: pid,
+                      pts: Number(pointsMap[pid]) || 0,
+                      name: pData ? `${pData.first_name} ${pData.last_name}` : pid,
+                      avatar: `https://sleepercdn.com/content/nfl/players/thumb/${pid}.jpg`,
+                      rosterSlot: slot
+                    };
+                  }).filter(Boolean) as any[];
+                };
+
+                const mapOptimal = (optimalStarters: any[]) => {
+                  return optimalStarters.map(s => {
+                    const pData = playersMap[s.id];
+                    const isReplacement = s.id.startsWith('REP_');
+                    return {
+                      id: s.id,
+                      pts: s.pts,
+                      name: isReplacement ? s.id.replace('REP_', '') : (pData ? `${pData.first_name} ${pData.last_name}` : s.id),
+                      avatar: isReplacement ? '' : `https://sleepercdn.com/content/nfl/players/thumb/${s.id}.jpg`,
+                      rosterSlot: s.rosterSlot || 'BN'
+                    };
+                  });
+                };
 
                 // Benchwarmer Blues
                 if (teamA_starterPts < teamB_starterPts && teamA_optimal > teamB_starterPts) {
                   benchBlues.push({ rosterId: teamA.roster_id, managerName: rosterToUser[teamA.roster_id],
                     managerAvatar: rosterToAvatar[teamA.roster_id] || null, week: w, actualScore: teamA_starterPts, optimalScore: teamA_optimal, opponentScore: teamB_starterPts, 
                     opponentName: rosterToUser[teamB.roster_id] || 'Unknown', opponentAvatar: rosterToAvatar[teamB.roster_id] || null,
-                    pointsLeftOnBench: teamA_optimal - teamA_starterPts, lostDueToLineup: true });
+                    pointsLeftOnBench: teamA_optimal - teamA_starterPts, lostDueToLineup: true,
+                    actualStarters: mapStarters(teamA.starters || [], teamA.players_points || {}),
+                    optimalStarters: mapOptimal(teamA_optimalRes.optimalStarters)
+                  });
                 }
                 if (teamB_starterPts < teamA_starterPts && teamB_optimal > teamA_starterPts) {
                   benchBlues.push({ rosterId: teamB.roster_id, managerName: rosterToUser[teamB.roster_id],
                     managerAvatar: rosterToAvatar[teamB.roster_id] || null, week: w, actualScore: teamB_starterPts, optimalScore: teamB_optimal, opponentScore: teamA_starterPts, 
                     opponentName: rosterToUser[teamA.roster_id] || 'Unknown', opponentAvatar: rosterToAvatar[teamA.roster_id] || null,
-                    pointsLeftOnBench: teamB_optimal - teamB_starterPts, lostDueToLineup: true });
+                    pointsLeftOnBench: teamB_optimal - teamB_starterPts, lostDueToLineup: true,
+                    actualStarters: mapStarters(teamB.starters || [], teamB.players_points || {}),
+                    optimalStarters: mapOptimal(teamB_optimalRes.optimalStarters)
+                  });
                 }
 
                 // Matchups Flipped
-                const checkFlipped = (team: any, oppPts: number) => {
+                const checkFlipped = (team: any, opponent: any) => {
+                   const oppPts = opponent.points;
                    if (team.points > oppPts) {
                       team.starters.forEach((playerId: string, idx: number) => {
                          if (playerId !== '0') {
@@ -272,18 +305,47 @@ export function usePlayoffAnalytics(leagueId: string, league: any) {
                                // Calculate ERV (Expected Replacement Value) WITHOUT this player
                                const hypotheticalPlayers = team.players.filter((p: string) => p !== playerId);
                                const retainedStarters = team.starters.filter((p: string) => p !== '0' && p !== playerId);
-                               const hypotheticalOptimal = getOptimalLineupPoints(hypotheticalPlayers, team.players_points || {}, league.roster_positions || [], playersMap, retainedStarters);
+                               const res = getOptimalLineupPoints(hypotheticalPlayers, team.players_points || {}, league.roster_positions || [], playersMap, retainedStarters, replacementBaselines);
+                               const hypotheticalOptimal = res.totalPoints;
+                               
                                if (hypotheticalOptimal < oppPts) {
+                                  const p = playersMap[playerId];
+                                  const actualStarters = team.starters.filter((id: string) => id !== '0').map((id: string, sIdx: number) => {
+                                     const sp = playersMap[id];
+                                     return {
+                                       id,
+                                       pts: team.starters_points[sIdx] || 0,
+                                       name: sp ? `${sp.first_name} ${sp.last_name}` : id,
+                                       avatar: `https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg`
+                                     };
+                                  });
+                                  const hypotheticalStarters = res.optimalStarters.map(s => {
+                                     const sp = playersMap[s.id];
+                                     return {
+                                       id: s.id,
+                                       pts: s.pts,
+                                       name: sp ? `${sp.first_name} ${sp.last_name}` : s.id,
+                                       avatar: `https://sleepercdn.com/content/nfl/players/thumb/${s.id}.jpg`
+                                     };
+                                  });
+
                                   matchupsFlipped.push({
                                      rosterId: team.roster_id,
                                      managerName: rosterToUser[team.roster_id],
                                      managerAvatar: rosterToAvatar[team.roster_id] || null,
                                      playerAvatar: `https://sleepercdn.com/content/nfl/players/thumb/${playerId}.jpg`,
                                      week: w,
-                                     playerName: playersMap[playerId] ? `${playersMap[playerId].first_name} ${playersMap[playerId].last_name}` : playerId,
+                                     playerName: p ? `${p.first_name} ${p.last_name}` : playerId,
                                      acquisitionType: acq,
                                      pointsScored: ptsScored,
-                                     margin: team.points - oppPts
+                                     margin: Number((team.points - oppPts).toFixed(1)),
+                                     actualPoints: team.points,
+                                     hypotheticalPoints: hypotheticalOptimal,
+                                     opponentPoints: oppPts,
+                                     opponentName: rosterToUser[opponent.roster_id] || 'Unknown',
+                                     opponentAvatar: rosterToAvatar[opponent.roster_id] || null,
+                                     actualStarters,
+                                     hypotheticalStarters
                                   });
                                }
                             }
@@ -291,8 +353,8 @@ export function usePlayoffAnalytics(leagueId: string, league: any) {
                       });
                    }
                 };
-                checkFlipped(teamA, teamB_starterPts);
-                checkFlipped(teamB, teamA_starterPts);
+                checkFlipped(teamA, teamB);
+                checkFlipped(teamB, teamA);
 
                 // Playoff Chokers / Winners Averages
                 const processTeamAvg = (team: any, won: boolean) => {

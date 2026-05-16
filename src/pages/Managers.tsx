@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Info } from 'lucide-react';
 import { Card } from '../components/Card';
+import { MobileTapHint } from '../components/MobileTapHint';
 import { useLeagueContext } from '../context/LeagueContext';
 import { useManagerAnalytics } from '../hooks/useManagerAnalytics';
 import {
@@ -349,6 +350,7 @@ export const Managers: React.FC = () => {
 
       {/* Row 0: Standings Table */}
       <Card title="Team Standings" className="stagger-1 mb-12">
+        <MobileTapHint text="Hover/Tap rows for league data" />
         {/* Mobile View: Card Stack */}
         <div className="md:hidden flex flex-col gap-4 mt-6">
           {[...selectedSeason.rosters].sort((a,b) => b.settings.wins - a.settings.wins || b.settings.fpts - a.settings.fpts).map((r, i) => {
@@ -527,6 +529,7 @@ export const Managers: React.FC = () => {
                   </div>
                 </div>
               </div>
+              <MobileTapHint />
               <div style={{ height: 380 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <ScatterChart margin={{ top: 20, right: 20, bottom: 30, left: 10 }}>
@@ -566,6 +569,7 @@ export const Managers: React.FC = () => {
                   </div>
                 </div>
               </div>
+              <MobileTapHint />
               <div style={{ height: 380 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <ScatterChart margin={{ top: 20, right: 30, bottom: 30, left: 10 }}>
@@ -618,6 +622,7 @@ export const Managers: React.FC = () => {
             {/* Comparative Radar Chart 1 */}
             <Card title="Manager Skill (League Percentiles)" className="col-span-1 stagger-2">
               <div className="text-sm text-muted mb-2 text-center">How you rank against the league in each discipline.</div>
+              <MobileTapHint />
               <div style={{ width: '100%', height: 320 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <RadarChart cx="50%" cy="50%" outerRadius="70%" data={comparativeRadarData}>
@@ -637,6 +642,7 @@ export const Managers: React.FC = () => {
             {/* Comparative Radar Chart 2: Roster DNA */}
             <Card title="Roster Composition (% of Total Yield)" className="col-span-1 stagger-2">
               <div className="text-sm text-muted mb-2 text-center">Relative points contribution by channel.</div>
+              <MobileTapHint />
               <div style={{ width: '100%', height: 320 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <RadarChart cx="50%" cy="50%" outerRadius="70%" data={comparativeRosterRadarData}>
@@ -666,6 +672,7 @@ export const Managers: React.FC = () => {
             {/* Comparative Positional */}
             <Card title="Positional Scoring Output" className="stagger-3">
               <div className="text-sm text-muted mb-2 text-center">Total points scored by lineup position (scaled to max).</div>
+              <MobileTapHint />
               <div style={{ width: '100%', height: 320 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <RadarChart cx="50%" cy="50%" outerRadius="70%" data={comparativePosData}>

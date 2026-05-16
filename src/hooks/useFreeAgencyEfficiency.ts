@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getTransactions, getMatchups, getPlayers } from '../api/sleeper';
-import { getOptimalLineupPoints } from '../utils/roster';
+import { getOptimalLineupPoints, calculateWeeklyReplacementBaselines } from '../utils/roster';
 import { useLeagueContext } from '../context/LeagueContext';
 import type { User } from '../api/sleeper';
 
@@ -289,6 +289,7 @@ export function useFreeAgencyEfficiency() {
           const matchups = weekData[1];
           if (!matchups?.length) return;
 
+          const replacementBaselines = calculateWeeklyReplacementBaselines(matchups, playersData);
           const weeklyWaiverStartersByRoster: Record<number, string[]> = {};
           const matchupsById: Record<number, any[]> = {};
 
@@ -338,7 +339,7 @@ export function useFreeAgencyEfficiency() {
                 if (r1WaiverStarters.length > 0) {
                   const retainedStarters = (r1.starters || []).filter((id: string) => id !== '0' && !r1WaiverStarters.includes(id));
                   const hypotheticalPlayers = (r1.players || []).filter((id: string) => !r1WaiverStarters.includes(id));
-                  const hypotheticalScore = getOptimalLineupPoints(hypotheticalPlayers, r1.players_points || {}, rosterPositions, playersData, retainedStarters);
+                  const hypotheticalScore = getOptimalLineupPoints(hypotheticalPlayers, r1.players_points || {}, rosterPositions, playersData, retainedStarters, replacementBaselines).totalPoints;
                   if (hypotheticalScore < r2Score) {
                     baseRosters[r1.roster_id].waiverWins += 1;
                   }
@@ -348,7 +349,7 @@ export function useFreeAgencyEfficiency() {
                 if (r2WaiverStarters.length > 0) {
                   const retainedStarters = (r2.starters || []).filter((id: string) => id !== '0' && !r2WaiverStarters.includes(id));
                   const hypotheticalPlayers = (r2.players || []).filter((id: string) => !r2WaiverStarters.includes(id));
-                  const hypotheticalScore = getOptimalLineupPoints(hypotheticalPlayers, r2.players_points || {}, rosterPositions, playersData, retainedStarters);
+                  const hypotheticalScore = getOptimalLineupPoints(hypotheticalPlayers, r2.players_points || {}, rosterPositions, playersData, retainedStarters, replacementBaselines).totalPoints;
                   if (hypotheticalScore < r1Score) {
                     baseRosters[r2.roster_id].waiverWins += 1;
                   }

@@ -62,7 +62,7 @@ export interface TradeEfficiencyResult {
   trades: TradeRecord[];
 }
 
-import { getOptimalLineupPoints } from '../utils/roster';
+import { getOptimalLineupPoints, calculateWeeklyReplacementBaselines } from '../utils/roster';
 
 export function useTradeEfficiency() {
   const { selectedSeason } = useLeagueContext();
@@ -493,6 +493,8 @@ export function useTradeEfficiency() {
               const oppMatchup = matchups.find((m: any) => m.matchup_id === myMatchup.matchup_id && m.roster_id !== rosterId);
               if (!oppMatchup) continue;
               
+              const replacementBaselines = calculateWeeklyReplacementBaselines(matchups, playersData);
+              
               if (myMatchup.points === 0 && oppMatchup.points === 0) continue;
               
               // 1. Identify Retained Starters
@@ -531,8 +533,9 @@ export function useTradeEfficiency() {
                 hypotheticalPoints, 
                 selectedSeason.league.roster_positions || [], 
                 playersData,
-                retainedStarters
-              );
+                retainedStarters,
+                replacementBaselines
+              ).totalPoints;
               
               const actualMargin = myMatchup.points - oppMatchup.points;
               const hypotheticalMargin = hypotheticalScore - oppMatchup.points;

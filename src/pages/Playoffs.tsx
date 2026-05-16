@@ -3,8 +3,12 @@ import { useLeagueContext } from '../context/LeagueContext';
 import { usePlayoffAnalytics } from '../hooks/usePlayoffAnalytics';
 import { Card } from '../components/Card';
 import { MobileTapHint } from '../components/MobileTapHint';
+import { FlippedMatchupModal } from '../components/FlippedMatchupModal';
+import { BenchwarmerModal } from '../components/BenchwarmerModal';
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, Tooltip as RechartsTooltip, ReferenceLine, ComposedChart, BarChart, Bar } from 'recharts';
-import { Trophy, TrendingDown, TrendingUp, AlertCircle, ArrowRightLeft, UserPlus, Shield, User } from 'lucide-react';
+import { Trophy, TrendingDown, TrendingUp, AlertCircle, ArrowRightLeft, UserPlus, Shield, User, Info } from 'lucide-react';
+import type { MatchupFlipped } from '../types/playoffs';
+import type { BenchwarmerBlue } from '../hooks/usePlayoffAnalytics';
 
 const CustomBarTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
@@ -79,6 +83,8 @@ export const Playoffs = () => {
   const league = selectedSeason?.league;
   const leagueId = league?.league_id;
   const { mvps, benchBlues, matchupsFlipped, playerSplits, teamPerformances, loserBracketTeams, champion, loading, error } = usePlayoffAnalytics(leagueId || '', league);
+  const [selectedMatchup, setSelectedMatchup] = React.useState<MatchupFlipped | null>(null);
+  const [selectedBenchwarmer, setSelectedBenchwarmer] = React.useState<BenchwarmerBlue | null>(null);
 
   if (loading) {
     return (
@@ -255,7 +261,15 @@ export const Playoffs = () => {
                     <div className="text-muted" style={{ fontStyle: 'italic', textAlign: 'center' }}>No playoff matchups were flipped by mid-season acquisitions this year.</div>
                  </div>
               ) : (
-                 <div className="mt-6" style={{ overflow: 'hidden', borderRadius: '0.5rem', border: '1px solid var(--card-border)' }}>
+                 <>
+                 <div className="flex items-center justify-between mb-4 mt-6">
+                   <div className="hidden md:flex items-center gap-2 text-xs text-muted font-medium bg-white/5 py-1.5 px-3 rounded-full border border-white/5">
+                      <Info size={12} className="text-accent-color" />
+                      <span>Tap row to see Alternate Reality breakdown</span>
+                   </div>
+                   <MobileTapHint className="md:hidden !mb-0 !py-1 !px-3" text="Tap row for details" />
+                 </div>
+                 <div style={{ overflow: 'hidden', borderRadius: '0.5rem', border: '1px solid var(--card-border)' }}>
                     <table className="standings-table">
                        <thead style={{ background: 'rgba(255,255,255,0.02)' }}>
                           <tr>
@@ -266,7 +280,7 @@ export const Playoffs = () => {
                        </thead>
                        <tbody>
                           {matchupsFlipped.map((m, i) => (
-                             <tr key={i} className="standings-row" style={{ transition: 'background-color 0.2s' }}>
+                             <tr key={i} className="standings-row hover:bg-white/5 transition-colors cursor-pointer group" onClick={() => setSelectedMatchup(m)}>
                                 <td>
                                   <div className="flex items-center gap-4">
                                     {m.managerAvatar ? (
@@ -302,6 +316,7 @@ export const Playoffs = () => {
                        </tbody>
                     </table>
                  </div>
+                 </>
               )}
            </Card>
 
@@ -387,8 +402,14 @@ export const Playoffs = () => {
                        </thead>
                        <tbody>
                           {benchBlues.map((b, i) => (
-                             <tr key={i} className="standings-row" style={{ transition: 'background-color 0.2s' }}>
-                                <td>
+                             <tr 
+                              key={i} 
+                              className="standings-row group cursor-pointer" 
+                              style={{ transition: 'background-color 0.2s' }}
+                              onClick={() => setSelectedBenchwarmer(b)}
+                             >
+                                <td className="relative">
+                                  <MobileTapHint text="Tap for details" />
                                   <div className="flex items-center gap-4">
                                     {b.managerAvatar ? (
                                       <img src={`https://sleepercdn.com/avatars/thumbs/${b.managerAvatar}`} style={{ width: 32, height: 32, borderRadius: '50%' }} alt="" />
@@ -479,6 +500,13 @@ export const Playoffs = () => {
            </Card>
         </div>
       </div>
+      {/* Modals */}
+      {selectedMatchup && (
+         <FlippedMatchupModal matchup={selectedMatchup} onClose={() => setSelectedMatchup(null)} />
+      )}
+      {selectedBenchwarmer && (
+         <BenchwarmerModal matchup={selectedBenchwarmer} onClose={() => setSelectedBenchwarmer(null)} />
+      )}
     </div>
   );
 };
