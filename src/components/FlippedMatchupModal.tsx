@@ -17,18 +17,25 @@ export const FlippedMatchupModal: React.FC<Props> = ({ matchup, onClose }) => {
     }
   };
 
+  React.useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
+
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
       <div className="bg-[#0f1115] border border-white/10 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
         {/* Header */}
-        <div className="p-6 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-accent-color/10 to-transparent">
-          <div className="flex items-center gap-4">
+        <div className="p-4 md:p-6 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-accent-color/10 to-transparent">
+          <div className="flex items-center gap-3 md:gap-4">
             <div className="p-3 rounded-xl bg-accent-color/20 border border-accent-color/30">
                {getAcqIcon(matchup.acquisitionType)}
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white leading-none mb-1">How it Flipped: Week {matchup.week}</h2>
-              <p className="text-muted text-sm font-medium uppercase tracking-wider">Playoff Alternate Reality Analysis</p>
+              <h2 className="text-lg md:text-xl font-bold text-white leading-none mb-1">How it Flipped: Week {matchup.week}</h2>
+              <p className="text-muted text-xs md:text-sm font-medium uppercase tracking-wider">Playoff Alternate Reality Analysis</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 rounded-full hover:bg-white/5 transition-colors text-muted hover:text-white">
@@ -37,25 +44,25 @@ export const FlippedMatchupModal: React.FC<Props> = ({ matchup, onClose }) => {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-8">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 md:space-y-8">
           {/* Summary Banner */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white/5 border border-white/5 rounded-xl p-4 flex flex-col items-center justify-center text-center">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4">
+            <div className="bg-white/5 border border-white/5 rounded-xl p-3 md:p-4 flex flex-col items-center justify-center text-center">
               <div className="text-muted text-xs uppercase font-bold tracking-widest mb-1">Reality</div>
               <div className="text-success-color font-black text-2xl">{matchup.actualPoints.toFixed(1)}</div>
               <div className="text-muted text-xs">Defeated {matchup.opponentName} ({matchup.opponentPoints.toFixed(1)})</div>
             </div>
-            <div className="flex items-center justify-center">
-               <ArrowRight size={32} className="text-white/10" />
+            <div className="flex items-center justify-center py-2 md:py-0">
+               <ArrowRight size={24} className="text-white/10 rotate-90 md:rotate-0" />
             </div>
-            <div className="bg-white/5 border border-white/5 rounded-xl p-4 flex flex-col items-center justify-center text-center">
+            <div className="bg-white/5 border border-white/5 rounded-xl p-3 md:p-4 flex flex-col items-center justify-center text-center">
               <div className="text-muted text-xs uppercase font-bold tracking-widest mb-1">Alternate Reality</div>
               <div className="text-danger-color font-black text-2xl">{matchup.hypotheticalPoints.toFixed(1)}</div>
               <div className="text-muted text-xs">Would have LOST to {matchup.opponentName}</div>
             </div>
           </div>
 
-          <div className="bg-accent-color/5 border border-accent-color/20 rounded-xl p-8 my-10 text-center italic text-lg text-white/90 leading-relaxed">
+          <div className="bg-accent-color/5 border border-accent-color/20 rounded-xl p-4 md:p-8 my-6 md:my-10 text-center italic text-base md:text-lg text-white/90 leading-relaxed">
             "Without acquiring <span className="text-accent-color font-bold">{matchup.playerName}</span>,{' '}
             <span className="text-white font-bold">{matchup.managerName}</span> would have been forced to start{' '}
             <span className="text-white font-bold">Expected Replacement Value (ERV)</span> players, resulting in a{' '}
@@ -63,7 +70,7 @@ export const FlippedMatchupModal: React.FC<Props> = ({ matchup, onClose }) => {
           </div>
 
           {/* Lineup Comparison Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
             {/* Actual Reality */}
             <div>
               <div className="flex items-center justify-between mb-4 px-2">
@@ -78,13 +85,15 @@ export const FlippedMatchupModal: React.FC<Props> = ({ matchup, onClose }) => {
                   const isThePlayer = s.id === matchup.actualStarters.find(as => as.name === matchup.playerName)?.id;
                   const displaySlot = (s.rosterSlot || '').replace('SUPER_FLEX', 'SFLX').replace('_FLEX', ' FLX');
                   return (
-                    <div key={idx} className={`flex items-center justify-between p-3 rounded-lg border ${isThePlayer ? 'bg-accent-color/10 border-accent-color/30' : 'bg-white/20 border-white/5'}`}>
-                      <div className="flex items-center gap-3">
-                        <span className="text-[10px] font-bold text-white/30 uppercase w-8 text-center tracking-wider">{displaySlot}</span>
-                        <img src={s.avatar} alt="" className="w-8 h-8 rounded-full bg-black/40" />
-                        <span className={`text-sm font-medium ${isThePlayer ? 'text-accent-color font-bold' : 'text-white'}`}>{s.name}</span>
+                    <div key={idx} className={`flex items-center justify-between p-2 md:p-3 rounded-lg border ${isThePlayer ? 'bg-accent-color/10 border-accent-color/30' : 'bg-white/20 border-white/5'}`}>
+                      <div className="flex items-center gap-2 md:gap-3 overflow-hidden">
+                        <span className="text-[9px] md:text-[10px] font-bold text-white/30 uppercase w-6 md:w-8 text-center tracking-wider shrink-0">{displaySlot}</span>
+                        <img src={s.avatar} alt="" className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black/40 shrink-0" />
+                        <span className={`text-xs md:text-sm font-medium truncate ${isThePlayer ? 'text-accent-color font-bold' : 'text-white'}`}>{s.name}</span>
                       </div>
-                      <span className={`font-mono text-xs ${isThePlayer ? 'text-accent-color font-bold' : 'text-muted'}`}>{s.pts.toFixed(1)}</span>
+                      <div className="flex items-center gap-2 shrink-0 ml-2">
+                         <span className={`font-mono text-xs ${isThePlayer ? 'text-accent-color font-bold' : 'text-muted'}`}>{s.pts.toFixed(1)}</span>
+                      </div>
                     </div>
                   );
                 })}
@@ -115,14 +124,14 @@ export const FlippedMatchupModal: React.FC<Props> = ({ matchup, onClose }) => {
                   else if (isNew) textClasses = 'text-warning-color font-bold';
 
                   return (
-                    <div key={idx} className={`flex items-center justify-between p-3 rounded-lg border ${rowClasses}`}>
-                      <div className="flex items-center gap-3">
-                        <span className="text-[10px] font-bold text-white/30 uppercase w-8 text-center tracking-wider">{displaySlot}</span>
-                        {!isReplacement && <img src={s.avatar} alt="" className="w-8 h-8 rounded-full bg-black/40" />}
-                        {isReplacement && <div className="w-8 h-8 rounded-full bg-danger-color/20 flex items-center justify-center border border-danger-color/30"><User size={16} className="text-danger-color" /></div>}
-                        <span className={`text-sm font-medium ${textClasses}`}>{isReplacement ? `Replacement ${s.name}` : s.name}</span>
+                    <div key={idx} className={`flex items-center justify-between p-2 md:p-3 rounded-lg border ${rowClasses}`}>
+                      <div className="flex items-center gap-2 md:gap-3 overflow-hidden">
+                        <span className="text-[9px] md:text-[10px] font-bold text-white/30 uppercase w-6 md:w-8 text-center tracking-wider shrink-0">{displaySlot}</span>
+                        {!isReplacement && <img src={s.avatar} alt="" className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black/40 shrink-0" />}
+                        {isReplacement && <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-danger-color/20 flex items-center justify-center border border-danger-color/30 shrink-0"><User size={12} className="text-danger-color" /></div>}
+                        <span className={`text-xs md:text-sm font-medium truncate ${textClasses}`}>{isReplacement ? `Rep. ${s.name}` : s.name}</span>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 shrink-0 ml-2">
                          {isReplacement && <span className="text-[10px] uppercase font-bold text-danger-color border border-danger-color/30 px-1 rounded">Replacement Level</span>}
                          {isNew && !isReplacement && <span className="text-[10px] uppercase font-bold text-warning-color border border-warning-color/30 px-1 rounded">Promoted</span>}
                          <span className={`font-mono text-xs ${textClasses}`}>{s.pts.toFixed(1)}</span>
@@ -136,7 +145,7 @@ export const FlippedMatchupModal: React.FC<Props> = ({ matchup, onClose }) => {
         </div>
 
         {/* Footer */}
-        <div className="p-6 bg-white/5 border-t border-white/5 text-center text-xs text-muted leading-relaxed">
+        <div className="p-4 md:p-6 bg-white/5 border-t border-white/5 text-center text-[10px] md:text-xs text-muted leading-relaxed">
           The Alternate Reality uses the <span className="text-white font-medium">Expected Replacement Value (ERV)</span> algorithm. 
           It removes the acquired player from the roster, locks in the manager's actual starting decisions for the remaining positions, 
           and backfills the vacated spot with the highest-scoring eligible bench player. If no bench player is eligible, it uses the league's average Replacement Level score for that position.

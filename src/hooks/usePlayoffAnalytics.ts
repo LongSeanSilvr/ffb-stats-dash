@@ -310,22 +310,27 @@ export function usePlayoffAnalytics(leagueId: string, league: any) {
                                
                                if (hypotheticalOptimal < oppPts) {
                                   const p = playersMap[playerId];
-                                  const actualStarters = team.starters.filter((id: string) => id !== '0').map((id: string, sIdx: number) => {
+                                  const actualStarters = team.starters.map((id: string, idx: number) => {
+                                     if (id === '0') return null;
                                      const sp = playersMap[id];
+                                     const slot = league.roster_positions[idx] || 'BN';
                                      return {
                                        id,
-                                       pts: team.starters_points[sIdx] || 0,
+                                       pts: team.starters_points[idx] || 0,
                                        name: sp ? `${sp.first_name} ${sp.last_name}` : id,
-                                       avatar: `https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg`
+                                       avatar: `https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg`,
+                                       rosterSlot: slot
                                      };
-                                  });
+                                  }).filter(Boolean) as any[];
                                   const hypotheticalStarters = res.optimalStarters.map(s => {
                                      const sp = playersMap[s.id];
+                                     const isReplacement = s.id.startsWith('REP_');
                                      return {
                                        id: s.id,
                                        pts: s.pts,
-                                       name: sp ? `${sp.first_name} ${sp.last_name}` : s.id,
-                                       avatar: `https://sleepercdn.com/content/nfl/players/thumb/${s.id}.jpg`
+                                       name: isReplacement ? s.id.replace('REP_', '') : (sp ? `${sp.first_name} ${sp.last_name}` : s.id),
+                                       avatar: isReplacement ? '' : `https://sleepercdn.com/content/nfl/players/thumb/${s.id}.jpg`,
+                                       rosterSlot: s.rosterSlot || 'BN'
                                      };
                                   });
 
