@@ -321,11 +321,11 @@ export const Playoffs = () => {
            </Card>
 
            {/* LEAGUE WINNERS & CHOKERS */}
-           <Card title="League Winners & Playoff Chokers" className="stagger-2 flex flex-col">
-              <div className="chart-header" style={{ marginBottom: 0 }}>
+           <Card title="Playoff Winners & Chokers" className="stagger-2 flex flex-col">
+              <div className="chart-header">
                  <div className="chart-description">
-                    <span className="text-success-color" style={{ fontWeight: 'bold' }}>League Winners</span> peaked at the perfect time. 
-                    <span className="text-danger-color" style={{ fontWeight: 'bold', marginLeft: '0.25rem' }}>Playoff Chokers</span> were regular season studs who completely vanished when the playoffs started.
+                    <span className="text-success-color font-bold">League Winners</span> peaked at the perfect time and carried their teams. 
+                    <span className="text-danger-color font-bold" style={{ marginLeft: '0.25rem' }}>Playoff Chokers</span> were regular season studs who completely vanished when the playoffs started.
                  </div>
               </div>
               {playerSplits.length === 0 ? (
@@ -334,45 +334,116 @@ export const Playoffs = () => {
                     <div className="text-muted" style={{ fontStyle: 'italic', textAlign: 'center' }}>No significant playoff outliers detected.</div>
                  </div>
               ) : (
-                 <div className="mt-6" style={{ overflow: 'hidden', borderRadius: '0.5rem', border: '1px solid var(--card-border)' }}>
-                    <table className="standings-table">
-                       <thead style={{ background: 'rgba(255,255,255,0.02)' }}>
-                          <tr>
-                             <th>Player</th>
-                             <th className="text-right">Reg Avg</th>
-                             <th className="text-right">Playoff Avg</th>
-                             <th className="text-right">Delta</th>
-                          </tr>
-                       </thead>
-                       <tbody>
-                          {playerSplits.map((p, i) => (
-                             <tr key={i} className="standings-row" style={{ transition: 'background-color 0.2s' }}>
-                                <td>
-                                  <div className="flex items-center gap-4">
-                                    {p.playerAvatar && (
-                                      <img src={p.playerAvatar} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', backgroundColor: 'rgba(255,255,255,0.05)' }} alt="" />
-                                    )}
-                                    <div>
-                                      <div className="flex items-center gap-2">
-                                        {p.isLeagueWinner ? <TrendingUp size={14} className="text-success-color" /> : <TrendingDown size={14} className="text-danger-color" />}
-                                        <span style={{ fontWeight: 'bold', color: '#fff' }}>{p.playerName}</span>
+                 (() => {
+                    const winners = playerSplits.filter(p => p.isLeagueWinner).sort((a, b) => b.diff - a.diff);
+                    const chokers = playerSplits.filter(p => p.isChoker).sort((a, b) => a.diff - b.diff);
+                    
+                    return (
+                       <div className="grid md:grid-cols-2 gap-8 mt-6">
+                          {/* TROPHY CASE (WINNERS) */}
+                          <div className="space-y-4">
+                             <h3 className="text-xs font-bold uppercase tracking-wider text-success-color flex items-center gap-2 border-b border-success-color/10 pb-2">
+                                <Trophy size={14} className="text-success-color" />
+                                The Trophy Case (League Winners)
+                             </h3>
+                             {winners.length === 0 ? (
+                                <div className="text-sm text-muted italic p-4 text-center bg-white/2 rounded-xl border border-white/5">
+                                   No players met the league winner criteria.
+                                </div>
+                             ) : (
+                                <div className="flex flex-col gap-3">
+                                   {winners.map((p, idx) => (
+                                      <div key={idx} className="flex items-center justify-between p-3 md:p-4 rounded-xl border bg-black/20 hover:bg-black/30 transition-all duration-200 border-white/5 hover:border-white/10 group">
+                                         <div className="flex items-center gap-3 md:gap-4 overflow-hidden">
+                                            <div className="relative shrink-0">
+                                               <img 
+                                                  src={p.playerAvatar} 
+                                                  className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover border-2 border-success-color/30 group-hover:border-success-color/60 transition-all" 
+                                                  alt="" 
+                                                  onError={(e) => {
+                                                     (e.target as HTMLImageElement).src = 'https://sleepercdn.com/images/v2/icons/player_default.webp';
+                                                  }}
+                                               />
+                                               {p.managerAvatar && (
+                                                  <img 
+                                                     src={`https://sleepercdn.com/avatars/thumbs/${p.managerAvatar}`} 
+                                                     className="w-5 h-5 rounded-full border border-[#0f1115] absolute -bottom-1 -right-1 shadow-md" 
+                                                     alt="" 
+                                                  />
+                                               )}
+                                            </div>
+                                            <div className="overflow-hidden">
+                                               <div className="font-bold text-white text-sm truncate leading-tight group-hover:text-success-color transition-colors">{p.playerName}</div>
+                                               <div className="text-xs text-muted truncate mt-1">{p.managerName}</div>
+                                            </div>
+                                         </div>
+                                         <div className="text-right shrink-0 ml-3">
+                                            <div className="text-sm md:text-base font-black text-success-color">
+                                               +{p.diff.toFixed(1)} <span className="text-[10px] uppercase font-bold opacity-60 ml-0.5 hidden sm:inline">pts</span>
+                                            </div>
+                                            <div className="text-[10px] md:text-xs text-muted font-mono leading-none mt-1">
+                                               {p.regularAvg.toFixed(1)} <span className="opacity-50 mx-1">→</span> {p.playoffAvg.toFixed(1)}
+                                            </div>
+                                         </div>
                                       </div>
-                                      <div className="text-muted" style={{ fontSize: '0.75rem', marginTop: '0.125rem' }}>Team: {p.managerName}</div>
-                                    </div>
-                                  </div>
-                                </td>
-                                <td className="text-right text-muted" style={{ fontFamily: 'monospace' }}>{p.regularAvg.toFixed(1)}</td>
-                                <td className="text-right" style={{ fontFamily: 'monospace', color: '#fff', fontWeight: 500 }}>{p.playoffAvg.toFixed(1)}</td>
-                                <td className="text-right" style={{ fontFamily: 'monospace' }}>
-                                  <span className={p.diff > 0 ? 'bg-success-light text-success-color' : 'bg-danger-light text-danger-color'} style={{ display: 'inline-flex', alignItems: 'center', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', fontSize: '0.75rem', fontWeight: 'bold' }}>
-                                    {p.diff > 0 ? '+' : ''}{p.diff.toFixed(1)}
-                                  </span>
-                                </td>
-                             </tr>
-                          ))}
-                       </tbody>
-                    </table>
-                 </div>
+                                   ))}
+                                </div>
+                             )}
+                          </div>
+
+                          {/* WALL OF SHAME (CHOKERS) */}
+                          <div className="space-y-4">
+                             <h3 className="text-xs font-bold uppercase tracking-wider text-danger-color flex items-center gap-2 border-b border-danger-color/10 pb-2">
+                                <TrendingDown size={14} className="text-danger-color" />
+                                The Wall of Shame (Playoff Chokers)
+                             </h3>
+                             {chokers.length === 0 ? (
+                                <div className="text-sm text-muted italic p-4 text-center bg-white/2 rounded-xl border border-white/5">
+                                   No players met the playoff choker criteria.
+                                </div>
+                             ) : (
+                                <div className="flex flex-col gap-3">
+                                   {chokers.map((p, idx) => (
+                                      <div key={idx} className="flex items-center justify-between p-3 md:p-4 rounded-xl border bg-black/20 hover:bg-black/30 transition-all duration-200 border-white/5 hover:border-white/10 group">
+                                         <div className="flex items-center gap-3 md:gap-4 overflow-hidden">
+                                            <div className="relative shrink-0">
+                                               <img 
+                                                  src={p.playerAvatar} 
+                                                  className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover border-2 border-danger-color/30 group-hover:border-danger-color/60 transition-all" 
+                                                  alt="" 
+                                                  onError={(e) => {
+                                                     (e.target as HTMLImageElement).src = 'https://sleepercdn.com/images/v2/icons/player_default.webp';
+                                                  }}
+                                               />
+                                               {p.managerAvatar && (
+                                                  <img 
+                                                     src={`https://sleepercdn.com/avatars/thumbs/${p.managerAvatar}`} 
+                                                     className="w-5 h-5 rounded-full border border-[#0f1115] absolute -bottom-1 -right-1 shadow-md" 
+                                                     alt="" 
+                                                  />
+                                               )}
+                                            </div>
+                                            <div className="overflow-hidden">
+                                               <div className="font-bold text-white text-sm truncate leading-tight group-hover:text-danger-color transition-colors">{p.playerName}</div>
+                                               <div className="text-xs text-muted truncate mt-1">{p.managerName}</div>
+                                            </div>
+                                         </div>
+                                         <div className="text-right shrink-0 ml-3">
+                                            <div className="text-sm md:text-base font-black text-danger-color">
+                                               {p.diff.toFixed(1)} <span className="text-[10px] uppercase font-bold opacity-60 ml-0.5 hidden sm:inline">pts</span>
+                                            </div>
+                                            <div className="text-[10px] md:text-xs text-muted font-mono leading-none mt-1">
+                                               {p.regularAvg.toFixed(1)} <span className="opacity-50 mx-1">→</span> {p.playoffAvg.toFixed(1)}
+                                            </div>
+                                         </div>
+                                      </div>
+                                   ))}
+                                </div>
+                             )}
+                          </div>
+                       </div>
+                    );
+                 })()
               )}
            </Card>
         </div>
