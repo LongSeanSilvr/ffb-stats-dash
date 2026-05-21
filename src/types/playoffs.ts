@@ -15,4 +15,12 @@ export interface MatchupFlipped {
   opponentAvatar: string | null;
   actualStarters: { id: string; pts: number; name: string; avatar: string; rosterSlot?: string }[];
   hypotheticalStarters: { id: string; pts: number; name: string; avatar: string; rosterSlot?: string }[];
+  transactionDetails?: {
+    type: string;
+    week: number;
+    tradedBy?: string;
+    gaveUp?: string[];
+    received?: string[];
+    bid?: number;
+  };
 }

@@ -175,6 +175,70 @@ export function usePlayoffAnalytics(leagueId: string, league: any) {
           return acqType;
         };
 
+        const getTransactionDetails = (playerId: string, rosterId: number) => {
+          const tx = allTransactions.find(t => 
+            t.status === 'complete' && 
+            t.adds && t.adds[playerId] === rosterId
+          );
+          if (!tx) return undefined;
+          
+          if (tx.type === 'trade') {
+            const drops = tx.drops || {};
+            const originalOwnerId = Object.keys(drops).find(pId => pId === playerId && drops[pId] !== rosterId) ? drops[playerId] : null;
+            const tradedBy = originalOwnerId ? rosterToUser[originalOwnerId] : 'Another Team';
+            
+            const gaveUp: string[] = [];
+            Object.keys(drops).forEach(pId => {
+              if (drops[pId] === rosterId) {
+                const p = playersMap[pId];
+                gaveUp.push(p ? `${p.first_name} ${p.last_name}` : pId);
+              }
+            });
+            if (tx.draft_picks) {
+              tx.draft_picks.forEach((dp: any) => {
+                if (dp.previous_owner_id === rosterId) {
+                  gaveUp.push(`${dp.season} Rd ${dp.round} Pick`);
+                }
+              });
+            }
+
+            const received: string[] = [];
+            Object.keys(tx.adds || {}).forEach(pId => {
+              if (tx.adds[pId] === rosterId && pId !== playerId) {
+                const p = playersMap[pId];
+                received.push(p ? `${p.first_name} ${p.last_name}` : pId);
+              }
+            });
+            if (tx.draft_picks) {
+              tx.draft_picks.forEach((dp: any) => {
+                if (dp.owner_id === rosterId) {
+                  received.push(`${dp.season} Rd ${dp.round} Pick`);
+                }
+              });
+            }
+
+            return {
+              type: 'Trade',
+              week: tx.week,
+              tradedBy,
+              gaveUp,
+              received,
+              bid: 0
+            };
+          } else if (tx.type === 'waiver' || tx.type === 'free_agent') {
+            const bid = tx.settings?.waiver_bid || 0;
+            return {
+              type: tx.type === 'waiver' ? 'Waiver' : 'Free Agency',
+              week: tx.week,
+              tradedBy: '',
+              gaveUp: [],
+              received: [],
+              bid
+            };
+          }
+          return undefined;
+        };
+
         // 1. Process regular season points
         for (let w = 1; w < playoffStartWeek; w++) {
           const matchups = allMatchups[w - 1];
@@ -350,7 +414,8 @@ export function usePlayoffAnalytics(leagueId: string, league: any) {
                                      opponentName: rosterToUser[opponent.roster_id] || 'Unknown',
                                      opponentAvatar: rosterToAvatar[opponent.roster_id] || null,
                                      actualStarters,
-                                     hypotheticalStarters
+                                     hypotheticalStarters,
+                                     transactionDetails: getTransactionDetails(playerId, team.roster_id)
                                   });
                                }
                             }

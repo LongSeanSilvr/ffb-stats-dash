@@ -42,6 +42,18 @@ export interface FlippedMatchup {
   actualMargin: number;
   hypotheticalMargin: number;
   oppRosterId: number;
+  transactionDetails?: {
+    type: string;
+    week: number;
+    tradedBy?: string;
+    gaveUp?: string[];
+    received?: string[];
+    bid?: number;
+  };
+  actualStarters?: { id: string; pts: number; name: string; avatar: string; rosterSlot?: string }[];
+  hypotheticalStarters?: { id: string; pts: number; name: string; avatar: string; rosterSlot?: string }[];
+  playerName?: string;
+  playerAvatar?: string;
 }
 
 export interface TradeEfficiencyResult {
@@ -528,14 +540,15 @@ export function useTradeEfficiency() {
               });
               
               // 3. Compute ERV Score (Hypothetical Score) by forcing Retained Starters
-              const hypotheticalScore = getOptimalLineupPoints(
+              const optimalRes = getOptimalLineupPoints(
                 hypotheticalPlayers, 
                 hypotheticalPoints, 
                 selectedSeason.league.roster_positions || [], 
                 playersData,
                 retainedStarters,
                 replacementBaselines
-              ).totalPoints;
+              );
+              const hypotheticalScore = optimalRes.totalPoints;
               
               const actualMargin = myMatchup.points - oppMatchup.points;
               const hypotheticalMargin = hypotheticalScore - oppMatchup.points;
@@ -543,14 +556,75 @@ export function useTradeEfficiency() {
               const s = record.sides.find(s => s.rosterId === rosterId);
               if (s) {
                 // If we won reality, but would have lost hypothetically -> Trade Added a Win
-                if (actualMargin > 0 && hypotheticalMargin <= 0) {
-                  s.matchupsFlippedAdded += 1;
-                  s.flippedMatchups.push({ week: w, type: 'added', actualMargin: Number(actualMargin.toFixed(2)), hypotheticalMargin: Number(hypotheticalMargin.toFixed(2)), oppRosterId: oppMatchup.roster_id });
-                }
-                // If we lost reality, but would have won hypothetically -> Trade Lost a Win
-                else if (actualMargin <= 0 && hypotheticalMargin > 0) {
-                  s.matchupsFlippedLost += 1;
-                  s.flippedMatchups.push({ week: w, type: 'lost', actualMargin: Number(actualMargin.toFixed(2)), hypotheticalMargin: Number(hypotheticalMargin.toFixed(2)), oppRosterId: oppMatchup.roster_id });
+                if (actualMargin > 0 && hypotheticalMargin <= 0 || (actualMargin <= 0 && hypotheticalMargin > 0)) {
+                  
+                  const actualStartersList = (myMatchup.starters || []).map((id: string, idx: number) => {
+                     if (id === '0') return null;
+                     const sp = playersData[id];
+                     const slot = selectedSeason.league.roster_positions[idx] || 'BN';
+                     return {
+                       id,
+                       pts: (myMatchup.players_points || {})[id] || 0,
+                       name: sp ? `${sp.first_name} ${sp.last_name}` : id,
+                       avatar: `https://sleepercdn.com/content/nfl/players/thumb/${id}.jpg`,
+                       rosterSlot: slot
+                     };
+                  }).filter(Boolean) as any[];
+
+                  const hypotheticalStartersList = optimalRes.optimalStarters.map((sItem: any) => {
+                     const sp = playersData[sItem.id];
+                     const isReplacement = sItem.id.startsWith('REP_');
+                     return {
+                       id: sItem.id,
+                       pts: sItem.pts,
+                       name: isReplacement ? sItem.id.replace('REP_', '') : (sp ? `${sp.first_name} ${sp.last_name}` : sItem.id),
+                       avatar: isReplacement ? '' : `https://sleepercdn.com/content/nfl/players/thumb/${sItem.id}.jpg`,
+                       rosterSlot: sItem.rosterSlot || 'BN'
+                     };
+                  });
+
+                  let primaryPlayerId = s.received.find(a => !a.isPick && a.position !== 'FAAB')?.playerId;
+                  let primaryPlayerName = 'Multiple Assets';
+                  let primaryPlayerAvatar = '';
+                  if (primaryPlayerId && playersData[primaryPlayerId]) {
+                     primaryPlayerName = `${playersData[primaryPlayerId].first_name} ${playersData[primaryPlayerId].last_name}`;
+                     primaryPlayerAvatar = `https://sleepercdn.com/content/nfl/players/thumb/${primaryPlayerId}.jpg`;
+                  } else if (s.gave.length > 0) {
+                     const gaveId = s.gave.find(a => !a.isPick && a.position !== 'FAAB')?.playerId;
+                     if (gaveId && playersData[gaveId]) {
+                       primaryPlayerName = `${playersData[gaveId].first_name} ${playersData[gaveId].last_name}`;
+                       primaryPlayerAvatar = `https://sleepercdn.com/content/nfl/players/thumb/${gaveId}.jpg`;
+                     }
+                  }
+
+                  const transactionDetails = {
+                    type: 'Trade',
+                    week: record.week,
+                    tradedBy: s.received.length > 0 ? (selectedSeason.rosterToUser[s.received[0].fromRosterId]?.display_name || 'Another Team') : 'Another Team',
+                    gaveUp: s.gave.map(a => a.isPick ? a.playerName.replace(' Pick', '') + ' Pick' : (a.position === 'FAAB' ? a.playerName : `${a.playerName} (${a.position})`)),
+                    received: s.received.map(a => a.isPick ? a.playerName.replace(' Pick', '') + ' Pick' : (a.position === 'FAAB' ? a.playerName : `${a.playerName} (${a.position})`)),
+                    bid: 0
+                  };
+
+                  const payload = {
+                    week: w, 
+                    type: (actualMargin > 0 && hypotheticalMargin <= 0) ? 'added' : 'lost' as 'added' | 'lost',
+                    actualMargin: Number(actualMargin.toFixed(2)), 
+                    hypotheticalMargin: Number(hypotheticalMargin.toFixed(2)), 
+                    oppRosterId: oppMatchup.roster_id,
+                    transactionDetails,
+                    actualStarters: actualStartersList,
+                    hypotheticalStarters: hypotheticalStartersList,
+                    playerName: primaryPlayerName,
+                    playerAvatar: primaryPlayerAvatar
+                  };
+
+                  if (payload.type === 'added') {
+                    s.matchupsFlippedAdded += 1;
+                  } else {
+                    s.matchupsFlippedLost += 1;
+                  }
+                  s.flippedMatchups.push(payload);
                 }
               }
             }

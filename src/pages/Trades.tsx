@@ -3,9 +3,10 @@ import { Card } from '../components/Card';
 import { useLeagueContext } from '../context/LeagueContext';
 import { useTradeEfficiency } from '../hooks/useTradeEfficiency';
 import { MobileTapHint } from '../components/MobileTapHint';
+import { X, User, ArrowRightLeft } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
-  ResponsiveContainer, Legend, ScatterChart, Scatter, Cell, Label, ReferenceLine
+  ResponsiveContainer, Legend, ScatterChart, Scatter, Cell, Label
 } from 'recharts';
 
 
@@ -414,43 +415,218 @@ export const Trades: React.FC = () => {
       </div>
       {/* Drill-down Modal */}
       {selectedDrilldown && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', padding: '2rem' }} onClick={() => setSelectedDrilldown(null)}>
-          <div style={{ background: 'rgba(15,17,21,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '24px', padding: '2rem', width: '100%', maxWidth: '600px', maxHeight: '80vh', overflowY: 'auto', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: '#f8fafc', margin: 0 }}>Flipped Matchups: {selectedDrilldown.name}</h2>
-              <button onClick={() => setSelectedDrilldown(null)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in" onClick={() => setSelectedDrilldown(null)}>
+          <div className="bg-surface-color border border-white/10 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
+            {/* Header */}
+            <div className="bg-black/40 border-b border-white/5 p-4 md:p-6 flex items-center justify-between">
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="w-10 h-10 rounded-full bg-accent-color/20 flex items-center justify-center border border-accent-color/30">
+                  <ArrowRightLeft size={18} className="text-accent-color" />
+                </div>
+                <div>
+                  <h2 className="text-lg md:text-xl font-bold text-white leading-none mb-1">Flipped Matchups: {selectedDrilldown.name}</h2>
+                  <p className="text-muted text-xs md:text-sm font-medium uppercase tracking-wider">Regular Season Trade Impact</p>
+                </div>
+              </div>
+              <button onClick={() => setSelectedDrilldown(null)} className="p-2 rounded-full hover:bg-white/5 transition-colors text-muted hover:text-white">
+                <X size={24} />
+              </button>
             </div>
             
-            {selectedDrilldown.flippedMatchups && selectedDrilldown.flippedMatchups.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {[...selectedDrilldown.flippedMatchups].sort((a, b) => a.week - b.week).map((fm: any, idx: number) => {
-                  const oppName = selectedSeason?.rosterToUser[fm.oppRosterId]?.display_name || `Team ${fm.oppRosterId}`;
-                  const isAdded = fm.type === 'added';
-                  return (
-                    <div key={idx} style={{ background: isAdded ? 'rgba(16, 185, 129, 0.05)' : 'rgba(239, 68, 68, 0.05)', border: `1px solid ${isAdded ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)'}`, borderRadius: '12px', padding: '1rem' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: isAdded ? 'var(--success-color)' : 'var(--danger-color)', backgroundColor: isAdded ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)', padding: '0.25rem 0.5rem', borderRadius: '4px' }}>
-                            {isAdded ? '+ WIN ADDED' : '- WIN LOST'}
-                          </span>
-                          <span style={{ fontSize: '1rem', fontWeight: 600, color: '#f8fafc' }}>Week {fm.week}</span>
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 md:space-y-8">
+              {selectedDrilldown.flippedMatchups && selectedDrilldown.flippedMatchups.length > 0 ? (
+                <div className="flex flex-col gap-6 md:gap-8">
+                  {[...selectedDrilldown.flippedMatchups].sort((a, b) => a.week - b.week).map((fm: any, idx: number) => {
+                    const oppUser = selectedSeason?.rosterToUser[fm.oppRosterId];
+                    const oppName = oppUser?.display_name || `Team ${fm.oppRosterId}`;
+                    const oppAvatar = oppUser?.avatar || null;
+                    const isAdded = fm.type === 'added';
+                    const tradeSwing = Math.abs(fm.actualMargin - fm.hypotheticalMargin);
+                    
+                    return (
+                      <div key={idx} className="border border-white/10 rounded-2xl overflow-hidden bg-white/[0.02]">
+                        {/* Matchup Header */}
+                        <div className="bg-black/40 border-b border-white/5 px-4 md:px-6 py-3 md:py-4 flex flex-wrap items-center justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-2 h-2 rounded-full ${isAdded ? 'bg-success-color' : 'bg-danger-color'}`} />
+                            <span className="text-base font-bold text-white">Week {fm.week}</span>
+                            <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded border ${
+                              isAdded ? 'text-success-color border-success-color/20 bg-success-color/5' : 'text-danger-color border-danger-color/20 bg-danger-color/5'
+                            }`}>
+                              {isAdded ? 'Win Added' : 'Win Lost'}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 text-muted text-sm">
+                            <span>vs</span>
+                            {oppAvatar ? (
+                              <img src={`https://sleepercdn.com/avatars/thumbs/${oppAvatar}`} className="w-5 h-5 rounded-full" alt="" />
+                            ) : (
+                              <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center"><User size={10} className="text-muted" /></div>
+                            )}
+                            <span className="text-white font-medium">{oppName}</span>
+                          </div>
                         </div>
-                        <span style={{ fontSize: '0.875rem', color: '#94a3b8' }}>vs <span style={{ color: '#e2e8f0', fontWeight: 500 }}>{oppName}</span></span>
-                      </div>
-                      <div style={{ fontSize: '0.875rem', color: '#cbd5e1', lineHeight: '1.5' }}>
-                        {isAdded ? (
-                          <>You won this matchup by <span style={{ fontWeight: 600 }}>{fm.actualMargin.toFixed(1)} pts</span>. Without your trades, you would have scored <span style={{ color: 'var(--danger-color)', fontWeight: 600 }}>{Math.abs(fm.actualMargin - fm.hypotheticalMargin).toFixed(1)} fewer points</span>, resulting in a loss.</>
-                        ) : (
-                          <>You lost this matchup by <span style={{ fontWeight: 600 }}>{Math.abs(fm.actualMargin).toFixed(1)} pts</span>. Without your trades, you would have scored <span style={{ color: 'var(--success-color)', fontWeight: 600 }}>{Math.abs(fm.actualMargin - fm.hypotheticalMargin).toFixed(1)} more points</span>, resulting in a win.</>
+
+                        {/* Transaction Details */}
+                        {fm.transactionDetails && (
+                          <div className="px-5 md:px-6 py-5 md:py-6 border-b border-white/5">
+                            <div className="text-[10px] uppercase font-bold text-muted tracking-widest mb-4">Trade in Week {fm.transactionDetails.week}</div>
+                            <div className="flex flex-col md:flex-row md:items-stretch gap-4 md:gap-5">
+                              <div className="flex-1 bg-white/5 border border-white/5 rounded-xl p-4">
+                                <div className="text-[10px] uppercase font-bold text-muted tracking-wider mb-3">Gave Up</div>
+                                <div className="flex flex-wrap gap-2">
+                                  {(fm.transactionDetails.gaveUp || []).map((asset: string, i: number) => (
+                                    <span key={i} className="text-sm font-medium text-white/80 bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg">{asset}</span>
+                                  ))}
+                                </div>
+                              </div>
+                              <div className="flex flex-col items-center shrink-0 px-3">
+                                <ArrowRightLeft size={14} className="text-white/20 rotate-90 md:rotate-0" />
+                                <span className="text-[9px] text-muted mt-1 uppercase">with {fm.transactionDetails.tradedBy}</span>
+                              </div>
+                              <div className="flex-1 bg-white/5 border border-white/5 rounded-xl p-4">
+                                <div className="text-[10px] uppercase font-bold text-muted tracking-wider mb-3">Received</div>
+                                <div className="flex flex-wrap gap-2">
+                                  {(fm.transactionDetails.received || []).map((asset: string, i: number) => (
+                                    <span key={i} className="text-sm font-medium text-accent-color bg-accent-color/5 border border-accent-color/10 px-3 py-1.5 rounded-lg">{asset}</span>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
                         )}
+
+                        {/* Scorecard */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 border-b border-white/5" style={{ padding: '2rem 1.5rem' }}>
+                          <div className="bg-white/5 border border-white/5 rounded-xl p-3 md:p-4 flex flex-col items-center justify-center text-center">
+                            <div className="text-muted text-[10px] uppercase font-bold tracking-widest mb-1">Reality</div>
+                            <div className={`font-black text-2xl ${isAdded ? 'text-success-color' : 'text-danger-color'}`}>{isAdded ? 'WIN' : 'LOSS'}</div>
+                            <div className="text-muted text-xs">Margin: {isAdded ? `+${fm.actualMargin.toFixed(1)}` : fm.actualMargin.toFixed(1)} pts</div>
+                          </div>
+                          <div className="flex items-center justify-center py-2 md:py-0">
+                            <div className="text-center">
+                              <div className="text-muted text-[10px] uppercase font-bold tracking-widest mb-1">Trade Swing</div>
+                              <div className={`font-black text-2xl font-mono ${isAdded ? 'text-success-color' : 'text-danger-color'}`}>
+                                {isAdded ? '+' : '-'}{tradeSwing.toFixed(1)}
+                              </div>
+                              <div className="text-muted text-[10px] uppercase tracking-wider">{isAdded ? 'improvement' : 'regression'}</div>
+                            </div>
+                          </div>
+                          <div className="bg-white/5 border border-white/5 rounded-xl p-3 md:p-4 flex flex-col items-center justify-center text-center">
+                            <div className="text-muted text-[10px] uppercase font-bold tracking-widest mb-1">Without Trades</div>
+                            <div className={`font-black text-2xl ${isAdded ? 'text-white/40' : 'text-white/40'}`}>{isAdded ? 'LOSS' : 'WIN'}</div>
+                            <div className="text-muted text-xs">Margin: {isAdded ? fm.hypotheticalMargin.toFixed(1) : `+${fm.hypotheticalMargin.toFixed(1)}`} pts</div>
+                          </div>
+                        </div>
+
+                        {/* Narrative */}
+                        <div className="bg-accent-color/5 border-b border-white/5 text-sm text-white/80 leading-relaxed" style={{ padding: '1.5rem' }}>
+                          {isAdded ? (
+                            <>Won by <span className="text-white font-semibold">{fm.actualMargin.toFixed(1)} pts</span>. Without trades, would have scored <span className="text-white font-semibold">{tradeSwing.toFixed(1)} fewer points</span> — resulting in a loss.</>
+                          ) : (
+                            <>Lost by <span className="text-white font-semibold">{Math.abs(fm.actualMargin).toFixed(1)} pts</span>. Without trades, would have scored <span className="text-white font-semibold">{tradeSwing.toFixed(1)} more points</span> — flipping this to a win.</>
+                          )}
+                        </div>
+
+                        {/* Lineup Comparison */}
+                        {fm.actualStarters && fm.hypotheticalStarters && (
+                          <div className="px-5 md:px-6 py-5 md:py-6">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+                              {/* Actual */}
+                              <div>
+                                <div className="flex items-center justify-between mb-3 px-1">
+                                  <h3 className="font-bold text-white flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-success-color" />
+                                    Actual Lineup
+                                  </h3>
+                                </div>
+                                <div className="space-y-2">
+                                  {fm.actualStarters.map((s: any, sIdx: number) => {
+                                    const isAcquired = fm.transactionDetails?.received?.some((r: string) => r.includes(s.name) || s.name.includes(r.split(' ')[0]));
+                                    const displaySlot = (s.rosterSlot || '').replace('SUPER_FLEX', 'SFLX').replace('_FLEX', ' FLX');
+                                    return (
+                                      <div key={sIdx} className={`flex items-center justify-between p-2 md:p-3 rounded-lg border ${
+                                        isAcquired ? 'bg-accent-color/10 border-accent-color/20' : 'bg-white/[0.02] border-white/5'
+                                      }`}>
+                                        <div className="flex items-center gap-2 md:gap-3 overflow-hidden">
+                                          <span className="text-[9px] md:text-[10px] font-bold text-white/30 uppercase w-6 md:w-8 text-center tracking-wider shrink-0">{displaySlot}</span>
+                                          <img src={s.avatar} alt="" className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black/40 shrink-0" onError={(e) => { (e.target as HTMLImageElement).src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }} />
+                                          <span className={`text-xs md:text-sm font-medium truncate ${isAcquired ? 'text-accent-color font-bold' : 'text-white'}`}>{s.name}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 shrink-0 ml-2">
+                                          {isAcquired && <span className="text-[10px] uppercase font-bold text-accent-color border border-accent-color/20 px-1 rounded hidden sm:inline">Acquired</span>}
+                                          <span className={`font-mono text-xs ${isAcquired ? 'text-accent-color font-bold' : 'text-muted'}`}>{s.pts.toFixed(1)}</span>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                              {/* Hypothetical */}
+                              <div>
+                                <div className="flex items-center justify-between mb-3 px-1">
+                                  <h3 className="font-bold text-white flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-danger-color" />
+                                    Without Trades
+                                  </h3>
+                                </div>
+                                <div className="space-y-2">
+                                  {fm.hypotheticalStarters.map((s: any, sIdx: number) => {
+                                    const isReplacement = s.id.startsWith('REP_');
+                                    const isNew = !fm.actualStarters.some((as: any) => as.id === s.id);
+                                    const displaySlot = (s.rosterSlot || '').replace('SUPER_FLEX', 'SFLX').replace('_FLEX', ' FLX');
+                                    const isChanged = isReplacement || isNew;
+                                    return (
+                                      <div key={sIdx} className={`flex items-center justify-between p-2 md:p-3 rounded-lg border ${
+                                        isReplacement ? 'bg-danger-color/10 border-danger-color/30 border-l-2 border-l-danger-color' : isNew ? 'bg-white/5 border-white/10 border-l-2 border-l-white/30' : 'bg-white/[0.02] border-white/5'
+                                      }`}>
+                                        <div className="flex items-center gap-2 md:gap-3 overflow-hidden">
+                                          <span className="text-[9px] md:text-[10px] font-bold text-white/30 uppercase w-6 md:w-8 text-center tracking-wider shrink-0">{displaySlot}</span>
+                                          {!isReplacement ? (
+                                            <img src={s.avatar} alt="" className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black/40 shrink-0" onError={(e) => { (e.target as HTMLImageElement).src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }} />
+                                          ) : (
+                                            <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-white/5 flex items-center justify-center shrink-0">
+                                              <User size={10} className="text-muted" />
+                                            </div>
+                                          )}
+                                          <span className={`text-xs md:text-sm font-medium truncate ${isReplacement ? 'text-danger-color font-bold' : isNew ? 'text-white font-bold' : 'text-white'}`}>
+                                            {isReplacement ? `ERV: ${s.name}` : s.name}
+                                          </span>
+                                        </div>
+                                        <div className="flex items-center gap-2 shrink-0 ml-2">
+                                          {isReplacement && <span className="text-[10px] uppercase font-bold text-danger-color border border-danger-color/30 px-1 rounded hidden sm:inline">Replacement</span>}
+                                          {isNew && !isReplacement && <span className="text-[10px] uppercase font-bold text-muted border border-white/10 px-1 rounded hidden sm:inline">Promoted</span>}
+                                          <span className={`font-mono text-xs ${isChanged ? (isReplacement ? 'text-danger-color font-bold' : 'text-muted font-bold') : 'text-muted'}`}>{s.pts.toFixed(1)}</span>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div style={{ color: '#94a3b8', textAlign: 'center', padding: '2rem 0' }}>No flipped matchups found for this manager.</div>
-            )}
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-muted text-center py-16 flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-2xl bg-black/20">
+                  <div className="p-4 bg-white/5 rounded-full mb-4">
+                    <User size={40} className="text-white/30" />
+                  </div>
+                  <span className="text-lg font-medium text-white/70 mb-1">No Flipped Matchups</span>
+                  <span className="text-sm text-white/40">This manager's trades did not alter the outcome of any matchups.</span>
+                </div>
+              )}
+            </div>
+            
+            {/* Footer */}
+            <div className="p-5 md:p-6 bg-black/40 border-t border-white/5 text-center text-xs text-muted leading-relaxed font-medium">
+              Flipped Matchups analyze the exact post-trade starting performance of all players involved in a manager's trades compared to who they replaced in the starting lineup.
+            </div>
           </div>
         </div>
       )}
