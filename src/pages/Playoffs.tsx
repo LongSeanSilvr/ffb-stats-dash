@@ -140,49 +140,6 @@ export const Playoffs = () => {
       </header>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
-        {/* MVPS SECTION */}
-        <Card title="Playoff MVPs (Weeks 15-17)" className="stagger-1">
-          <div className="chart-header">
-            <div className="chart-description">
-              The players who scored the most total points on active starting rosters during the fantasy playoffs. 
-              Color-coded to highlight whether they were foundational draft picks or crucial mid-season acquisitions.
-            </div>
-            <div className="chart-legend-grid">
-              <div className="legend-item">
-                <div className="legend-item-header"><span style={{ width: 12, height: 12, borderRadius: 2, background: 'var(--success-color)', display: 'inline-block' }} /> Drafted</div>
-                <div className="legend-item-desc">Selected in the draft</div>
-              </div>
-              <div className="legend-item">
-                <div className="legend-item-header"><span style={{ width: 12, height: 12, borderRadius: 2, background: 'var(--accent-color)', display: 'inline-block' }} /> Trade</div>
-                <div className="legend-item-desc">Acquired via trade</div>
-              </div>
-              <div className="legend-item">
-                <div className="legend-item-header"><span style={{ width: 12, height: 12, borderRadius: 2, background: '#f59e0b', display: 'inline-block' }} /> Free Agency</div>
-                <div className="legend-item-desc">Acquired via FAAB/Waivers</div>
-              </div>
-            </div>
-          </div>
-          <MobileTapHint />
-          <div style={{ height: 450, width: '100%' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={mvps.slice(0, 15)} layout="vertical" margin={{ left: 130, right: 30, top: 10, bottom: 10 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.05)" />
-                <XAxis type="number" stroke="var(--text-secondary)" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
-                <YAxis type="category" dataKey="playerName" stroke="var(--text-secondary)" tick={{ fontSize: 12, fill: 'var(--text-primary)', fontWeight: 500 }} width={120} axisLine={false} tickLine={false} />
-                <RechartsTooltip content={<CustomBarTooltip />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
-                <Bar dataKey="totalPoints" radius={[0, 4, 4, 0]} maxBarSize={24} animationDuration={1000}>
-                  {mvps.slice(0, 15).map((entry, index) => {
-                    let color = 'var(--success-color)';
-                    if (entry.acquisitionType === 'Trade') color = 'var(--accent-color)';
-                    if (entry.acquisitionType === 'Free Agency') color = '#f59e0b';
-                    return <Cell key={`cell-${index}`} fill={color} />;
-                  })}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-
         {/* TEAM AVERAGES SCATTER PLOT */}
         {(() => {
           const allPoints = teamPerformances ? teamPerformances.flatMap((t: any) => [t.regAvg, t.playAvg]) : [];
@@ -247,9 +204,137 @@ export const Playoffs = () => {
           );
         })()}
 
+        {/* PLAYOFF WINNERS & CHOKERS (Full-width Row) */}
+        <Card title="Playoff Winners & Chokers" className="stagger-2 flex flex-col">
+           <div className="chart-header">
+              <div className="chart-description">
+                 <span className="text-success-color font-bold">League Winners</span> peaked at the perfect time and carried their teams. 
+                 <span className="text-danger-color font-bold" style={{ marginLeft: '0.25rem' }}>Playoff Chokers</span> were regular season studs who completely vanished when the playoffs started.
+              </div>
+           </div>
+           {playerSplits.length === 0 ? (
+              <div className="flex flex-col items-center justify-center mt-6" style={{ flexGrow: 1, padding: '2rem', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '0.75rem', backgroundColor: 'rgba(255,255,255,0.02)' }}>
+                 <TrendingUp size={32} style={{ color: 'rgba(148, 163, 184, 0.5)', marginBottom: '0.75rem' }} />
+                 <div className="text-muted" style={{ fontStyle: 'italic', textAlign: 'center' }}>No significant playoff outliers detected.</div>
+              </div>
+           ) : (
+              (() => {
+                 const winners = playerSplits.filter(p => p.isLeagueWinner).sort((a, b) => b.diff - a.diff);
+                 const chokers = playerSplits.filter(p => p.isChoker).sort((a, b) => a.diff - b.diff);
+                 
+                 return (
+                    <div className="grid md:grid-cols-2 gap-8 mt-6">
+                       {/* TROPHY CASE (WINNERS) */}
+                       <div className="space-y-4">
+                          <h3 className="text-xs font-bold uppercase tracking-wider text-success-color flex items-center gap-2 border-b border-success-color/10 pb-2">
+                             <Trophy size={14} className="text-success-color" />
+                             The Trophy Case (League Winners)
+                          </h3>
+                          {winners.length === 0 ? (
+                             <div className="text-sm text-muted italic p-4 text-center bg-white/2 rounded-xl border border-white/5">
+                                No players met the league winner criteria.
+                             </div>
+                          ) : (
+                             <div className="flex flex-col gap-3">
+                                {winners.map((p, idx) => (
+                                   <div key={idx} className="flex items-center justify-between p-3 md:p-4 rounded-xl border bg-black/20 hover:bg-black/30 transition-all duration-200 border-white/5 hover:border-white/10 group">
+                                      <div className="flex items-center gap-3 md:gap-4 overflow-hidden">
+                                         <div className="relative shrink-0">
+                                            <img 
+                                               src={p.playerAvatar} 
+                                               className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover border-2 border-success-color/30 group-hover:border-success-color/60 transition-all" 
+                                               alt="" 
+                                               onError={(e) => {
+                                                  (e.target as HTMLImageElement).src = 'https://sleepercdn.com/images/v2/icons/player_default.webp';
+                                               }}
+                                            />
+                                            {p.managerAvatar && (
+                                               <img 
+                                                  src={`https://sleepercdn.com/avatars/thumbs/${p.managerAvatar}`} 
+                                                  className="w-5 h-5 rounded-full border border-[#0f1115] absolute -bottom-1 -right-1 shadow-md" 
+                                                  alt="" 
+                                               />
+                                            )}
+                                         </div>
+                                         <div className="overflow-hidden">
+                                            <div className="font-bold text-white text-sm truncate leading-tight group-hover:text-success-color transition-colors">{p.playerName}</div>
+                                            <div className="text-xs text-muted truncate mt-1">{p.managerName}</div>
+                                         </div>
+                                      </div>
+                                      <div className="text-right shrink-0 ml-3">
+                                         <div className="text-sm md:text-base font-black text-success-color">
+                                            +{p.diff.toFixed(1)} <span className="text-[10px] uppercase font-bold opacity-60 ml-0.5 hidden sm:inline">pts</span>
+                                         </div>
+                                         <div className="text-[10px] md:text-xs text-muted font-mono leading-none mt-1">
+                                            {p.regularAvg.toFixed(1)} <span className="opacity-50 mx-1">→</span> {p.playoffAvg.toFixed(1)}
+                                         </div>
+                                      </div>
+                                   </div>
+                                ))}
+                             </div>
+                          )}
+                       </div>
+
+                       {/* WALL OF SHAME (CHOKERS) */}
+                       <div className="space-y-4">
+                          <h3 className="text-xs font-bold uppercase tracking-wider text-danger-color flex items-center gap-2 border-b border-danger-color/10 pb-2">
+                             <TrendingDown size={14} className="text-danger-color" />
+                             The Wall of Shame (Playoff Chokers)
+                          </h3>
+                          {chokers.length === 0 ? (
+                             <div className="text-sm text-muted italic p-4 text-center bg-white/2 rounded-xl border border-white/5">
+                                No players met the playoff choker criteria.
+                             </div>
+                          ) : (
+                             <div className="flex flex-col gap-3">
+                                {chokers.map((p, idx) => (
+                                   <div key={idx} className="flex items-center justify-between p-3 md:p-4 rounded-xl border bg-black/20 hover:bg-black/30 transition-all duration-200 border-white/5 hover:border-white/10 group">
+                                      <div className="flex items-center gap-3 md:gap-4 overflow-hidden">
+                                         <div className="relative shrink-0">
+                                            <img 
+                                               src={p.playerAvatar} 
+                                               className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover border-2 border-danger-color/30 group-hover:border-danger-color/60 transition-all" 
+                                               alt="" 
+                                               onError={(e) => {
+                                                  (e.target as HTMLImageElement).src = 'https://sleepercdn.com/images/v2/icons/player_default.webp';
+                                               }}
+                                            />
+                                            {p.managerAvatar && (
+                                               <img 
+                                                  src={`https://sleepercdn.com/avatars/thumbs/${p.managerAvatar}`} 
+                                                  className="w-5 h-5 rounded-full border border-[#0f1115] absolute -bottom-1 -right-1 shadow-md" 
+                                                  alt="" 
+                                               />
+                                            )}
+                                         </div>
+                                         <div className="overflow-hidden">
+                                            <div className="font-bold text-white text-sm truncate leading-tight group-hover:text-danger-color transition-colors">{p.playerName}</div>
+                                            <div className="text-xs text-muted truncate mt-1">{p.managerName}</div>
+                                         </div>
+                                      </div>
+                                      <div className="text-right shrink-0 ml-3">
+                                         <div className="text-sm md:text-base font-black text-danger-color">
+                                            {p.diff.toFixed(1)} <span className="text-[10px] uppercase font-bold opacity-60 ml-0.5 hidden sm:inline">pts</span>
+                                         </div>
+                                         <div className="text-[10px] md:text-xs text-muted font-mono leading-none mt-1">
+                                            {p.regularAvg.toFixed(1)} <span className="opacity-50 mx-1">→</span> {p.playoffAvg.toFixed(1)}
+                                         </div>
+                                      </div>
+                                   </div>
+                                ))}
+                             </div>
+                          )}
+                       </div>
+                    </div>
+                 );
+              })()
+           )}
+        </Card>
+
+        {/* SIDE-BY-SIDE MATCHUP NARRATIVES GRID */}
         <div className="grid lg:grid-cols-2 gap-8">
            {/* MATCHUPS FLIPPED */}
-           <Card title="High Stakes Matchups Flipped" className="stagger-2 flex flex-col">
+           <Card title="High Stakes Matchups Flipped" className="stagger-3 flex flex-col">
               <div className="chart-header" style={{ marginBottom: 0 }}>
                  <div className="chart-description">
                     Did a mid-season acquisition literally win a playoff game? These trades and FAAB pickups scored exactly enough points to flip the outcome of a playoff matchup from a loss to a win.
@@ -320,140 +405,11 @@ export const Playoffs = () => {
               )}
            </Card>
 
-           {/* LEAGUE WINNERS & CHOKERS */}
-           <Card title="Playoff Winners & Chokers" className="stagger-2 flex flex-col">
-              <div className="chart-header">
-                 <div className="chart-description">
-                    <span className="text-success-color font-bold">League Winners</span> peaked at the perfect time and carried their teams. 
-                    <span className="text-danger-color font-bold" style={{ marginLeft: '0.25rem' }}>Playoff Chokers</span> were regular season studs who completely vanished when the playoffs started.
-                 </div>
-              </div>
-              {playerSplits.length === 0 ? (
-                 <div className="flex flex-col items-center justify-center mt-6" style={{ flexGrow: 1, padding: '2rem', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '0.75rem', backgroundColor: 'rgba(255,255,255,0.02)' }}>
-                    <TrendingUp size={32} style={{ color: 'rgba(148, 163, 184, 0.5)', marginBottom: '0.75rem' }} />
-                    <div className="text-muted" style={{ fontStyle: 'italic', textAlign: 'center' }}>No significant playoff outliers detected.</div>
-                 </div>
-              ) : (
-                 (() => {
-                    const winners = playerSplits.filter(p => p.isLeagueWinner).sort((a, b) => b.diff - a.diff);
-                    const chokers = playerSplits.filter(p => p.isChoker).sort((a, b) => a.diff - b.diff);
-                    
-                    return (
-                       <div className="grid md:grid-cols-2 gap-8 mt-6">
-                          {/* TROPHY CASE (WINNERS) */}
-                          <div className="space-y-4">
-                             <h3 className="text-xs font-bold uppercase tracking-wider text-success-color flex items-center gap-2 border-b border-success-color/10 pb-2">
-                                <Trophy size={14} className="text-success-color" />
-                                The Trophy Case (League Winners)
-                             </h3>
-                             {winners.length === 0 ? (
-                                <div className="text-sm text-muted italic p-4 text-center bg-white/2 rounded-xl border border-white/5">
-                                   No players met the league winner criteria.
-                                </div>
-                             ) : (
-                                <div className="flex flex-col gap-3">
-                                   {winners.map((p, idx) => (
-                                      <div key={idx} className="flex items-center justify-between p-3 md:p-4 rounded-xl border bg-black/20 hover:bg-black/30 transition-all duration-200 border-white/5 hover:border-white/10 group">
-                                         <div className="flex items-center gap-3 md:gap-4 overflow-hidden">
-                                            <div className="relative shrink-0">
-                                               <img 
-                                                  src={p.playerAvatar} 
-                                                  className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover border-2 border-success-color/30 group-hover:border-success-color/60 transition-all" 
-                                                  alt="" 
-                                                  onError={(e) => {
-                                                     (e.target as HTMLImageElement).src = 'https://sleepercdn.com/images/v2/icons/player_default.webp';
-                                                  }}
-                                               />
-                                               {p.managerAvatar && (
-                                                  <img 
-                                                     src={`https://sleepercdn.com/avatars/thumbs/${p.managerAvatar}`} 
-                                                     className="w-5 h-5 rounded-full border border-[#0f1115] absolute -bottom-1 -right-1 shadow-md" 
-                                                     alt="" 
-                                                  />
-                                               )}
-                                            </div>
-                                            <div className="overflow-hidden">
-                                               <div className="font-bold text-white text-sm truncate leading-tight group-hover:text-success-color transition-colors">{p.playerName}</div>
-                                               <div className="text-xs text-muted truncate mt-1">{p.managerName}</div>
-                                            </div>
-                                         </div>
-                                         <div className="text-right shrink-0 ml-3">
-                                            <div className="text-sm md:text-base font-black text-success-color">
-                                               +{p.diff.toFixed(1)} <span className="text-[10px] uppercase font-bold opacity-60 ml-0.5 hidden sm:inline">pts</span>
-                                            </div>
-                                            <div className="text-[10px] md:text-xs text-muted font-mono leading-none mt-1">
-                                               {p.regularAvg.toFixed(1)} <span className="opacity-50 mx-1">→</span> {p.playoffAvg.toFixed(1)}
-                                            </div>
-                                         </div>
-                                      </div>
-                                   ))}
-                                </div>
-                             )}
-                          </div>
-
-                          {/* WALL OF SHAME (CHOKERS) */}
-                          <div className="space-y-4">
-                             <h3 className="text-xs font-bold uppercase tracking-wider text-danger-color flex items-center gap-2 border-b border-danger-color/10 pb-2">
-                                <TrendingDown size={14} className="text-danger-color" />
-                                The Wall of Shame (Playoff Chokers)
-                             </h3>
-                             {chokers.length === 0 ? (
-                                <div className="text-sm text-muted italic p-4 text-center bg-white/2 rounded-xl border border-white/5">
-                                   No players met the playoff choker criteria.
-                                </div>
-                             ) : (
-                                <div className="flex flex-col gap-3">
-                                   {chokers.map((p, idx) => (
-                                      <div key={idx} className="flex items-center justify-between p-3 md:p-4 rounded-xl border bg-black/20 hover:bg-black/30 transition-all duration-200 border-white/5 hover:border-white/10 group">
-                                         <div className="flex items-center gap-3 md:gap-4 overflow-hidden">
-                                            <div className="relative shrink-0">
-                                               <img 
-                                                  src={p.playerAvatar} 
-                                                  className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover border-2 border-danger-color/30 group-hover:border-danger-color/60 transition-all" 
-                                                  alt="" 
-                                                  onError={(e) => {
-                                                     (e.target as HTMLImageElement).src = 'https://sleepercdn.com/images/v2/icons/player_default.webp';
-                                                  }}
-                                               />
-                                               {p.managerAvatar && (
-                                                  <img 
-                                                     src={`https://sleepercdn.com/avatars/thumbs/${p.managerAvatar}`} 
-                                                     className="w-5 h-5 rounded-full border border-[#0f1115] absolute -bottom-1 -right-1 shadow-md" 
-                                                     alt="" 
-                                                  />
-                                               )}
-                                            </div>
-                                            <div className="overflow-hidden">
-                                               <div className="font-bold text-white text-sm truncate leading-tight group-hover:text-danger-color transition-colors">{p.playerName}</div>
-                                               <div className="text-xs text-muted truncate mt-1">{p.managerName}</div>
-                                            </div>
-                                         </div>
-                                         <div className="text-right shrink-0 ml-3">
-                                            <div className="text-sm md:text-base font-black text-danger-color">
-                                               {p.diff.toFixed(1)} <span className="text-[10px] uppercase font-bold opacity-60 ml-0.5 hidden sm:inline">pts</span>
-                                            </div>
-                                            <div className="text-[10px] md:text-xs text-muted font-mono leading-none mt-1">
-                                               {p.regularAvg.toFixed(1)} <span className="opacity-50 mx-1">→</span> {p.playoffAvg.toFixed(1)}
-                                            </div>
-                                         </div>
-                                      </div>
-                                   ))}
-                                </div>
-                             )}
-                          </div>
-                       </div>
-                    );
-                 })()
-              )}
-           </Card>
-        </div>
-
-        <div className="grid lg:grid-cols-2 gap-8">
            {/* BENCHWARMER BLUES */}
            <Card title="The Benchwarmer Blues" className="stagger-3 flex flex-col">
               <div className="chart-header" style={{ marginBottom: 0 }}>
                  <div className="chart-description">
-                 Managers who were eliminated from the playoffs because they started the wrong players. These are matchups where the manager LOST, but their optimal lineup would have WON.
+                    Managers who were eliminated from the playoffs because they started the wrong players. These are matchups where the manager LOST, but their optimal lineup would have WON.
                  </div>
               </div>
               {benchBlues.length === 0 ? (
@@ -529,47 +485,50 @@ export const Playoffs = () => {
                  </div>
               )}
            </Card>
-
-           {/* THE RACE FOR #1 PICK */}
-           <Card title="The Race for the #1 Pick" className="stagger-3">
-              <div className="chart-header">
-                 <div className="chart-description">
-                    Since the Consolation Bracket determines the #1 overall pick next year, engagement stays high. Here are the total points scored by teams fighting in the Losers Bracket.
-                 </div>
-              </div>
-              <div style={{ height: 350, width: '100%', marginTop: '1rem' }}>
-                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={loserBracketTeams} margin={{ left: -10, right: 10, top: 20, bottom: 40 }}>
-                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                       <XAxis 
-                         dataKey="managerName" 
-                         stroke="var(--text-secondary)" 
-                         tick={{ fontSize: 11, fill: 'var(--text-primary)' }} 
-                         axisLine={false} 
-                         tickLine={false}
-                         angle={-45}
-                         textAnchor="end"
-                         interval={0}
-                       />
-                       <YAxis stroke="var(--text-secondary)" tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} axisLine={false} tickLine={false} />
-                       <RechartsTooltip content={<CustomBarTooltip />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
-                       <Bar dataKey="totalPoints" radius={[4, 4, 0, 0]} maxBarSize={40} animationDuration={1000}>
-                          {loserBracketTeams.map((entry, index) => (
-                             <Cell 
-                               key={`cell-${index}`} 
-                               fill={entry.isToiletBowlChamp ? 'var(--accent-color)' : 'rgba(255,255,255,0.1)'} 
-                             />
-                          ))}
-                       </Bar>
-                    </BarChart>
-                 </ResponsiveContainer>
-              </div>
-              <div className="flex items-center justify-center gap-2" style={{ marginTop: '0.5rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                 <div style={{ width: 12, height: 12, borderRadius: 2, background: 'var(--accent-color)' }}></div>
-                 <span style={{ fontSize: '0.875rem', color: '#fff', fontWeight: 500 }}>Secured the 1.01 Draft Pick</span>
-              </div>
-           </Card>
         </div>
+
+        {/* MVPS SECTION */}
+        <Card title="Playoff MVPs (Weeks 15-17)" className="stagger-4">
+          <div className="chart-header">
+            <div className="chart-description">
+              The players who scored the most total points on active starting rosters during the fantasy playoffs. 
+              Color-coded to highlight whether they were foundational draft picks or crucial mid-season acquisitions.
+            </div>
+            <div className="chart-legend-grid">
+              <div className="legend-item">
+                <div className="legend-item-header"><span style={{ width: 12, height: 12, borderRadius: 2, background: 'var(--success-color)', display: 'inline-block' }} /> Drafted</div>
+                <div className="legend-item-desc">Selected in the draft</div>
+              </div>
+              <div className="legend-item">
+                <div className="legend-item-header"><span style={{ width: 12, height: 12, borderRadius: 2, background: 'var(--accent-color)', display: 'inline-block' }} /> Trade</div>
+                <div className="legend-item-desc">Acquired via trade</div>
+              </div>
+              <div className="legend-item">
+                <div className="legend-item-header"><span style={{ width: 12, height: 12, borderRadius: 2, background: '#f59e0b', display: 'inline-block' }} /> Free Agency</div>
+                <div className="legend-item-desc">Acquired via FAAB/Waivers</div>
+              </div>
+            </div>
+          </div>
+          <MobileTapHint />
+          <div style={{ height: 450, width: '100%' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={mvps.slice(0, 15)} layout="vertical" margin={{ left: 130, right: 30, top: 10, bottom: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.05)" />
+                <XAxis type="number" stroke="var(--text-secondary)" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
+                <YAxis type="category" dataKey="playerName" stroke="var(--text-secondary)" tick={{ fontSize: 12, fill: 'var(--text-primary)', fontWeight: 500 }} width={120} axisLine={false} tickLine={false} />
+                <RechartsTooltip content={<CustomBarTooltip />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
+                <Bar dataKey="totalPoints" radius={[0, 4, 4, 0]} maxBarSize={24} animationDuration={1000}>
+                  {mvps.slice(0, 15).map((entry, index) => {
+                    let color = 'var(--success-color)';
+                    if (entry.acquisitionType === 'Trade') color = 'var(--accent-color)';
+                    if (entry.acquisitionType === 'Free Agency') color = '#f59e0b';
+                    return <Cell key={`cell-${index}`} fill={color} />;
+                  })}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
       </div>
       {/* Modals */}
       {selectedMatchup && (
