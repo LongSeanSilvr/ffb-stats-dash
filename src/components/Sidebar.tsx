@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { UserCircle, Target, DollarSign, Repeat, Zap, Trophy } from 'lucide-react';
+import { UserCircle, Target, DollarSign, Repeat, Zap, Trophy, BookOpen } from 'lucide-react';
 import { useLeagueContext } from '../context/LeagueContext';
 
 interface SidebarProps {
@@ -21,9 +21,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
         <nav className="sidebar-nav mb-8">
 
-          <NavLink to="/managers" onClick={onClose} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-            <UserCircle size={20} />
-            League Managers
+          <NavLink to="/" end onClick={onClose} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+            <BookOpen size={20} />
+            Record Book
+          </NavLink>
+          <NavLink to="/playoffs" onClick={onClose} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+            <Trophy size={20} />
+            Playoffs
           </NavLink>
           <NavLink to="/draft" onClick={onClose} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
             <Target size={20} />
@@ -41,9 +45,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             <Zap size={20} />
             Free Agency
           </NavLink>
-          <NavLink to="/playoffs" onClick={onClose} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-            <Trophy size={20} />
-            Playoffs
+          <NavLink to="/managers" onClick={onClose} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+            <UserCircle size={20} />
+            League Managers
           </NavLink>
 
         </nav>

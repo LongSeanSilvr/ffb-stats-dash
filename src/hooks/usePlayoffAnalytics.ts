@@ -204,7 +204,7 @@ export function usePlayoffAnalytics(leagueId: string, league: any) {
 
             const received: string[] = [];
             Object.keys(tx.adds || {}).forEach(pId => {
-              if (tx.adds[pId] === rosterId && pId !== playerId) {
+              if (tx.adds && tx.adds[pId] === rosterId && pId !== playerId) {
                 const p = playersMap[pId];
                 received.push(p ? `${p.first_name} ${p.last_name}` : pId);
               }
@@ -219,7 +219,7 @@ export function usePlayoffAnalytics(leagueId: string, league: any) {
 
             return {
               type: 'Trade',
-              week: tx.week,
+              week: tx.leg,
               tradedBy,
               gaveUp,
               received,
@@ -229,7 +229,7 @@ export function usePlayoffAnalytics(leagueId: string, league: any) {
             const bid = tx.settings?.waiver_bid || 0;
             return {
               type: tx.type === 'waiver' ? 'Waiver' : 'Free Agency',
-              week: tx.week,
+              week: tx.leg,
               tradedBy: '',
               gaveUp: [],
               received: [],

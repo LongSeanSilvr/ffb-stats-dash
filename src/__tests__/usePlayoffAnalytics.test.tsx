@@ -31,7 +31,7 @@ describe('Playoff Analytics', () => {
     rosters.forEach((r: any) => { const user = users.find((u: any) => u.user_id === r.owner_id); if (user) rosterToUser[r.roster_id] = user; });
     mockSelectedSeason = { league, rosters, rosterToUser };
 
-    const { result } = renderHook(() => usePlayoffAnalytics());
+    const { result } = renderHook(() => usePlayoffAnalytics(mockSelectedSeason.league.league_id, mockSelectedSeason.league));
     await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 10000 });
     expect(result.current.error).toBeNull();
   });

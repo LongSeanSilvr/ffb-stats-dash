@@ -24,3 +24,5 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+dist.tar.gz
+ffb_stats_dash_ready.tar.gz

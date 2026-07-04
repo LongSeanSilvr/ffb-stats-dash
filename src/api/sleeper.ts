@@ -9,6 +9,10 @@ export interface League {
   roster_positions: string[];
   previous_league_id: string | null;
   settings: Record<string, any>;
+  metadata?: {
+    latest_league_winner_roster_id?: string;
+    [key: string]: any;
+  };
   avatar: string | null;
   draft_id: string;
 }
@@ -51,6 +55,7 @@ export interface Transaction {
     waiver_bid?: number;
   } | null;
   leg: number; // week
+  draft_picks?: any[];
 }
 
 export interface Matchup {
@@ -144,6 +149,7 @@ export interface PlayoffMatchup {
   t2: number;
   w: number;
   l: number;
+  p?: number;
   t1_from?: any;
   t2_from?: any;
 }

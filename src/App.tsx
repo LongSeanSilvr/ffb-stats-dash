@@ -8,6 +8,7 @@ import { Draft } from './pages/Draft';
 import { Trades } from './pages/Trades';
 import { FreeAgency } from './pages/FreeAgency';
 import Playoffs from './pages/Playoffs';
+import { RecordBook } from './pages/RecordBook';
 import { LeagueProvider } from './context/LeagueContext';
 
 function App() {
@@ -57,7 +58,7 @@ function App() {
           <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
           <main className="main-content">
             <Routes>
-              <Route path="/" element={<Managers />} />
+              <Route path="/" element={<RecordBook />} />
               <Route path="/managers" element={<Managers />} />
               <Route path="/draft" element={<Draft />} />
               <Route path="/trades" element={<Trades />} />
