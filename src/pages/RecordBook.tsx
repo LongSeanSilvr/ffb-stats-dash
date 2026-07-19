@@ -266,13 +266,29 @@ export const RecordBook: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12 stagger-3">
         
         <Card title="Luck vs Skill Matrix" className="col-span-1 lg:col-span-2">
-          <div className="relative h-[400px] mt-2 w-full">
-            {/* Quadrant Watermarks */}
-            <div className="absolute top-8 left-24 text-muted text-sm font-bold opacity-30 pointer-events-none uppercase tracking-widest">Lucky</div>
-            <div className="absolute top-8 right-12 text-muted text-sm font-bold opacity-30 pointer-events-none uppercase tracking-widest text-right">Juggernauts</div>
-            <div className="absolute bottom-20 left-24 text-muted text-sm font-bold opacity-30 pointer-events-none uppercase tracking-widest">Bottom Feeders</div>
-            <div className="absolute bottom-20 right-12 text-muted text-sm font-bold opacity-30 pointer-events-none uppercase tracking-widest text-right">Unlucky</div>
-
+          <div className="chart-header">
+            <div className="chart-description">
+              Compares average points scored per season against overall win percentage. High points and high wins indicates a Juggernaut; high wins but low points indicates good fortune.
+            </div>
+            <div className="matrix-legend-wrapper">
+              <div className="matrix-legend-grid">
+                <div className="matrix-quadrant top-left">
+                  🍀 <strong style={{ color: '#fff', fontWeight: 500 }}>Lucky</strong>
+                </div>
+                <div className="matrix-quadrant top-right">
+                  👑 <strong style={{ color: '#fff', fontWeight: 500 }}>Juggernauts</strong>
+                </div>
+                <div className="matrix-quadrant bottom-left">
+                  📉 <strong style={{ color: '#fff', fontWeight: 500 }}>Bottom Feeders</strong>
+                </div>
+                <div className="matrix-quadrant bottom-right">
+                  🤕 <strong style={{ color: '#fff', fontWeight: 500 }}>Unlucky</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+          <MobileTapHint />
+          <div style={{ height: 400 }} className="mt-2 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ top: 20, right: 30, bottom: 20, left: 10 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
@@ -333,13 +349,29 @@ export const RecordBook: React.FC = () => {
         </Card>
 
         <Card title="Peak vs Consistency Matrix">
-          <div className="relative h-[320px] mt-2 w-full">
-            {/* Quadrant Watermarks */}
-            <div className="absolute z-10 top-4 left-28 text-muted text-sm font-bold opacity-30 pointer-events-none uppercase tracking-widest">One-Hit Wonders</div>
-            <div className="absolute z-10 top-4 right-8 text-muted text-sm font-bold opacity-30 pointer-events-none uppercase tracking-widest text-right">Dynasty Builders</div>
-            <div className="absolute z-10 bottom-20 left-28 text-muted text-sm font-bold opacity-30 pointer-events-none uppercase tracking-widest">Perennial Losers</div>
-            <div className="absolute z-10 bottom-20 right-8 text-muted text-sm font-bold opacity-30 pointer-events-none uppercase tracking-widest text-right">Steady Eddies</div>
-
+          <div className="chart-header">
+            <div className="chart-description">
+              Compares average final standing (consistency) against best single-season points scored (peak). Dynasty Builders finish high consistently and score high peaks.
+            </div>
+            <div className="matrix-legend-wrapper">
+              <div className="matrix-legend-grid">
+                <div className="matrix-quadrant top-left">
+                  ⚡ <strong style={{ color: '#fff', fontWeight: 500 }}>One-Hit Wonders</strong>
+                </div>
+                <div className="matrix-quadrant top-right">
+                  🏛️ <strong style={{ color: '#fff', fontWeight: 500 }}>Dynasty Builders</strong>
+                </div>
+                <div className="matrix-quadrant bottom-left">
+                  📉 <strong style={{ color: '#fff', fontWeight: 500 }}>Perennial Losers</strong>
+                </div>
+                <div className="matrix-quadrant bottom-right">
+                  🎯 <strong style={{ color: '#fff', fontWeight: 500 }}>Steady Eddies</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+          <MobileTapHint />
+          <div style={{ height: 320 }} className="mt-2 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ top: 20, right: 30, bottom: 20, left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
