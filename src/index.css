@@ -807,3 +807,49 @@ a:hover {
   justify-content: flex-start;
   padding: 8px 0 0 16px;
 }
+
+/* Heatmap Grid */
+.heatmap-scroll-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.heatmap-grid { display: grid; gap: 2px; min-width: max-content; }
+.heatmap-cell { padding: 6px 8px; text-align: center; font-size: 0.75rem;
+                font-weight: 600; border-radius: 4px; min-width: 52px; }
+.heatmap-cell.positive-1 { background: rgba(16,185,129,0.15); color: #6ee7b7; }
+.heatmap-cell.positive-2 { background: rgba(16,185,129,0.3); color: #34d399; }
+.heatmap-cell.positive-3 { background: rgba(16,185,129,0.5); color: #10b981; }
+.heatmap-cell.negative-1 { background: rgba(239,68,68,0.15); color: #fca5a5; }
+.heatmap-cell.negative-2 { background: rgba(239,68,68,0.3); color: #f87171; }
+.heatmap-cell.negative-3 { background: rgba(239,68,68,0.5); color: #ef4444; }
+.heatmap-cell.neutral { background: rgba(255,255,255,0.03); color: #64748b; }
+.heatmap-cell.diagonal { background: rgba(0,0,0,0.2); }
+.heatmap-header { font-size: 0.7rem; color: #94a3b8; padding: 6px 4px;
+                  text-align: center; white-space: nowrap; }
+.heatmap-row-label { position: sticky; left: 0; z-index: 2;
+                     background: var(--bg-color); padding: 6px 12px; }
+
+/* GOAT Rankings */
+.goat-scroll { display: flex; gap: 1rem; overflow-x: auto;
+               -webkit-overflow-scrolling: touch; padding: 0.5rem 0; }
+.goat-card { flex: 0 0 auto; min-width: 160px; padding: 1.25rem;
+             border-radius: 16px; text-align: center; position: relative; }
+.goat-card.rank-1 { border: 2px solid rgba(251,191,36,0.5);
+                    background: linear-gradient(145deg, rgba(251,191,36,0.08), rgba(15,17,21,0.9)); }
+.goat-card.rank-2 { border: 2px solid rgba(148,163,184,0.4);
+                    background: linear-gradient(145deg, rgba(148,163,184,0.06), rgba(15,17,21,0.9)); }
+.goat-card.rank-3 { border: 2px solid rgba(180,130,80,0.4);
+                    background: linear-gradient(145deg, rgba(180,130,80,0.06), rgba(15,17,21,0.9)); }
+
+/* Yearbook Awards */
+.yearbook-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+.yearbook-card { padding: 1rem; border-radius: 12px;
+                 background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); }
+
+/* Hall of Shame (red-tinted record cards) */
+.shame-card { border-color: rgba(239,68,68,0.3) !important; }
+
+/* Bump Chart toggle buttons */
+.chart-toggle { display: inline-flex; gap: 2px; background: rgba(255,255,255,0.05);
+                border-radius: 8px; padding: 2px; }
+.chart-toggle button { padding: 6px 14px; border-radius: 6px; border: none;
+                       background: transparent; color: #94a3b8; cursor: pointer;
+                       font-size: 0.8rem; transition: all 0.2s; }
+.chart-toggle button.active { background: rgba(255,255,255,0.1); color: #fff; }

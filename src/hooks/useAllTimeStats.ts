@@ -1,7 +1,18 @@
 import { useState, useEffect } from 'react';
-import { getWinnersBracket } from '../api/sleeper';
+import { cachedFetch } from './useSessionCache';
 import type { SeasonData } from './useLeagueData';
 import type { User } from '../api/sleeper';
+
+export interface SeasonBreakdown {
+  season: string;
+  fpts: number;
+  wins: number;
+  losses: number;
+  finish: number;
+  winPct: number;
+  ppts: number;
+  coachingEff: number;
+}
 
 export interface ManagerAllTimeStats {
   ownerId: string;
@@ -17,8 +28,19 @@ export interface ManagerAllTimeStats {
   playoffAppearances: number;
   championships: number;
   bestSingleSeasonFpts: number;
+  worstSingleSeasonFpts: number;
   averageFinish: number;
+  bestFinish: number;
+  worstFinish: number;
   finishes: number[]; // Store all finishes to calculate average
+  totalPpts: number;
+  coachingEfficiency: number;
+  playoffWins: number;
+  playoffLosses: number;
+  championshipAppearances: number;
+  biggestSeasonJump: number;
+  ptsAgainstPerGame: number;
+  seasonBreakdowns: SeasonBreakdown[];
 }
 
 export interface AllTimeData {
@@ -54,18 +76,32 @@ export function useAllTimeStats(seasons: SeasonData[]) {
            return seasonUsers.find(u => u.user_id === ownerId);
         };
 
+        // We iterate over seasons (which are ordered newest to oldest typically, but we should just process them)
         for (const season of seasons) {
           const leagueId = season.league.league_id;
+          const seasonYear = season.league.season;
           
           // Fetch playoff bracket to determine champions and playoff appearances
-          let bracket = await getWinnersBracket(leagueId).catch(() => []);
+          let bracket = await cachedFetch(`https://api.sleeper.app/v1/league/${leagueId}/winners_bracket`).catch(() => []);
           if (!Array.isArray(bracket)) bracket = [];
           
-          // Identify playoff teams
+          // Identify playoff teams and records
           const playoffTeams = new Set<number>();
+          const playoffRecords: Record<number, { w: number, l: number }> = {};
+
           bracket.forEach(m => {
             if (m.t1) playoffTeams.add(m.t1);
             if (m.t2) playoffTeams.add(m.t2);
+            
+            // Only count matches that have a winner (actual played matches)
+            if (m.w) {
+              if (!playoffRecords[m.w]) playoffRecords[m.w] = { w: 0, l: 0 };
+              playoffRecords[m.w].w += 1;
+              if (m.l) {
+                if (!playoffRecords[m.l]) playoffRecords[m.l] = { w: 0, l: 0 };
+                playoffRecords[m.l].l += 1;
+              }
+            }
           });
 
           let championRosterId: number | null = null;
@@ -74,13 +110,14 @@ export function useAllTimeStats(seasons: SeasonData[]) {
           let fourthPlaceRosterId: number | null = null;
 
           if (bracket.length > 0) {
-            // Usually p: 1 is the championship match and p: 3 is the third place match
+            // p: 1 is the championship match
             const champMatch = bracket.find(m => m.p === 1);
             if (champMatch) {
               championRosterId = champMatch.w;
               runnerUpRosterId = champMatch.l;
             }
             
+            // p: 3 is the third place match
             const thirdPlaceMatch = bracket.find(m => m.p === 3);
             if (thirdPlaceMatch) {
                thirdPlaceRosterId = thirdPlaceMatch.w;
@@ -121,22 +158,41 @@ export function useAllTimeStats(seasons: SeasonData[]) {
                 playoffAppearances: 0,
                 championships: 0,
                 bestSingleSeasonFpts: 0,
+                worstSingleSeasonFpts: 99999,
                 averageFinish: 0,
+                bestFinish: 99,
+                worstFinish: 0,
                 finishes: [],
+                totalPpts: 0,
+                coachingEfficiency: 0,
+                playoffWins: 0,
+                playoffLosses: 0,
+                championshipAppearances: 0,
+                biggestSeasonJump: -99,
+                ptsAgainstPerGame: 0,
+                seasonBreakdowns: []
               };
             }
 
             const stats = statsMap[ownerId];
             stats.seasonsPlayed += 1;
-            stats.wins += (roster.settings.wins || 0);
-            stats.losses += (roster.settings.losses || 0);
-            stats.ties += (roster.settings.ties || 0);
+            
+            const wins = roster.settings.wins || 0;
+            const losses = roster.settings.losses || 0;
+            const ties = roster.settings.ties || 0;
+            
+            stats.wins += wins;
+            stats.losses += losses;
+            stats.ties += ties;
             
             const fpts = (roster.settings.fpts || 0) + (roster.settings.fpts_decimal || 0) / 100;
+            const ppts = (roster.settings.ppts || 0) + (roster.settings.ppts_decimal || 0) / 100;
+            
             stats.totalFpts += fpts;
-            if (fpts > stats.bestSingleSeasonFpts) {
-               stats.bestSingleSeasonFpts = fpts;
-            }
+            stats.totalPpts += ppts;
+            
+            if (fpts > stats.bestSingleSeasonFpts) stats.bestSingleSeasonFpts = fpts;
+            if (fpts < stats.worstSingleSeasonFpts) stats.worstSingleSeasonFpts = fpts;
             
             stats.totalFptsAgainst += (roster.settings.fpts_against || 0) + (roster.settings.fpts_against_decimal || 0) / 100;
 
@@ -144,8 +200,15 @@ export function useAllTimeStats(seasons: SeasonData[]) {
               stats.playoffAppearances += 1;
             }
 
+            const poRecords = playoffRecords[roster.roster_id] || { w: 0, l: 0 };
+            stats.playoffWins += poRecords.w;
+            stats.playoffLosses += poRecords.l;
+
             if (roster.roster_id === championRosterId) {
               stats.championships += 1;
+              stats.championshipAppearances += 1;
+            } else if (roster.roster_id === runnerUpRosterId) {
+              stats.championshipAppearances += 1;
             }
 
             // Determine final finish
@@ -154,9 +217,25 @@ export function useAllTimeStats(seasons: SeasonData[]) {
             else if (roster.roster_id === runnerUpRosterId) finish = 2;
             else if (roster.roster_id === thirdPlaceRosterId) finish = 3;
             else if (roster.roster_id === fourthPlaceRosterId) finish = 4;
-            // Note: teams 5-6 in playoffs might be ranked based on regular season or a 5th place match, we'll fall back to reg season rank for simplicity if they aren't in top 4.
             
             stats.finishes.push(finish);
+            if (finish < stats.bestFinish) stats.bestFinish = finish;
+            if (finish > stats.worstFinish) stats.worstFinish = finish;
+
+            const totalGames = wins + losses + ties;
+            const winPct = totalGames > 0 ? (wins + ties * 0.5) / totalGames : 0;
+            const coachingEff = ppts > 0 ? (fpts / ppts) * 100 : 0;
+
+            stats.seasonBreakdowns.push({
+              season: seasonYear,
+              fpts: Number(fpts.toFixed(2)),
+              wins,
+              losses,
+              finish,
+              winPct: Number((winPct * 100).toFixed(1)),
+              ppts: Number(ppts.toFixed(2)),
+              coachingEff: Number(coachingEff.toFixed(1))
+            });
           });
         }
 
@@ -168,12 +247,33 @@ export function useAllTimeStats(seasons: SeasonData[]) {
           const sumFinishes = manager.finishes.reduce((sum, val) => sum + val, 0);
           manager.averageFinish = manager.finishes.length > 0 ? sumFinishes / manager.finishes.length : 0;
           
+          manager.ptsAgainstPerGame = totalGames > 0 ? manager.totalFptsAgainst / totalGames : 0;
+          manager.coachingEfficiency = manager.totalPpts > 0 ? (manager.totalFpts / manager.totalPpts) * 100 : 0;
+          
+          // Calculate biggest season jump (best improvement in finish rank)
+          // First sort chronologically ascending
+          manager.seasonBreakdowns.sort((a, b) => parseInt(a.season) - parseInt(b.season));
+          
+          let maxJump = -99;
+          for (let i = 1; i < manager.seasonBreakdowns.length; i++) {
+             // Improvement means previous finish is HIGHER number than current finish
+             const jump = manager.seasonBreakdowns[i-1].finish - manager.seasonBreakdowns[i].finish;
+             if (jump > maxJump) maxJump = jump;
+          }
+          manager.biggestSeasonJump = manager.seasonBreakdowns.length > 1 ? maxJump : 0;
+          
+          if (manager.worstSingleSeasonFpts === 99999) manager.worstSingleSeasonFpts = 0;
+          if (manager.bestFinish === 99) manager.bestFinish = 0;
+
           // Round floating points
           manager.totalFpts = Number(manager.totalFpts.toFixed(2));
           manager.totalFptsAgainst = Number(manager.totalFptsAgainst.toFixed(2));
           manager.bestSingleSeasonFpts = Number(manager.bestSingleSeasonFpts.toFixed(2));
+          manager.worstSingleSeasonFpts = Number(manager.worstSingleSeasonFpts.toFixed(2));
           manager.winPercentage = Number((manager.winPercentage * 100).toFixed(1));
           manager.averageFinish = Number(manager.averageFinish.toFixed(1));
+          manager.coachingEfficiency = manager.totalPpts > 0 ? Number(((manager.totalFpts / manager.totalPpts) * 100).toFixed(1)) : 0;
+          manager.ptsAgainstPerGame = Number(manager.ptsAgainstPerGame.toFixed(2));
           
           return manager;
         });
