@@ -249,15 +249,48 @@ export const Draft: React.FC = () => {
     };
   }, [scatterData]);
 
+  // Calculate positional baseline across all drafted players & keepers with starts
+  const posStarterAvgs = useMemo(() => {
+    if (!draftData || draftData.length === 0) return {};
+    const allAssets = draftData.flatMap(d => [...(d.draftPicks || []), ...(d.keepers || [])]);
+    const totals: Record<string, { pts: number; count: number }> = {};
+    
+    allAssets.forEach(p => {
+      const pos = p.position || 'FLEX';
+      if (!totals[pos]) totals[pos] = { pts: 0, count: 0 };
+      if (p.starterPoints > 0) {
+        totals[pos].pts += p.starterPoints;
+        totals[pos].count += 1;
+      }
+    });
+
+    const avgs: Record<string, number> = {};
+    Object.entries(totals).forEach(([pos, val]) => {
+      avgs[pos] = val.count > 0 ? val.pts / val.count : 0;
+    });
+    return avgs;
+  }, [draftData]);
+
   if (loading || !selectedSeason) return <div className="flex flex-col justify-center items-center h-full min-h-[60vh] gap-4"><div className="loading-spinner"></div><div className="text-muted text-sm font-medium">Analyzing draft picks and roster tenures...</div></div>;
   if (error) return <div className="text-danger-color p-8 text-center">Error loading draft data: {error}</div>;
   if (!draftData.length) return <div className="text-muted p-8 text-center">No draft data available for this season.</div>;
 
-  const allDraftPicks = draftData.flatMap(d => d.draftPicks.map(pick => ({ ...pick, managerName: d.user?.display_name || `Team ${d.roster_id}`, avatar: d.user?.avatar }))).sort((a, b) => b.starterPoints - a.starterPoints);
-  const allKeepers = draftData.flatMap(d => d.keepers.map(k => ({ ...k, managerName: d.user?.display_name || `Team ${d.roster_id}`, avatar: d.user?.avatar }))).sort((a, b) => b.starterPoints - a.starterPoints);
+  const allDraftPicks = draftData.flatMap(d => d.draftPicks.map(pick => ({
+    ...pick,
+    managerName: d.user?.display_name || `Team ${d.roster_id}`,
+    avatar: d.user?.avatar,
+    valOverPos: Number((pick.starterPoints - (posStarterAvgs[pick.position] || 0)).toFixed(1)),
+  }))).sort((a, b) => b.starterPoints - a.starterPoints);
+
+  const allKeepers = draftData.flatMap(d => d.keepers.map(k => ({
+    ...k,
+    managerName: d.user?.display_name || `Team ${d.roster_id}`,
+    avatar: d.user?.avatar,
+    valOverPos: Number((k.starterPoints - (posStarterAvgs[k.position] || 0)).toFixed(1)),
+  }))).sort((a, b) => b.valOverPos - a.valOverPos);
 
   const topDrafter = [...draftData].sort((a, b) => b.draftStarterPoints - a.draftStarterPoints)[0];
-  const biggestSteal = allDraftPicks.filter(p => !p.isKeeper && p.round >= 7).sort((a, b) => b.starterPoints - a.starterPoints)[0];
+  const biggestSteal = [...allDraftPicks].filter(p => !p.isKeeper && p.round >= 7).sort((a, b) => b.valOverPos - a.valOverPos)[0];
   const bestRoiTeam = [...scatterData].sort((a, b) => b.roi - a.roi)[0];
   const bestHitRate = [...draftData].map(d => {
       const picks = d.draftPicks.filter(p => !p.isKeeper);
@@ -368,12 +401,14 @@ export const Draft: React.FC = () => {
                 </div>
                 <div className="min-w-0">
                   <div className="font-bold text-white text-sm truncate flex items-center gap-1.5"><span className="truncate">{biggestSteal.playerName}</span><DraftPositionBadge position={biggestSteal.position} /></div>
-                  <div className="text-xs text-muted mt-0.5 truncate">Rd {biggestSteal.round} • <span className="text-gray-300 font-medium">{biggestSteal.managerName}</span></div>
-                  <div className="text-xs font-mono font-bold text-emerald-400 mt-0.5">{biggestSteal.starterPoints.toFixed(1)} starter pts</div>
+                  <div className="text-xs text-muted mt-0.5 truncate">
+                    <span className="font-mono text-emerald-400 font-semibold">Rd {biggestSteal.round}</span> • <span className="text-gray-200">{biggestSteal.managerName}</span>{' '}
+                    <span className="text-emerald-400 font-mono">({biggestSteal.valOverPos > 0 ? `+${biggestSteal.valOverPos.toFixed(0)}` : biggestSteal.starterPoints.toFixed(0)} vs {biggestSteal.position})</span>
+                  </div>
                 </div>
               </div>
             </div>
-            <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">Top-scoring pick from Round 7 or later</div>
+            <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">Highest fantasy value over positional baseline (Round 7+)</div>
           </div>
         )}
 
@@ -475,7 +510,7 @@ export const Draft: React.FC = () => {
                 </div>
               </Card>
               <Card title="Top Keepers Leaderboard">
-                <div className="chart-header mb-4"><div className="chart-description">Most productive retained assets by starter fantasy points scored.</div></div>
+                <div className="chart-header mb-4"><div className="chart-description">Most impactful retained assets ranked by value created over positional average.</div></div>
                 <div className="space-y-3 overflow-y-auto pr-1" style={{ maxHeight: '350px' }}>
                   {allKeepers.slice(0, 15).map((pick, i) => (
                     <div key={`${pick.playerId}-${pick.rosterId}`} className="flex items-center justify-between p-3 rounded-xl border border-white/5 bg-black/30 hover:border-emerald-500/40 hover:bg-black/40 transition-all group">
@@ -488,8 +523,11 @@ export const Draft: React.FC = () => {
                         </div>
                       </div>
                       <div className="text-right shrink-0 ml-2">
-                        <div className="text-sm font-mono font-bold text-emerald-400">{pick.starterPoints.toFixed(1)} <span className="text-[10px] text-muted">pts</span></div>
-                        <div className="text-[10px] text-muted font-mono">{pick.gamesStartedOnRoster} starts</div>
+                        <div className="text-sm font-mono font-bold text-emerald-400">
+                          {pick.valOverPos > 0 ? `+${pick.valOverPos.toFixed(1)}` : pick.starterPoints.toFixed(1)}{' '}
+                          <span className="text-[10px] text-muted">{pick.valOverPos > 0 ? `vs ${pick.position}` : 'pts'}</span>
+                        </div>
+                        <div className="text-[10px] text-muted font-mono">{pick.starterPoints.toFixed(1)} pts • {pick.gamesStartedOnRoster} starts</div>
                       </div>
                     </div>
                   ))}
@@ -498,7 +536,14 @@ export const Draft: React.FC = () => {
             </div>
           )}
           <Card title="Draft Value by Round Heatmap">
-            <div className="chart-header mb-4"><div className="chart-description">Average total fantasy points per pick in each round. Green indicates scoring above the round's league-wide average per pick; red indicates scoring below average.</div></div>
+            <div className="chart-header mb-4">
+              <div className="chart-description">
+                Average total fantasy points per pick in each round. Green indicates scoring above the round's league-wide average per pick; red indicates scoring below average.
+                <span className="block mt-1 text-[11px] text-muted/80">
+                  💡 <strong>Note on multi-pick rounds:</strong> When a manager holds multiple picks in a single round via trades (e.g. <em>"3 picks"</em>), the cell displays their average points scored across those picks.
+                </span>
+              </div>
+            </div>
             <DraftHeatmap draftData={draftData} />
           </Card>
         </div>
@@ -507,14 +552,15 @@ export const Draft: React.FC = () => {
       {activeTab === 'strategy' && (
         <div className="space-y-8 animate-fade-in">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Scatter 1: Draft Capital vs Starter Yield */}
             <Card title="Draft Capital vs Starter Yield">
               <div className="chart-header">
                 <div className="chart-description">Total draft capital owned entering the draft (expected points for pick slots) vs actual starter points generated.</div>
                 <div className="chart-legend-grid">
-                  <div className="legend-item"><div className="legend-item-header">Top-Right (Capital Delivered)</div><div className="legend-item-desc">High draft investment translated into strong starter points.</div></div>
-                  <div className="legend-item"><div className="legend-item-header">Top-Left (Value Extractors)</div><div className="legend-item-desc">Heavy starter production despite modest draft capital.</div></div>
-                  <div className="legend-item"><div className="legend-item-header">Bottom-Right (Capital Wasted)</div><div className="legend-item-desc">High draft investment yielded disappointing starter points.</div></div>
-                  <div className="legend-item"><div className="legend-item-header">Bottom-Left (Low Capital & Yield)</div><div className="legend-item-desc">Limited draft capital and low starter output.</div></div>
+                  <div className="legend-item"><div className="legend-item-header">🚀 <span>Top-Left (Value Extractors)</span></div><div className="legend-item-desc">High starter production achieved from modest draft capital.</div></div>
+                  <div className="legend-item"><div className="legend-item-header">👑 <span>Top-Right (Capital Delivered)</span></div><div className="legend-item-desc">Heavy draft investment converted into elite starter points.</div></div>
+                  <div className="legend-item"><div className="legend-item-header">📉 <span>Bottom-Left (Low Capital & Yield)</span></div><div className="legend-item-desc">Modest draft investment and low starting lineup output.</div></div>
+                  <div className="legend-item"><div className="legend-item-header">💸 <span>Bottom-Right (Capital Wasted)</span></div><div className="legend-item-desc">Premium draft capital heavily underperformed starter expectations.</div></div>
                 </div>
               </div>
               <MobileTapHint />
@@ -532,14 +578,16 @@ export const Draft: React.FC = () => {
                 </ResponsiveContainer>
               </div>
             </Card>
+
+            {/* Scatter 2: Draft ROI vs Season Wins */}
             <Card title="Draft ROI vs Season Wins">
               <div className="chart-header">
                 <div className="chart-description">Correlates draft return on investment (% above/below draft slot expectation) with regular-season wins.</div>
                 <div className="chart-legend-grid">
-                  <div className="legend-item"><div className="legend-item-header">Top-Right (Draft-Powered Winners)</div><div className="legend-item-desc">Draft outscored expectations, leading directly to wins.</div></div>
-                  <div className="legend-item"><div className="legend-item-header">Top-Left (Waiver & Trade Saviors)</div><div className="legend-item-desc">Won games despite poor draft ROI via savvy in-season moves.</div></div>
-                  <div className="legend-item"><div className="legend-item-header">Bottom-Right (Unlucky / Mismanaged)</div><div className="legend-item-desc">Strong draft returns undone by tough matchups or coaching.</div></div>
-                  <div className="legend-item"><div className="legend-item-header">Bottom-Left (Draft-Sunk Struggles)</div><div className="legend-item-desc">Poor draft efficiency directly doomed regular season.</div></div>
+                  <div className="legend-item"><div className="legend-item-header">🔄 <span>Top-Left (Waiver & Trade Saviors)</span></div><div className="legend-item-desc">Overcame poor draft returns to win games through in-season moves.</div></div>
+                  <div className="legend-item"><div className="legend-item-header">🏆 <span>Top-Right (Draft-Powered Winners)</span></div><div className="legend-item-desc">Strong draft efficiency translated directly into regular-season wins.</div></div>
+                  <div className="legend-item"><div className="legend-item-header">💀 <span>Bottom-Left (Draft-Sunk Struggles)</span></div><div className="legend-item-desc">Draft busts and negative ROI directly doomed the season.</div></div>
+                  <div className="legend-item"><div className="legend-item-header">💔 <span>Bottom-Right (Unlucky / Mismanaged)</span></div><div className="legend-item-desc">Draft outscored expectations but fell victim to tough schedule or coaching.</div></div>
                 </div>
               </div>
               <MobileTapHint />
@@ -557,14 +605,16 @@ export const Draft: React.FC = () => {
                 </ResponsiveContainer>
               </div>
             </Card>
+
+            {/* Scatter 3: Early Capital (1-5) vs Late Steals (6+) */}
             <Card title="Early Capital (1–5) vs Late Steals (6+)">
               <div className="chart-header">
                 <div className="chart-description">Compares value extracted in premium early rounds (1–5) vs late-round discovery (6+).</div>
                 <div className="chart-legend-grid">
-                  <div className="legend-item"><div className="legend-item-header">Top-Right (Complete Draft Masters)</div><div className="legend-item-desc">Hit on early anchor picks and uncovered late gems.</div></div>
-                  <div className="legend-item"><div className="legend-item-header">Top-Left (Late-Round Specialists)</div><div className="legend-item-desc">Rescued early-round misses with high-impact late steals.</div></div>
-                  <div className="legend-item"><div className="legend-item-header">Bottom-Right (Early-Round Reliant)</div><div className="legend-item-desc">Strong top-round hits but missed on late lottery tickets.</div></div>
-                  <div className="legend-item"><div className="legend-item-header">Bottom-Left (Total Draft Struggles)</div><div className="legend-item-desc">Underperformed expectations across early and late rounds.</div></div>
+                  <div className="legend-item"><div className="legend-item-header">🎯 <span>Top-Left (Late-Round Saviors)</span></div><div className="legend-item-desc">Rescued early-round misses with high-impact late-round steals.</div></div>
+                  <div className="legend-item"><div className="legend-item-header">💎 <span>Top-Right (Complete Draft Masters)</span></div><div className="legend-item-desc">Hit on early foundation stars and discovered late-round gems.</div></div>
+                  <div className="legend-item"><div className="legend-item-header">⚠️ <span>Bottom-Left (Total Draft Struggles)</span></div><div className="legend-item-desc">Missed expectations across both early foundation and late flyers.</div></div>
+                  <div className="legend-item"><div className="legend-item-header">🧱 <span>Bottom-Right (Early-Round Reliant)</span></div><div className="legend-item-desc">Strong top-round anchors but failed to uncover late-round depth.</div></div>
                 </div>
               </div>
               <MobileTapHint />
@@ -582,14 +632,16 @@ export const Draft: React.FC = () => {
                 </ResponsiveContainer>
               </div>
             </Card>
+
+            {/* Scatter 4: Draft Injury Impact (Luck vs Skill) */}
             <Card title="Draft Injury Impact (Luck vs Skill)">
               <div className="chart-header">
                 <div className="chart-description">Correlates draft return on investment (skill) against games lost to injury by drafted starters (luck).</div>
                 <div className="chart-legend-grid">
-                  <div className="legend-item"><div className="legend-item-header">Top-Right (Injury-Resilient Drafters)</div><div className="legend-item-desc">Positive draft ROI despite losing heavy starter time to injury.</div></div>
-                  <div className="legend-item"><div className="legend-item-header">Top-Left (Sunk by Injuries)</div><div className="legend-item-desc">Draft underperformed primarily due to severe starter injuries.</div></div>
-                  <div className="legend-item"><div className="legend-item-header">Bottom-Right (Healthy & Productive)</div><div className="legend-item-desc">Drafted starters stayed healthy and produced as expected.</div></div>
-                  <div className="legend-item"><div className="legend-item-header">Bottom-Left (Healthy Underperformers)</div><div className="legend-item-desc">Negative draft ROI despite starters staying mostly healthy.</div></div>
+                  <div className="legend-item"><div className="legend-item-header">🩹 <span>Top-Left (Sunk by Injuries)</span></div><div className="legend-item-desc">Draft underperformed primarily due to severe injuries to key starters.</div></div>
+                  <div className="legend-item"><div className="legend-item-header">🛡️ <span>Top-Right (Injury-Resilient Drafters)</span></div><div className="legend-item-desc">Positive draft ROI despite losing heavy starter time to injury.</div></div>
+                  <div className="legend-item"><div className="legend-item-header">📉 <span>Bottom-Left (Healthy Underperformers)</span></div><div className="legend-item-desc">Draft missed expectations despite starters staying mostly healthy.</div></div>
+                  <div className="legend-item"><div className="legend-item-header">🌟 <span>Bottom-Right (Healthy & Productive)</span></div><div className="legend-item-desc">Drafted starters stayed healthy and produced as intended.</div></div>
                 </div>
               </div>
               <MobileTapHint />

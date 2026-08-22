@@ -4,20 +4,20 @@ import { DraftPositionBadge } from './DraftPositionBadge';
 import type { DraftAsset } from '../../hooks/useDraftEfficiency';
 
 interface Props {
-  picks: (DraftAsset & { managerName: string; avatar?: string | null })[];
+  picks: (DraftAsset & { managerName: string; avatar?: string | null; valOverPos?: number })[];
 }
 
 export const DraftStealsAndBusts: React.FC<Props> = ({ picks }) => {
-  // Steals: Drafted in Round 7 or later with high starter points (excluding keepers)
+  // Steals: Drafted in Round 7 or later with high positional value (excluding keepers)
   const steals = picks
-    .filter(p => !p.isKeeper && p.round >= 7 && p.starterPoints > 50)
-    .sort((a, b) => b.starterPoints - a.starterPoints)
+    .filter(p => !p.isKeeper && p.round >= 7 && (p.valOverPos !== undefined ? p.valOverPos > 15 : p.starterPoints > 50))
+    .sort((a, b) => (b.valOverPos ?? b.starterPoints) - (a.valOverPos ?? a.starterPoints))
     .slice(0, 6);
 
   // Busts: Drafted in Rounds 1-4 with low starter points (excluding keepers)
   const busts = picks
-    .filter(p => !p.isKeeper && p.round <= 4 && p.starterPoints < 120)
-    .sort((a, b) => a.starterPoints - b.starterPoints)
+    .filter(p => !p.isKeeper && p.round <= 4 && (p.valOverPos !== undefined ? p.valOverPos < 0 : p.starterPoints < 120))
+    .sort((a, b) => (a.valOverPos ?? a.starterPoints) - (b.valOverPos ?? b.starterPoints))
     .slice(0, 6);
 
   if (steals.length === 0 && busts.length === 0) return null;
@@ -39,7 +39,7 @@ export const DraftStealsAndBusts: React.FC<Props> = ({ picks }) => {
                 </span>
               </h3>
               <p className="text-xs text-muted">
-                Late-round selections that delivered league-winning starter production.
+                Late-round selections delivering the highest fantasy value over positional baseline.
               </p>
             </div>
           </div>
@@ -94,11 +94,16 @@ export const DraftStealsAndBusts: React.FC<Props> = ({ picks }) => {
 
                 <div className="text-right shrink-0 ml-3">
                   <div className="text-sm sm:text-base font-black text-emerald-400 font-mono">
-                    {p.starterPoints.toFixed(1)} <span className="text-[10px] text-muted">pts</span>
+                    {p.valOverPos !== undefined && p.valOverPos > 0
+                      ? `+${p.valOverPos.toFixed(1)}`
+                      : p.starterPoints.toFixed(1)}{' '}
+                    <span className="text-[10px] text-muted">
+                      {p.valOverPos !== undefined && p.valOverPos > 0 ? `vs ${p.position} avg` : 'pts'}
+                    </span>
                   </div>
                   <div className="text-[11px] text-muted font-mono flex items-center justify-end gap-1">
                     <TrendingUp size={12} className="text-emerald-400" />
-                    <span>{p.gamesStartedOnRoster} starts</span>
+                    <span>{p.starterPoints.toFixed(1)} pts • {p.gamesStartedOnRoster} starts</span>
                   </div>
                 </div>
               </div>
