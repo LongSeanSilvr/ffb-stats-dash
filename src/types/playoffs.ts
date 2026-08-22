@@ -1,3 +1,12 @@
+export interface PlayerRosterItem {
+  id: string;
+  pts: number;
+  name: string;
+  avatar: string;
+  rosterSlot?: string;
+  position?: string;
+}
+
 export interface MatchupFlipped {
   rosterId: number;
   managerName: string;
@@ -13,8 +22,10 @@ export interface MatchupFlipped {
   opponentPoints: number;
   opponentName: string;
   opponentAvatar: string | null;
-  actualStarters: { id: string; pts: number; name: string; avatar: string; rosterSlot?: string }[];
-  hypotheticalStarters: { id: string; pts: number; name: string; avatar: string; rosterSlot?: string }[];
+  actualStarters: PlayerRosterItem[];
+  actualBench?: PlayerRosterItem[];
+  hypotheticalStarters: PlayerRosterItem[];
+  hypotheticalBench?: PlayerRosterItem[];
   transactionDetails?: {
     type: string;
     week: number;

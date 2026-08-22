@@ -27,8 +27,11 @@ export interface BenchwarmerBlue {
   pointsLeftOnBench: number;
   lostDueToLineup: boolean;
   actualStarters: { id: string; pts: number; name: string; avatar: string; rosterSlot?: string }[];
+  actualBench?: { id: string; pts: number; name: string; avatar: string; rosterSlot?: string; position?: string }[];
   optimalStarters: { id: string; pts: number; name: string; avatar: string; rosterSlot?: string }[];
+  optimalBench?: { id: string; pts: number; name: string; avatar: string; rosterSlot?: string; position?: string }[];
 }
+
 
 
 
@@ -337,23 +340,60 @@ export function usePlayoffAnalytics(leagueId: string, league: any) {
                   });
                 };
 
+                const mapBench = (allPlayers: string[], starterIds: string[], pointsMap: Record<string, number>) => {
+                  const benchIds = (allPlayers || []).filter(pid => pid && pid !== '0' && !starterIds.includes(pid));
+                  return benchIds
+                    .map(pid => {
+                      const pData = playersMap[pid];
+                      return {
+                        id: pid,
+                        pts: Number(pointsMap[pid]) || 0,
+                        name: pData ? `${pData.first_name} ${pData.last_name}` : pid,
+                        avatar: `https://sleepercdn.com/content/nfl/players/thumb/${pid}.jpg`,
+                        rosterSlot: 'BN',
+                        position: pData?.position || 'BN',
+                      };
+                    })
+                    .sort((a, b) => b.pts - a.pts);
+                };
+
                 // Benchwarmer Blues
                 if (teamA_starterPts < teamB_starterPts && teamA_optimal > teamB_starterPts) {
-                  benchBlues.push({ rosterId: teamA.roster_id, managerName: rosterToUser[teamA.roster_id],
-                    managerAvatar: rosterToAvatar[teamA.roster_id] || null, week: w, actualScore: teamA_starterPts, optimalScore: teamA_optimal, opponentScore: teamB_starterPts, 
-                    opponentName: rosterToUser[teamB.roster_id] || 'Unknown', opponentAvatar: rosterToAvatar[teamB.roster_id] || null,
-                    pointsLeftOnBench: teamA_optimal - teamA_starterPts, lostDueToLineup: true,
+                  benchBlues.push({
+                    rosterId: teamA.roster_id,
+                    managerName: rosterToUser[teamA.roster_id],
+                    managerAvatar: rosterToAvatar[teamA.roster_id] || null,
+                    week: w,
+                    actualScore: teamA_starterPts,
+                    optimalScore: teamA_optimal,
+                    opponentScore: teamB_starterPts,
+                    opponentName: rosterToUser[teamB.roster_id] || 'Unknown',
+                    opponentAvatar: rosterToAvatar[teamB.roster_id] || null,
+                    pointsLeftOnBench: teamA_optimal - teamA_starterPts,
+                    lostDueToLineup: true,
                     actualStarters: mapStarters(teamA.starters || [], teamA.players_points || {}),
-                    optimalStarters: mapOptimal(teamA_optimalRes.optimalStarters)
+                    actualBench: mapBench(teamA.players || [], teamA.starters || [], teamA.players_points || {}),
+                    optimalStarters: mapOptimal(teamA_optimalRes.optimalStarters),
+                    optimalBench: mapBench(teamA.players || [], teamA_optimalRes.optimalStarters.map((s: any) => s.id), teamA.players_points || {}),
                   });
                 }
                 if (teamB_starterPts < teamA_starterPts && teamB_optimal > teamA_starterPts) {
-                  benchBlues.push({ rosterId: teamB.roster_id, managerName: rosterToUser[teamB.roster_id],
-                    managerAvatar: rosterToAvatar[teamB.roster_id] || null, week: w, actualScore: teamB_starterPts, optimalScore: teamB_optimal, opponentScore: teamA_starterPts, 
-                    opponentName: rosterToUser[teamA.roster_id] || 'Unknown', opponentAvatar: rosterToAvatar[teamA.roster_id] || null,
-                    pointsLeftOnBench: teamB_optimal - teamB_starterPts, lostDueToLineup: true,
+                  benchBlues.push({
+                    rosterId: teamB.roster_id,
+                    managerName: rosterToUser[teamB.roster_id],
+                    managerAvatar: rosterToAvatar[teamB.roster_id] || null,
+                    week: w,
+                    actualScore: teamB_starterPts,
+                    optimalScore: teamB_optimal,
+                    opponentScore: teamA_starterPts,
+                    opponentName: rosterToUser[teamA.roster_id] || 'Unknown',
+                    opponentAvatar: rosterToAvatar[teamA.roster_id] || null,
+                    pointsLeftOnBench: teamB_optimal - teamB_starterPts,
+                    lostDueToLineup: true,
                     actualStarters: mapStarters(teamB.starters || [], teamB.players_points || {}),
-                    optimalStarters: mapOptimal(teamB_optimalRes.optimalStarters)
+                    actualBench: mapBench(teamB.players || [], teamB.starters || [], teamB.players_points || {}),
+                    optimalStarters: mapOptimal(teamB_optimalRes.optimalStarters),
+                    optimalBench: mapBench(teamB.players || [], teamB_optimalRes.optimalStarters.map((s: any) => s.id), teamB.players_points || {}),
                   });
                 }
 
@@ -414,7 +454,9 @@ export function usePlayoffAnalytics(leagueId: string, league: any) {
                                      opponentName: rosterToUser[opponent.roster_id] || 'Unknown',
                                      opponentAvatar: rosterToAvatar[opponent.roster_id] || null,
                                      actualStarters,
+                                     actualBench: mapBench(team.players || [], team.starters || [], team.players_points || {}),
                                      hypotheticalStarters,
+                                     hypotheticalBench: mapBench(hypotheticalPlayers || [], res.optimalStarters.map((s: any) => s.id), team.players_points || {}),
                                      transactionDetails: getTransactionDetails(playerId, team.roster_id)
                                   });
                                }
@@ -425,6 +467,7 @@ export function usePlayoffAnalytics(leagueId: string, league: any) {
                 };
                 checkFlipped(teamA, teamB);
                 checkFlipped(teamB, teamA);
+
 
                 // Playoff Chokers / Winners Averages
                 const processTeamAvg = (team: any, won: boolean) => {
