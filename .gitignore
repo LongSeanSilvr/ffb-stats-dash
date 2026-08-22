@@ -26,3 +26,7 @@ dist-ssr
 *.sw?
 dist.tar.gz
 ffb_stats_dash_ready.tar.gz
+
+# Local deployment & agent configs
+scripts/
+.agents/
