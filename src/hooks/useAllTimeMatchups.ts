@@ -29,6 +29,7 @@ export interface AllTimeMatchupData {
   mostLopsidedRivalry: { owner1: string; owner2: string; wins: number; losses: number; diff: number } | null;
   mostCompetitiveRivalry: { owner1: string; owner2: string; wins: number; losses: number } | null;
   longestDominanceStreak: { dominator: string; victim: string; streak: number } | null;
+  matchupList: MatchupRecord[];
   loading: boolean;
   error: string | null;
   progress: number;
@@ -47,6 +48,7 @@ export function useAllTimeMatchups(seasons: SeasonData[]) {
     mostLopsidedRivalry: null,
     mostCompetitiveRivalry: null,
     longestDominanceStreak: null,
+    matchupList: [],
     loading: true,
     error: null,
     progress: 0,
@@ -300,6 +302,7 @@ export function useAllTimeMatchups(seasons: SeasonData[]) {
             mostLopsidedRivalry: mostLopsided,
             mostCompetitiveRivalry: mostCompetitive,
             longestDominanceStreak: longestStreak,
+            matchupList: allMatches,
             loading: false,
             error: null,
             progress: 100

@@ -29,21 +29,21 @@
   --font-sans: var(--font-sans);
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+html {
+  background-color: #0f1115;
+  background: #0f1115;
+  min-height: 100%;
+  color-scheme: dark;
 }
 
 body {
   font-family: var(--font-sans);
   background-color: var(--bg-color);
+  background: #0f1115 radial-gradient(circle at top right, #1a1c29 0%, #0f1115 60%);
+  background-attachment: fixed;
   color: var(--text-primary);
   line-height: 1.5;
   min-height: 100vh;
-  /* subtle gradient background */
-  background: radial-gradient(circle at top right, #1a1c29 0%, var(--bg-color) 60%);
-  background-attachment: fixed;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -64,7 +64,7 @@ a:hover {
 
 /* Glassmorphic Utilities */
 .glass-card {
-  background: var(--card-bg);
+  background: rgba(22, 26, 35, 0.75);
   backdrop-filter: var(--glass-backdrop);
   -webkit-backdrop-filter: var(--glass-backdrop);
   border: 1px solid var(--card-border);
