@@ -16,6 +16,7 @@ export interface DraftAsset {
   endWeek: number | null;
   starterPoints: number;
   benchPoints: number;
+  gamesStartedOnRoster: number;
   gamesPlayedOnRoster: number;
   gamesMissed: number;
   draftValueExpected: number;
@@ -141,6 +142,7 @@ export function useDraftEfficiency() {
             endWeek: null,
             starterPoints: 0,
             benchPoints: 0,
+            gamesStartedOnRoster: 0,
             gamesPlayedOnRoster: 0,
             gamesMissed: 0,
             draftValueExpected: Math.max(0, draftPicks.length - pick.pick_no)
@@ -189,13 +191,14 @@ export function useDraftEfficiency() {
 
               if (activeAsset) {
                 const pts = Number(playersPoints[playerId]) || 0;
+                if (starters.includes(playerId)) {
+                  activeAsset.gamesStartedOnRoster++;
+                  activeAsset.starterPoints += pts;
+                } else {
+                  activeAsset.benchPoints += pts;
+                }
                 if (pts > 0) {
                   activeAsset.gamesPlayedOnRoster++;
-                  if (starters.includes(playerId)) {
-                    activeAsset.starterPoints += pts;
-                  } else {
-                    activeAsset.benchPoints += pts;
-                  }
                 }
               }
             });

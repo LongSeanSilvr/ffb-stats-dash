@@ -98,7 +98,7 @@ export const DraftStealsAndBusts: React.FC<Props> = ({ picks }) => {
                   </div>
                   <div className="text-[11px] text-muted font-mono flex items-center justify-end gap-1">
                     <TrendingUp size={12} className="text-emerald-400" />
-                    <span>{p.gamesPlayedOnRoster} starts</span>
+                    <span>{p.gamesStartedOnRoster} starts</span>
                   </div>
                 </div>
               </div>
@@ -181,7 +181,13 @@ export const DraftStealsAndBusts: React.FC<Props> = ({ picks }) => {
                   </div>
                   <div className="text-[11px] text-muted font-mono flex items-center justify-end gap-1">
                     <TrendingDown size={12} className="text-rose-400" />
-                    <span>{p.gamesMissed ? `${p.gamesMissed} games missed` : `${p.gamesPlayedOnRoster} starts`}</span>
+                    <span>
+                      {p.gamesStartedOnRoster > 0
+                        ? `${p.gamesStartedOnRoster} starts`
+                        : p.gamesMissed > 0
+                        ? `${p.gamesMissed} games missed`
+                        : '0 starts (benched)'}
+                    </span>
                   </div>
                 </div>
               </div>

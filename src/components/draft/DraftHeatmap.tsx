@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import type { DraftEfficiencyResult } from '../../hooks/useDraftEfficiency';
 
 interface Props {
@@ -6,6 +6,7 @@ interface Props {
 }
 
 export const DraftHeatmap: React.FC<Props> = ({ draftData }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
   const [hovered, setHovered] = useState<{ round: number; mgr: string; x: number; y: number } | null>(null);
 
   const managers = draftData.map(d => ({
@@ -84,8 +85,20 @@ export const DraftHeatmap: React.FC<Props> = ({ draftData }) => {
     }
   };
 
+  const handleCellHover = (round: number, mgr: string, el: HTMLElement) => {
+    if (!containerRef.current) return;
+    const cellRect = el.getBoundingClientRect();
+    const containerRect = containerRef.current.getBoundingClientRect();
+    setHovered({
+      round,
+      mgr,
+      x: cellRect.left - containerRect.left + cellRect.width / 2,
+      y: cellRect.top - containerRect.top - 8,
+    });
+  };
+
   return (
-    <div className="relative">
+    <div ref={containerRef} className="relative">
       <div className="overflow-x-auto pb-4 custom-scrollbar">
         <table className="w-full border-separate border-spacing-1.5 min-w-[900px]">
           <thead>
@@ -144,12 +157,7 @@ export const DraftHeatmap: React.FC<Props> = ({ draftData }) => {
                         key={m.rosterId}
                         onMouseEnter={e => {
                           if (hasPicks) {
-                            setHovered({ round, mgr: m.name, x: e.clientX, y: e.clientY });
-                          }
-                        }}
-                        onMouseMove={e => {
-                          if (hovered && hasPicks) {
-                            setHovered({ round, mgr: m.name, x: e.clientX, y: e.clientY });
+                            handleCellHover(round, m.name, e.currentTarget);
                           }
                         }}
                         onMouseLeave={() => setHovered(null)}
@@ -178,7 +186,7 @@ export const DraftHeatmap: React.FC<Props> = ({ draftData }) => {
         </table>
       </div>
 
-      {/* Hover Tooltip */}
+      {/* Hover Tooltip (Anchored right above the hovered cell) */}
       {hovered && (() => {
         const cell = cellData[`${hovered.round}-${hovered.mgr}`];
         if (!cell || cell.players.length === 0) return null;
@@ -187,9 +195,9 @@ export const DraftHeatmap: React.FC<Props> = ({ draftData }) => {
         return (
           <div
             style={{
-              position: 'fixed',
-              left: hovered.x,
-              top: hovered.y - 12,
+              position: 'absolute',
+              left: Math.max(120, Math.min(hovered.x, (containerRef.current?.offsetWidth || 900) - 120)),
+              top: hovered.y,
               transform: 'translate(-50%, -100%)',
             }}
             className="bg-[#0f1115]/95 border border-white/15 rounded-xl p-3.5 z-[999] min-w-[220px] shadow-2xl pointer-events-none backdrop-blur-md animate-fade-in"
