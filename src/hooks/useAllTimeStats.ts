@@ -89,7 +89,7 @@ export function useAllTimeStats(seasons: SeasonData[]) {
           const playoffTeams = new Set<number>();
           const playoffRecords: Record<number, { w: number, l: number }> = {};
 
-          bracket.forEach(m => {
+          bracket.forEach((m: any) => {
             if (m.t1) playoffTeams.add(m.t1);
             if (m.t2) playoffTeams.add(m.t2);
             
@@ -111,14 +111,14 @@ export function useAllTimeStats(seasons: SeasonData[]) {
 
           if (bracket.length > 0) {
             // p: 1 is the championship match
-            const champMatch = bracket.find(m => m.p === 1);
+            const champMatch = bracket.find((m: any) => m.p === 1);
             if (champMatch) {
               championRosterId = champMatch.w;
               runnerUpRosterId = champMatch.l;
             }
             
             // p: 3 is the third place match
-            const thirdPlaceMatch = bracket.find(m => m.p === 3);
+            const thirdPlaceMatch = bracket.find((m: any) => m.p === 3);
             if (thirdPlaceMatch) {
                thirdPlaceRosterId = thirdPlaceMatch.w;
                fourthPlaceRosterId = thirdPlaceMatch.l;
