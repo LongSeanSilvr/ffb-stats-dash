@@ -471,22 +471,22 @@ export const Draft: React.FC = () => {
         )}
       </div>
 
-      {/* 2-Hub Tab Navigation */}
-      <div className="bg-black/40 backdrop-blur-md p-1.5 rounded-2xl border border-white/10 shadow-xl inline-flex flex-wrap sm:flex-nowrap gap-2 mb-8 w-full sm:w-auto">
+      {/* 2-Hub Tab Navigation (Full Width 2-Column Grid) */}
+      <div className="bg-black/40 backdrop-blur-md p-1.5 rounded-2xl border border-white/10 shadow-xl grid grid-cols-1 md:grid-cols-2 gap-2 mb-8 w-full">
         <button
           onClick={() => setActiveTab('performance')}
-          className={`flex-1 sm:flex-initial flex items-center justify-center sm:justify-start gap-3 px-5 py-3 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+          className={`flex items-center gap-3.5 px-6 py-3.5 rounded-xl text-sm font-bold transition-all cursor-pointer w-full ${
             activeTab === 'performance'
               ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25 border border-blue-400/30'
               : 'text-gray-300 hover:text-white hover:bg-white/5 border border-transparent'
           }`}
         >
-          <div className={`p-2 rounded-lg ${activeTab === 'performance' ? 'bg-white/20 text-white' : 'bg-white/5 text-gray-400'}`}>
-            <LayoutGrid size={18} />
+          <div className={`p-2 rounded-lg shrink-0 ${activeTab === 'performance' ? 'bg-white/20 text-white' : 'bg-white/5 text-gray-400'}`}>
+            <LayoutGrid size={20} />
           </div>
-          <div className="text-left">
-            <div className="leading-tight text-sm sm:text-base font-bold">Draft Performance & Heatmap</div>
-            <div className={`text-[11px] font-normal mt-0.5 ${activeTab === 'performance' ? 'text-blue-100' : 'text-gray-400'}`}>
+          <div className="text-left min-w-0">
+            <div className="leading-tight text-sm sm:text-base font-bold truncate">Draft Performance & Heatmap</div>
+            <div className={`text-xs font-normal mt-0.5 truncate ${activeTab === 'performance' ? 'text-blue-100' : 'text-gray-400'}`}>
               Steals, Hit Rates, Keepers & Board Heatmap
             </div>
           </div>
@@ -494,18 +494,18 @@ export const Draft: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('strategy')}
-          className={`flex-1 sm:flex-initial flex items-center justify-center sm:justify-start gap-3 px-5 py-3 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+          className={`flex items-center gap-3.5 px-6 py-3.5 rounded-xl text-sm font-bold transition-all cursor-pointer w-full ${
             activeTab === 'strategy'
               ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25 border border-blue-400/30'
               : 'text-gray-300 hover:text-white hover:bg-white/5 border border-transparent'
           }`}
         >
-          <div className={`p-2 rounded-lg ${activeTab === 'strategy' ? 'bg-white/20 text-white' : 'bg-white/5 text-gray-400'}`}>
-            <Target size={18} />
+          <div className={`p-2 rounded-lg shrink-0 ${activeTab === 'strategy' ? 'bg-white/20 text-white' : 'bg-white/5 text-gray-400'}`}>
+            <Target size={20} />
           </div>
-          <div className="text-left">
-            <div className="leading-tight text-sm sm:text-base font-bold">Strategy & Capital Matrices</div>
-            <div className={`text-[11px] font-normal mt-0.5 ${activeTab === 'strategy' ? 'text-blue-100' : 'text-gray-400'}`}>
+          <div className="text-left min-w-0">
+            <div className="leading-tight text-sm sm:text-base font-bold truncate">Strategy & Capital Matrices</div>
+            <div className={`text-xs font-normal mt-0.5 truncate ${activeTab === 'strategy' ? 'text-blue-100' : 'text-gray-400'}`}>
               4-Quadrant Scatter Charts & Positional Radars
             </div>
           </div>
