@@ -609,8 +609,8 @@ export const Playoffs = () => {
             )}
           </Card>
 
-          {/* BENCHWARMER BLUES */}
-          <Card title="The Benchwarmer Blues" className="stagger-3 flex flex-col justify-between">
+          {/* FATAL LINEUP MISTAKES */}
+          <Card title="Fatal Lineup Mistakes" className="stagger-3 flex flex-col justify-between">
             <div>
               <div className="chart-header mb-4">
                 <div className="chart-description">

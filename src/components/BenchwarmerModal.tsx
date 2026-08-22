@@ -36,7 +36,7 @@ export const BenchwarmerModal: React.FC<Props> = ({ matchup, onClose }) => {
             </div>
             <div>
               <h2 className="text-lg md:text-xl font-bold text-white leading-none mb-1">
-                Benchwarmer Blues: Week {matchup.week}
+                Fatal Lineup Mistake: Week {matchup.week}
               </h2>
               <p className="text-muted text-xs md:text-sm font-medium uppercase tracking-wider">
                 Optimal Lineup vs Actual Starting Roster
