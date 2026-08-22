@@ -112,11 +112,12 @@ const TEAM_COLORS = [
 
 export const Faab: React.FC = () => {
   const { selectedSeason } = useLeagueContext();
-  const { data: faabData, loading, error } = useFaabEfficiency();
-  const { topAssets: faabTopAssets } = useFreeAgencyEfficiency();
+  const { data: faabData, loading: faabLoading, error } = useFaabEfficiency();
+  const { topAssets: faabTopAssets, loading: freeAgencyLoading } = useFreeAgencyEfficiency();
 
   const [activeTab, setActiveTab] = useState<'performance' | 'strategy'>('performance');
   const [pointFilter, setPointFilter] = useState<'all' | 'starters' | 'bench'>('starters');
+  const [posFilter, setPosFilter] = useState<string>('ALL');
   const [hiddenTeams, setHiddenTeams] = useState<string[]>([]);
 
   // Default to top 2 spenders for radar
@@ -167,47 +168,95 @@ export const Faab: React.FC = () => {
     };
   }, [faabData, selectedSeason]);
 
-  // Per-pickup FAAB value ledger
+  // Per-pickup FAAB value ledger with position filter
   const ppdLedger = useMemo(() => {
     return faabTopAssets.all
       .filter(a => a.acqType === 'faab' && a.cost > 0 && a.starterPoints > 0)
+      .filter(a => posFilter === 'ALL' || a.position === posFilter)
       .map(a => ({ ...a, ppd: Number((a.starterPoints / a.cost).toFixed(2)) }))
       .sort((a, b) => b.ppd - a.ppd)
       .slice(0, 25);
-  }, [faabTopAssets]);
+  }, [faabTopAssets, posFilter]);
 
-  // Hero KPI Computations
+  // Non-FAAB top waiver additions (by total starter points) with position filter
+  const topWaiverPickups = useMemo(() => {
+    return faabTopAssets.all
+      .filter(a => a.starterPoints > 0)
+      .filter(a => posFilter === 'ALL' || a.position === posFilter)
+      .sort((a, b) => b.starterPoints - a.starterPoints)
+      .slice(0, 25);
+  }, [faabTopAssets, posFilter]);
+
+  // Check if FAAB was utilized in this season
+  const isFaabActive = useMemo(() => {
+    return faabData.some(d => d.totalFaabSpent > 0 || d.totalBidAmount > 0);
+  }, [faabData]);
+
+  // Hero KPI Computations (Adapts cleanly to FAAB vs Free Waiver seasons)
   const heroKpis = useMemo(() => {
     if (!faabData.length) return null;
 
-    // 1. Best value pickup
-    const bestPickup = ppdLedger.length > 0 ? ppdLedger[0] : null;
+    if (isFaabActive) {
+      // 1. Best value pickup
+      const bestPickup = ppdLedger.length > 0 ? ppdLedger[0] : null;
 
-    // 2. Best ROI Manager (highest pointsPerDollar)
-    const sortedByRoi = [...faabData].sort((a, b) => b.pointsPerDollar - a.pointsPerDollar);
-    const bestRoiManager = sortedByRoi[0];
+      // 2. Best ROI Manager (highest pointsPerDollar)
+      const sortedByRoi = [...faabData].sort((a, b) => b.pointsPerDollar - a.pointsPerDollar);
+      const bestRoiManager = sortedByRoi[0];
 
-    // 3. Hit Rate Leader (highest hits / total acquisitions)
-    const sortedByHitRate = [...faabData]
-      .filter(d => (d.hits + d.busts) > 0)
-      .map(d => ({
-        ...d,
-        rate: (d.hits / (d.hits + d.busts)) * 100
-      }))
-      .sort((a, b) => b.rate - a.rate);
-    const bestHitRate = sortedByHitRate[0];
+      // 3. Hit Rate Leader (highest hits / total acquisitions)
+      const sortedByHitRate = [...faabData]
+        .filter(d => d.hits + d.busts > 0)
+        .map(d => ({
+          ...d,
+          rate: (d.hits / (d.hits + d.busts)) * 100
+        }))
+        .sort((a, b) => b.rate - a.rate);
+      const bestHitRate = sortedByHitRate[0];
 
-    // 4. Most Wasted FAAB
-    const sortedByWasted = [...faabData].sort((a, b) => b.wastedFaab - a.wastedFaab);
-    const mostWasted = sortedByWasted[0];
+      // 4. Most Wasted FAAB
+      const sortedByWasted = [...faabData].sort((a, b) => b.wastedFaab - a.wastedFaab);
+      const mostWasted = sortedByWasted[0];
 
-    return {
-      bestPickup,
-      bestRoiManager,
-      bestHitRate,
-      mostWasted
-    };
-  }, [faabData, ppdLedger]);
+      return {
+        isFaab: true,
+        bestPickup,
+        bestRoiManager,
+        bestHitRate,
+        mostWasted
+      };
+    } else {
+      // Standard Free Waiver Season KPIs
+      // 1. Hit Rate Leader
+      const sortedByHitRate = [...faabData]
+        .filter(d => d.hits + d.busts > 0)
+        .map(d => ({
+          ...d,
+          rate: (d.hits / (d.hits + d.busts)) * 100
+        }))
+        .sort((a, b) => b.rate - a.rate);
+      const bestHitRate = sortedByHitRate[0];
+
+      // 2. Top Waiver Producer (Manager with most starter points generated)
+      const sortedByPoints = [...faabData].sort((a, b) => b.pointsGenerated - a.pointsGenerated);
+      const topProducer = sortedByPoints[0];
+
+      // 3. Most Active Wire Manager (most total waiver acquisitions)
+      const sortedByVolume = [...faabData].sort((a, b) => (b.hits + b.busts) - (a.hits + a.busts));
+      const mostActive = sortedByVolume[0];
+
+      // 4. Top Free Agent Pickup
+      const topPickup = topWaiverPickups.length > 0 ? topWaiverPickups[0] : null;
+
+      return {
+        isFaab: false,
+        bestHitRate,
+        topProducer,
+        mostActive,
+        topPickup
+      };
+    }
+  }, [faabData, ppdLedger, topWaiverPickups, isFaabActive]);
 
   const radarProfiles = useMemo(() => {
     return [...faabData].sort((a, b) => (a.user?.display_name || '').localeCompare(b.user?.display_name || ''));
@@ -266,7 +315,7 @@ export const Faab: React.FC = () => {
     }
   };
 
-  if (loading || !selectedSeason) {
+  if (faabLoading || freeAgencyLoading || !selectedSeason) {
     return (
       <div className="flex flex-col justify-center items-center h-full min-h-[60vh]">
         <div className="loading-spinner"></div>
@@ -359,149 +408,314 @@ export const Faab: React.FC = () => {
 
       {/* 4 Hero KPI Cards */}
       {heroKpis && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* 1. Top Value Steal */}
-          {heroKpis.bestPickup && (
-            <div className="glass-card p-4 rounded-xl border border-emerald-500/20 flex flex-col justify-between">
-              <div>
-                <div className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
-                  <Sparkles size={14} className="text-emerald-400" />
-                  <span>Top Waiver Steal</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <img
-                    src={`https://sleepercdn.com/content/nfl/players/thumb/${heroKpis.bestPickup.playerId}.jpg`}
-                    alt=""
-                    className="w-10 h-10 rounded-full border border-emerald-400/40 object-cover bg-black/40 shrink-0"
-                    onError={e => {
-                      (e.target as HTMLImageElement).src = 'https://sleepercdn.com/images/v2/icons/player_default.webp';
-                    }}
-                  />
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="font-bold text-white text-sm truncate">{heroKpis.bestPickup.playerName}</span>
-                      <DraftPositionBadge position={heroKpis.bestPickup.position} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 w-full">
+          {heroKpis.isFaab ? (
+            <>
+              {/* 1. Top Value Steal */}
+              {heroKpis.bestPickup && (
+                <div className="glass-card p-4 rounded-xl border border-emerald-500/20 flex flex-col justify-between">
+                  <div>
+                    <div className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                      <Sparkles size={14} className="text-emerald-400 shrink-0" />
+                      <span className="truncate">Top Waiver Steal</span>
                     </div>
-                    <div className="text-[11px] text-muted truncate mt-0.5">
-                      ${heroKpis.bestPickup.cost} • <span className="text-gray-300">{heroKpis.bestPickup.managerName}</span>{' '}
-                      <span className="text-emerald-400 font-bold font-mono">({heroKpis.bestPickup.ppd.toFixed(1)} pts/$)</span>
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={`https://sleepercdn.com/content/nfl/players/thumb/${heroKpis.bestPickup.playerId}.jpg`}
+                        alt=""
+                        className="w-10 h-10 rounded-full border border-emerald-400/40 object-cover bg-black/40 shrink-0"
+                        onError={e => {
+                          (e.target as HTMLImageElement).src = 'https://sleepercdn.com/images/v2/icons/player_default.webp';
+                        }}
+                      />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="font-bold text-white text-sm truncate">{heroKpis.bestPickup.playerName}</span>
+                          <DraftPositionBadge position={heroKpis.bestPickup.position} />
+                        </div>
+                        <div className="text-[11px] text-muted truncate mt-0.5">
+                          ${heroKpis.bestPickup.cost} • <span className="text-gray-300">{heroKpis.bestPickup.managerName}</span>{' '}
+                          <span className="text-emerald-400 font-bold font-mono">({heroKpis.bestPickup.ppd.toFixed(1)} pts/$)</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
+                  <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
+                    Highest starter points per FAAB dollar
+                  </div>
                 </div>
-              </div>
-              <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
-                Highest starter points generated per FAAB dollar spent
-              </div>
-            </div>
-          )}
+              )}
 
-          {/* 2. FAAB ROI Leader */}
-          {heroKpis.bestRoiManager && (
-            <div className="glass-card p-4 rounded-xl border border-blue-500/20 flex flex-col justify-between">
-              <div>
-                <div className="text-[11px] font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
-                  <Zap size={14} className="text-blue-400" />
-                  <span>FAAB ROI Leader</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  {heroKpis.bestRoiManager.user?.avatar ? (
-                    <img
-                      src={`https://sleepercdn.com/avatars/thumbs/${heroKpis.bestRoiManager.user.avatar}`}
-                      alt=""
-                      className="w-10 h-10 rounded-full border border-blue-400/40 object-cover shrink-0"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
-                      N/A
+              {/* 2. FAAB ROI Leader */}
+              {heroKpis.bestRoiManager && (
+                <div className="glass-card p-4 rounded-xl border border-blue-500/20 flex flex-col justify-between">
+                  <div>
+                    <div className="text-[11px] font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                      <Zap size={14} className="text-blue-400 shrink-0" />
+                      <span className="truncate">FAAB ROI Leader</span>
                     </div>
-                  )}
-                  <div className="min-w-0">
-                    <div className="font-bold text-white text-sm truncate">
-                      {heroKpis.bestRoiManager.user?.display_name || `Team ${heroKpis.bestRoiManager.roster_id}`}
-                    </div>
-                    <div className="text-xs font-mono font-bold text-blue-400 mt-0.5">
-                      {heroKpis.bestRoiManager.pointsPerDollar.toFixed(1)} pts/$ spent
+                    <div className="flex items-center gap-3">
+                      {heroKpis.bestRoiManager.user?.avatar ? (
+                        <img
+                          src={`https://sleepercdn.com/avatars/thumbs/${heroKpis.bestRoiManager.user.avatar}`}
+                          alt=""
+                          className="w-10 h-10 rounded-full border border-blue-400/40 object-cover shrink-0"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
+                          N/A
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <div className="font-bold text-white text-sm truncate">
+                          {heroKpis.bestRoiManager.user?.display_name || `Team ${heroKpis.bestRoiManager.roster_id}`}
+                        </div>
+                        <div className="text-xs font-mono font-bold text-blue-400 mt-0.5">
+                          {heroKpis.bestRoiManager.pointsPerDollar.toFixed(1)} pts/$ spent
+                        </div>
+                      </div>
                     </div>
                   </div>
+                  <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
+                    Total starter fantasy points per FAAB dollar
+                  </div>
                 </div>
-              </div>
-              <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
-                Total starter fantasy points per FAAB budget dollar
-              </div>
-            </div>
-          )}
+              )}
 
-          {/* 3. Hit Rate Leader */}
-          {heroKpis.bestHitRate && (
-            <div className="glass-card p-4 rounded-xl border border-purple-500/20 flex flex-col justify-between">
-              <div>
-                <div className="text-[11px] font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
-                  <Target size={14} className="text-purple-400" />
-                  <span>Hit Rate Leader</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  {heroKpis.bestHitRate.user?.avatar ? (
-                    <img
-                      src={`https://sleepercdn.com/avatars/thumbs/${heroKpis.bestHitRate.user.avatar}`}
-                      alt=""
-                      className="w-10 h-10 rounded-full border border-purple-400/40 object-cover shrink-0"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
-                      N/A
+              {/* 3. Hit Rate Leader */}
+              {heroKpis.bestHitRate && (
+                <div className="glass-card p-4 rounded-xl border border-purple-500/20 flex flex-col justify-between">
+                  <div>
+                    <div className="text-[11px] font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                      <Target size={14} className="text-purple-400 shrink-0" />
+                      <span className="truncate">Hit Rate Leader</span>
                     </div>
-                  )}
-                  <div className="min-w-0">
-                    <div className="font-bold text-white text-sm truncate">
-                      {heroKpis.bestHitRate.user?.display_name || `Team ${heroKpis.bestHitRate.roster_id}`}
-                    </div>
-                    <div className="text-xs font-mono font-bold text-purple-400 mt-0.5">
-                      {heroKpis.bestHitRate.rate.toFixed(0)}% starting pickups
+                    <div className="flex items-center gap-3">
+                      {heroKpis.bestHitRate.user?.avatar ? (
+                        <img
+                          src={`https://sleepercdn.com/avatars/thumbs/${heroKpis.bestHitRate.user.avatar}`}
+                          alt=""
+                          className="w-10 h-10 rounded-full border border-purple-400/40 object-cover shrink-0"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
+                          N/A
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <div className="font-bold text-white text-sm truncate">
+                          {heroKpis.bestHitRate.user?.display_name || `Team ${heroKpis.bestHitRate.roster_id}`}
+                        </div>
+                        <div className="text-xs font-mono font-bold text-purple-400 mt-0.5">
+                          {heroKpis.bestHitRate.rate.toFixed(0)}% starting pickups
+                        </div>
+                      </div>
                     </div>
                   </div>
+                  <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
+                    Highest % of additions that started ≥1 game
+                  </div>
                 </div>
-              </div>
-              <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
-                Highest % of waiver additions that started ≥1 matchup
-              </div>
-            </div>
-          )}
+              )}
 
-          {/* 4. Most Wasted FAAB */}
-          {heroKpis.mostWasted && (
-            <div className="glass-card p-4 rounded-xl border border-rose-500/20 flex flex-col justify-between">
-              <div>
-                <div className="text-[11px] font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
-                  <Flame size={14} className="text-rose-400" />
-                  <span>Most Wasted FAAB</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  {heroKpis.mostWasted.user?.avatar ? (
-                    <img
-                      src={`https://sleepercdn.com/avatars/thumbs/${heroKpis.mostWasted.user.avatar}`}
-                      alt=""
-                      className="w-10 h-10 rounded-full border border-rose-400/40 object-cover shrink-0"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
-                      N/A
+              {/* 4. Most Wasted FAAB */}
+              {heroKpis.mostWasted && (
+                <div className="glass-card p-4 rounded-xl border border-rose-500/20 flex flex-col justify-between">
+                  <div>
+                    <div className="text-[11px] font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                      <Flame size={14} className="text-rose-400 shrink-0" />
+                      <span className="truncate">Most Wasted FAAB</span>
                     </div>
-                  )}
-                  <div className="min-w-0">
-                    <div className="font-bold text-white text-sm truncate">
-                      {heroKpis.mostWasted.user?.display_name || `Team ${heroKpis.mostWasted.roster_id}`}
-                    </div>
-                    <div className="text-xs font-mono font-bold text-rose-400 mt-0.5">
-                      ${heroKpis.mostWasted.wastedFaab} burnt on bench
+                    <div className="flex items-center gap-3">
+                      {heroKpis.mostWasted.user?.avatar ? (
+                        <img
+                          src={`https://sleepercdn.com/avatars/thumbs/${heroKpis.mostWasted.user.avatar}`}
+                          alt=""
+                          className="w-10 h-10 rounded-full border border-rose-400/40 object-cover shrink-0"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
+                          N/A
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <div className="font-bold text-white text-sm truncate">
+                          {heroKpis.mostWasted.user?.display_name || `Team ${heroKpis.mostWasted.roster_id}`}
+                        </div>
+                        <div className="text-xs font-mono font-bold text-rose-400 mt-0.5 truncate">
+                          ${heroKpis.mostWasted.wastedFaab} burnt on bench
+                        </div>
+                      </div>
                     </div>
                   </div>
+                  <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
+                    FAAB spent on 0-start benchwarmers
+                  </div>
                 </div>
-              </div>
-              <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
-                FAAB spent on players who scored 0 starter points
-              </div>
-            </div>
+              )}
+            </>
+          ) : (
+            <>
+              {/* Non-FAAB Season KPIs */}
+              {/* 1. Hit Rate Leader */}
+              {heroKpis.bestHitRate && (
+                <div className="glass-card p-4 rounded-xl border border-purple-500/20 flex flex-col justify-between">
+                  <div>
+                    <div className="text-[11px] font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                      <Target size={14} className="text-purple-400 shrink-0" />
+                      <span className="truncate">Hit Rate Leader</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {heroKpis.bestHitRate.user?.avatar ? (
+                        <img
+                          src={`https://sleepercdn.com/avatars/thumbs/${heroKpis.bestHitRate.user.avatar}`}
+                          alt=""
+                          className="w-10 h-10 rounded-full border border-purple-400/40 object-cover shrink-0"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
+                          N/A
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <div className="font-bold text-white text-sm truncate">
+                          {heroKpis.bestHitRate.user?.display_name || `Team ${heroKpis.bestHitRate.roster_id}`}
+                        </div>
+                        <div className="text-xs font-mono font-bold text-purple-400 mt-0.5">
+                          {heroKpis.bestHitRate.rate.toFixed(0)}% starting pickups
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
+                    Highest % of additions that started ≥1 game
+                  </div>
+                </div>
+              )}
+
+              {/* 2. Top Waiver Producer */}
+              {heroKpis.topProducer && (
+                <div className="glass-card p-4 rounded-xl border border-blue-500/20 flex flex-col justify-between">
+                  <div>
+                    <div className="text-[11px] font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                      <Zap size={14} className="text-blue-400 shrink-0" />
+                      <span className="truncate">Top Waiver Producer</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {heroKpis.topProducer.user?.avatar ? (
+                        <img
+                          src={`https://sleepercdn.com/avatars/thumbs/${heroKpis.topProducer.user.avatar}`}
+                          alt=""
+                          className="w-10 h-10 rounded-full border border-blue-400/40 object-cover shrink-0"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
+                          N/A
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <div className="font-bold text-white text-sm truncate">
+                          {heroKpis.topProducer.user?.display_name || `Team ${heroKpis.topProducer.roster_id}`}
+                        </div>
+                        <div className="text-xs font-mono font-bold text-blue-400 mt-0.5">
+                          {heroKpis.topProducer.pointsGenerated.toFixed(1)} starter pts
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
+                    Most total starter fantasy points produced
+                  </div>
+                </div>
+              )}
+
+              {/* 3. Most Active Wire Manager */}
+              {heroKpis.mostActive && (
+                <div className="glass-card p-4 rounded-xl border border-emerald-500/20 flex flex-col justify-between">
+                  <div>
+                    <div className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                      <TrendingUp size={14} className="text-emerald-400 shrink-0" />
+                      <span className="truncate">Most Active Manager</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {heroKpis.mostActive.user?.avatar ? (
+                        <img
+                          src={`https://sleepercdn.com/avatars/thumbs/${heroKpis.mostActive.user.avatar}`}
+                          alt=""
+                          className="w-10 h-10 rounded-full border border-emerald-400/40 object-cover shrink-0"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
+                          N/A
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <div className="font-bold text-white text-sm truncate">
+                          {heroKpis.mostActive.user?.display_name || `Team ${heroKpis.mostActive.roster_id}`}
+                        </div>
+                        <div className="text-xs font-mono font-bold text-emerald-400 mt-0.5">
+                          {heroKpis.mostActive.hits + heroKpis.mostActive.busts} total additions
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
+                    Highest volume of total waiver pickups
+                  </div>
+                </div>
+              )}
+
+              {/* 4. Top Free Agent Pickup */}
+              {heroKpis.topPickup && (
+                <div className="glass-card p-4 rounded-xl border border-amber-500/20 flex flex-col justify-between">
+                  <div>
+                    <div className="text-[11px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                      <Sparkles size={14} className="text-amber-400 shrink-0" />
+                      <span className="truncate">Top Waiver Pickup</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={`https://sleepercdn.com/content/nfl/players/thumb/${heroKpis.topPickup.playerId}.jpg`}
+                        alt=""
+                        className="w-10 h-10 rounded-full border border-amber-400/40 object-cover bg-black/40 shrink-0"
+                        onError={e => {
+                          (e.target as HTMLImageElement).src = 'https://sleepercdn.com/images/v2/icons/player_default.webp';
+                        }}
+                      />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="font-bold text-white text-sm truncate">{heroKpis.topPickup.playerName}</span>
+                          <DraftPositionBadge position={heroKpis.topPickup.position} />
+                        </div>
+                        <div className="text-[11px] text-muted truncate mt-0.5">
+                          <span className="text-gray-300">{heroKpis.topPickup.managerName}</span> •{' '}
+                          <span className="text-amber-400 font-bold font-mono">{heroKpis.topPickup.starterPoints.toFixed(1)} pts</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
+                    Most starter points scored by a waiver addition
+                  </div>
+                </div>
+              )}
+            </>
           )}
+        </div>
+      )}
+
+      {/* Non-FAAB Season Banner */}
+      {!isFaabActive && (
+        <div className="glass-card p-4 rounded-xl border border-blue-500/20 bg-blue-500/5 flex items-start gap-3">
+          <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400 shrink-0 mt-0.5">
+            <TrendingUp size={18} />
+          </div>
+          <div>
+            <div className="font-bold text-white text-sm">Standard Waiver Priority Season</div>
+            <div className="text-xs text-muted mt-0.5">
+              FAAB dollar bidding was not active during the {selectedSeason.league.season} season. Waiver claims were awarded via traditional waiver priority and free agency without budget caps.
+            </div>
+          </div>
         </div>
       )}
 
@@ -549,482 +763,711 @@ export const Faab: React.FC = () => {
       {/* TAB 1: FAAB PERFORMANCE & VALUE */}
       {activeTab === 'performance' && (
         <div className="space-y-8 animate-fade-in">
-          {/* Row 1: Hit Rate & Wasted FAAB */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Hit Rate */}
-            <Card title="FAAB Hit Rate (Starter Conversion)">
-              <div className="chart-header mb-4">
-                <div className="chart-description">
-                  Percentage of FAAB additions that became viable fantasy starters (≥1 start for the manager).
-                </div>
-                <div className="chart-legend-grid pt-3 mt-3 border-t border-white/5">
-                  <div className="legend-item">
-                    <div className="legend-item-header"><span className="text-emerald-400">🟩</span> Hits</div>
-                    <div className="legend-item-desc">Started ≥1 game on roster.</div>
+          {isFaabActive ? (
+            <>
+              {/* Row 1: Hit Rate & Wasted FAAB */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Hit Rate */}
+                <Card title="FAAB Hit Rate (Starter Conversion)">
+                  <div className="chart-header mb-4">
+                    <div className="chart-description">
+                      Percentage of FAAB additions that became viable fantasy starters (≥1 start for the manager).
+                    </div>
+                    <div className="chart-legend-grid pt-3 mt-3 border-t border-white/5">
+                      <div className="legend-item">
+                        <div className="legend-item-header"><span className="text-emerald-400">🟩</span> Hits</div>
+                        <div className="legend-item-desc">Started ≥1 game on roster.</div>
+                      </div>
+                      <div className="legend-item">
+                        <div className="legend-item-header"><span className="text-rose-400">🟥</span> Busts</div>
+                        <div className="legend-item-desc">0 starts (benched or dropped).</div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="legend-item">
-                    <div className="legend-item-header"><span className="text-rose-400">🟥</span> Busts</div>
-                    <div className="legend-item-desc">0 starts (benched or dropped).</div>
+                  <MobileTapHint />
+                  <div style={{ height: 350 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={hitRateData} layout="vertical" margin={{ left: 110, right: 30, top: 10, bottom: 10 }}>
+                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.05)" />
+                        <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 12 }} domain={[0, 100]} unit="%" />
+                        <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11 }} width={100} tickMargin={8} />
+                        <RechartsTooltip
+                          cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                          contentStyle={{ backgroundColor: 'rgba(15,17,21,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}
+                          formatter={(val: any, name: any, item: any) => {
+                            if (name === 'hitPct') return [`${item.payload.hits} hits (${val}%)`, 'Hit Rate'];
+                            return [`${item.payload.busts} busts (${val}%)`, 'Bust Rate'];
+                          }}
+                        />
+                        <Bar dataKey="hitPct" stackId="a" fill="#10b981" isAnimationActive={false} name="hitPct" />
+                        <Bar dataKey="bustPct" stackId="a" fill="#f43f5e" radius={[0, 4, 4, 0]} isAnimationActive={false} name="bustPct" />
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
-                </div>
-              </div>
-              <MobileTapHint />
-              <div style={{ height: 350 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={hitRateData} layout="vertical" margin={{ left: 110, right: 30, top: 10, bottom: 10 }}>
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.05)" />
-                    <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 12 }} domain={[0, 100]} unit="%" />
-                    <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11 }} width={100} tickMargin={8} />
-                    <RechartsTooltip
-                      cursor={false}
-                      contentStyle={{ backgroundColor: 'rgba(15,17,21,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}
-                      formatter={(val: any, name: any, item: any) => {
-                        if (name === 'hitPct') return [`${item.payload.hits} hits (${val}%)`, 'Hit Rate'];
-                        return [`${item.payload.busts} busts (${val}%)`, 'Bust Rate'];
-                      }}
-                    />
-                    <Bar dataKey="hitPct" stackId="a" fill="#10b981" isAnimationActive={false} name="hitPct" />
-                    <Bar dataKey="bustPct" stackId="a" fill="#f43f5e" radius={[0, 4, 4, 0]} isAnimationActive={false} name="bustPct" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </Card>
+                </Card>
 
-            {/* Wasted FAAB */}
-            <Card title="Wasted FAAB (The Benchwarmers Fund)">
-              <div className="chart-header mb-4">
-                <div className="chart-description">
-                  Total FAAB budget spent on players who never contributed a single starter point.
-                </div>
-              </div>
-              <div className="space-y-3 overflow-y-auto pr-1.5 custom-scrollbar" style={{ maxHeight: '350px' }}>
-                {wastedFaabData.map((d, i) => {
-                  const maxWasted = Math.max(...wastedFaabData.map(w => w.wastedFaab), 1);
-                  const pct = Math.round((d.wastedFaab / maxWasted) * 100);
+                {/* Wasted FAAB */}
+                <Card title="Wasted FAAB (The Benchwarmers Fund)">
+                  <div className="chart-header mb-4">
+                    <div className="chart-description">
+                      Total FAAB budget spent on players who never contributed a single starter point.
+                    </div>
+                  </div>
+                  <div className="space-y-3 overflow-y-auto pr-1.5 custom-scrollbar" style={{ maxHeight: '350px' }}>
+                    {wastedFaabData.map((d, i) => {
+                      const maxWasted = Math.max(...wastedFaabData.map(w => w.wastedFaab), 1);
+                      const pct = Math.round((d.wastedFaab / maxWasted) * 100);
 
-                  return (
-                    <div
-                      key={d.roster_id}
-                      className="relative flex items-center justify-between p-3 rounded-xl border border-white/5 bg-black/30 hover:border-rose-500/30 transition-all overflow-hidden"
-                    >
-                      <div
-                        className="absolute top-0 left-0 bottom-0 bg-rose-500/10 pointer-events-none transition-all duration-500"
-                        style={{ width: `${pct}%` }}
-                      />
-                      <div className="flex items-center gap-3 min-w-0 relative z-10">
-                        <div className="text-xs font-mono font-bold text-rose-400 w-5 text-right shrink-0">
-                          #{i + 1}
-                        </div>
-                        {d.user?.avatar ? (
-                          <img
-                            src={`https://sleepercdn.com/avatars/thumbs/${d.user.avatar}`}
-                            alt=""
-                            className="w-9 h-9 rounded-full object-cover border border-rose-500/30 bg-black/40 shrink-0"
+                      return (
+                        <div
+                          key={d.roster_id}
+                          className="relative flex items-center justify-between p-3 rounded-xl border border-white/5 bg-black/30 hover:border-rose-500/30 transition-all overflow-hidden"
+                        >
+                          <div
+                            className="absolute top-0 left-0 bottom-0 bg-rose-500/10 pointer-events-none transition-all duration-500"
+                            style={{ width: `${pct}%` }}
                           />
-                        ) : (
-                          <div className="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
-                            N/A
+                          <div className="flex items-center gap-3 min-w-0 relative z-10">
+                            <div className="text-xs font-mono font-bold text-rose-400 w-5 text-right shrink-0">
+                              #{i + 1}
+                            </div>
+                            {d.user?.avatar ? (
+                              <img
+                                src={`https://sleepercdn.com/avatars/thumbs/${d.user.avatar}`}
+                                alt=""
+                                className="w-9 h-9 rounded-full object-cover border border-rose-500/30 bg-black/40 shrink-0"
+                              />
+                            ) : (
+                              <div className="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
+                                N/A
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <span className="font-bold text-white text-sm truncate block">
+                                {d.user?.display_name || `Team ${d.roster_id}`}
+                              </span>
+                              <div className="text-[11px] text-muted truncate">
+                                {d.busts} bust{d.busts !== 1 ? 's' : ''} on bench
+                              </div>
+                            </div>
                           </div>
-                        )}
-                        <div className="min-w-0">
-                          <span className="font-bold text-white text-sm truncate block">
-                            {d.user?.display_name || `Team ${d.roster_id}`}
-                          </span>
-                          <div className="text-[11px] text-muted truncate">
-                            {d.busts} bust{d.busts !== 1 ? 's' : ''} on bench
-                          </div>
-                        </div>
-                      </div>
 
-                      <div className="text-right shrink-0 ml-2 relative z-10">
-                        <div className="text-base font-mono font-bold text-rose-400 flex items-center gap-1">
-                          {d.wastedFaab > 0 && <span>🔥</span>}
-                          ${d.wastedFaab}
+                          <div className="text-right shrink-0 ml-2 relative z-10">
+                            <div className="text-base font-mono font-bold text-rose-400 flex items-center justify-end gap-1">
+                              {d.wastedFaab > 0 && <span>🔥</span>}
+                              <span>${d.wastedFaab}</span>
+                            </div>
+                            <div className="text-[10px] text-muted font-mono whitespace-nowrap">
+                              {d.totalFaabSpent > 0 ? `${((d.wastedFaab / d.totalFaabSpent) * 100).toFixed(0)}% of spend` : '$0 total spend'}
+                            </div>
+                          </div>
                         </div>
-                        <div className="text-[10px] text-muted font-mono">
-                          {d.totalFaabSpent > 0 ? `${((d.wastedFaab / d.totalFaabSpent) * 100).toFixed(0)}% of spend` : '$0 total spend'}
-                        </div>
-                      </div>
+                      );
+                    })}
+                  </div>
+                </Card>
+              </div>
+
+              {/* Row 2: FAAB Efficiency Bar Charts */}
+              <Card>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                  <div>
+                    <h2 className="text-xl font-bold text-white">FAAB Efficiency & Production</h2>
+                    <p className="text-sm text-muted mt-0.5">
+                      Total fantasy points unlocked through waivers compared against budget efficiency (pts/$).
+                    </p>
+                  </div>
+                  <div className="glass-toggle-container self-start sm:self-auto">
+                    <button
+                      onClick={() => setPointFilter('starters')}
+                      className={`glass-toggle-btn ${pointFilter === 'starters' ? 'active' : ''}`}
+                    >
+                      Starters Only
+                    </button>
+                    <button
+                      onClick={() => setPointFilter('bench')}
+                      className={`glass-toggle-btn ${pointFilter === 'bench' ? 'active' : ''}`}
+                    >
+                      Bench Only
+                    </button>
+                    <button
+                      onClick={() => setPointFilter('all')}
+                      className={`glass-toggle-btn ${pointFilter === 'all' ? 'active' : ''}`}
+                    >
+                      All Points
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* Total Points */}
+                  <div>
+                    <h3 className="text-xs font-bold text-muted uppercase tracking-wider mb-3">Total Points Generated</h3>
+                    <div style={{ height: 320 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={pointsData} layout="vertical" margin={{ left: 110, right: 30, top: 10, bottom: 10 }}>
+                          <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.05)" />
+                          <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 11 }} />
+                          <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11 }} width={100} tickMargin={8} />
+                          <RechartsTooltip
+                            cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                            contentStyle={{ backgroundColor: 'rgba(15,17,21,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
+                            formatter={(val: any) => [`${val} pts`, 'Points Generated']}
+                          />
+                          <Bar dataKey="points" fill="#3b82f6" radius={[0, 4, 4, 0]} isAnimationActive={false} />
+                        </BarChart>
+                      </ResponsiveContainer>
                     </div>
-                  );
-                })}
-              </div>
-            </Card>
-          </div>
+                  </div>
 
-          {/* Row 2: FAAB Efficiency Bar Charts */}
-          <Card>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-              <div>
-                <h2 className="text-xl font-bold text-white">FAAB Efficiency & Production</h2>
-                <p className="text-sm text-muted mt-0.5">
-                  Total fantasy points unlocked through waivers compared against budget efficiency (pts/$).
-                </p>
-              </div>
-              <div className="glass-toggle-container self-start sm:self-auto">
-                <button
-                  onClick={() => setPointFilter('starters')}
-                  className={`glass-toggle-btn ${pointFilter === 'starters' ? 'active' : ''}`}
-                >
-                  Starters Only
-                </button>
-                <button
-                  onClick={() => setPointFilter('bench')}
-                  className={`glass-toggle-btn ${pointFilter === 'bench' ? 'active' : ''}`}
-                >
-                  Bench Only
-                </button>
-                <button
-                  onClick={() => setPointFilter('all')}
-                  className={`glass-toggle-btn ${pointFilter === 'all' ? 'active' : ''}`}
-                >
-                  All Points
-                </button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Total Points */}
-              <div>
-                <h3 className="text-xs font-bold text-muted uppercase tracking-wider mb-3">Total Points Generated</h3>
-                <div style={{ height: 320 }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={pointsData} layout="vertical" margin={{ left: 110, right: 30, top: 10, bottom: 10 }}>
-                      <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.05)" />
-                      <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 11 }} />
-                      <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11 }} width={100} tickMargin={8} />
-                      <RechartsTooltip
-                        cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                        contentStyle={{ backgroundColor: 'rgba(15,17,21,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
-                        formatter={(val: any) => [`${val} pts`, 'Points Generated']}
-                      />
-                      <Bar dataKey="points" fill="#3b82f6" radius={[0, 4, 4, 0]} isAnimationActive={false} />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  {/* Points Per Dollar */}
+                  <div>
+                    <h3 className="text-xs font-bold text-muted uppercase tracking-wider mb-3">Points Per FAAB Dollar (VOC)</h3>
+                    <div style={{ height: 320 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={ppdData} layout="vertical" margin={{ left: 110, right: 30, top: 10, bottom: 10 }}>
+                          <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.05)" />
+                          <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 11 }} />
+                          <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11 }} width={100} tickMargin={8} />
+                          <RechartsTooltip
+                            cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                            contentStyle={{ backgroundColor: 'rgba(15,17,21,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
+                            formatter={(val: any) => [`${val} pts/$`, 'Points Per Dollar']}
+                          />
+                          <Bar dataKey="ppd" fill="#10b981" radius={[0, 4, 4, 0]} isAnimationActive={false} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </Card>
 
-              {/* Points Per Dollar */}
-              <div>
-                <h3 className="text-xs font-bold text-muted uppercase tracking-wider mb-3">Points Per FAAB Dollar (VOC)</h3>
-                <div style={{ height: 320 }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={ppdData} layout="vertical" margin={{ left: 110, right: 30, top: 10, bottom: 10 }}>
-                      <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.05)" />
-                      <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 11 }} />
-                      <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11 }} width={100} tickMargin={8} />
-                      <RechartsTooltip
-                        cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                        contentStyle={{ backgroundColor: 'rgba(15,17,21,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
-                        formatter={(val: any) => [`${val} pts/$`, 'Points Per Dollar']}
-                      />
-                      <Bar dataKey="ppd" fill="#10b981" radius={[0, 4, 4, 0]} isAnimationActive={false} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          {/* Row 3: FAAB Value Index (pts/$) */}
-          <Card title="FAAB Value Index (pts/$)">
-            <div className="chart-header mb-4">
-              <div className="chart-description">
-                Top individual waiver wire steals ranked by starter points created per dollar spent. Excludes $0 acquisitions.
-              </div>
-            </div>
-            <div className="space-y-3 overflow-y-auto pr-1.5 custom-scrollbar" style={{ maxHeight: '520px' }}>
-              {ppdLedger.map((asset, idx) => {
-                const isTop3 = idx < 3;
-                const rankBadgeClass =
-                  idx === 0
-                    ? 'text-amber-400 border-amber-500/40 bg-amber-500/10'
-                    : idx === 1
-                    ? 'text-slate-300 border-slate-400/40 bg-slate-400/10'
-                    : idx === 2
-                    ? 'text-amber-600 border-amber-700/40 bg-amber-700/10'
-                    : 'text-muted border-white/5 bg-white/5';
-
-                return (
-                  <div
-                    key={`ppd-${asset.playerId}-${idx}`}
-                    className={`flex items-center justify-between p-3.5 rounded-xl border transition-all hover:bg-white/[0.04] group ${
-                      isTop3 ? 'border-emerald-500/30 bg-black/40' : 'border-white/5 bg-black/25'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3.5 min-w-0">
-                      <div
-                        className={`w-7 h-7 rounded-lg border font-mono font-bold text-xs flex items-center justify-center shrink-0 ${rankBadgeClass}`}
+              {/* Row 3: FAAB Value Index (pts/$) */}
+              <Card>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                  <div>
+                    <h2 className="text-xl font-bold text-white">FAAB Value Index (pts/$)</h2>
+                    <p className="text-sm text-muted mt-0.5">
+                      Top individual waiver wire steals ranked by starter points created per dollar spent. Excludes $0 acquisitions.
+                    </p>
+                  </div>
+                  {/* Position Filter Pills */}
+                  <div className="flex flex-wrap items-center gap-1.5 bg-black/40 p-1 rounded-xl border border-white/10 shrink-0">
+                    {['ALL', 'QB', 'RB', 'WR', 'TE', 'IDP', 'K'].map(pos => (
+                      <button
+                        key={pos}
+                        onClick={() => setPosFilter(pos)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                          posFilter === pos
+                            ? 'bg-emerald-500 text-black shadow-sm'
+                            : 'text-gray-400 hover:text-white hover:bg-white/5'
+                        }`}
                       >
-                        #{idx + 1}
-                      </div>
+                        {pos}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-                      {/* Player Headshot */}
-                      <img
-                        src={`https://sleepercdn.com/content/nfl/players/thumb/${asset.playerId}.jpg`}
-                        alt=""
-                        className="w-10 h-10 rounded-full object-cover border border-emerald-500/30 bg-black/40 shrink-0"
-                        onError={e => {
-                          (e.target as HTMLImageElement).src =
-                            'https://sleepercdn.com/images/v2/icons/player_default.webp';
-                        }}
-                      />
+                <div className="space-y-3 overflow-y-auto pr-1.5 custom-scrollbar" style={{ maxHeight: '520px' }}>
+                  {ppdLedger.map((asset, idx) => {
+                    const isTop3 = idx < 3;
+                    const rankBadgeClass =
+                      idx === 0
+                        ? 'text-amber-400 border-amber-500/40 bg-amber-500/10'
+                        : idx === 1
+                        ? 'text-slate-300 border-slate-400/40 bg-slate-400/10'
+                        : idx === 2
+                        ? 'text-amber-600 border-amber-700/40 bg-amber-700/10'
+                        : 'text-muted border-white/5 bg-white/5';
 
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="font-bold text-white text-sm sm:text-base truncate group-hover:text-emerald-400 transition-colors">
-                            {asset.playerName}
-                          </span>
-                          <DraftPositionBadge position={asset.position} />
+                    return (
+                      <div
+                        key={`ppd-${asset.playerId}-${idx}`}
+                        className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl border transition-all hover:bg-white/[0.04] group ${
+                          isTop3 ? 'border-emerald-500/30 bg-black/40' : 'border-white/5 bg-black/25'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3.5 min-w-0">
+                          <div
+                            className={`w-7 h-7 rounded-lg border font-mono font-bold text-xs flex items-center justify-center shrink-0 ${rankBadgeClass}`}
+                          >
+                            #{idx + 1}
+                          </div>
+
+                          {/* Player Headshot */}
+                          <img
+                            src={`https://sleepercdn.com/content/nfl/players/thumb/${asset.playerId}.jpg`}
+                            alt=""
+                            className="w-10 h-10 rounded-full object-cover border border-emerald-500/30 bg-black/40 shrink-0"
+                            onError={e => {
+                              (e.target as HTMLImageElement).src =
+                                'https://sleepercdn.com/images/v2/icons/player_default.webp';
+                            }}
+                          />
+
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 min-w-0 flex-wrap sm:flex-nowrap">
+                              <span className="font-bold text-white text-sm sm:text-base group-hover:text-emerald-400 transition-colors">
+                                {asset.playerName}
+                              </span>
+                              <DraftPositionBadge position={asset.position} />
+                            </div>
+                            <div className="text-xs text-muted truncate mt-0.5 flex items-center gap-1.5 flex-wrap">
+                              <span className="text-emerald-400 font-bold font-mono">${asset.cost} FAAB</span>
+                              <span>•</span>
+                              <span className="text-gray-300 font-medium">{asset.managerName}</span>
+                              <span>•</span>
+                              <span>Wk {asset.weekAcquired} ({asset.weeksStarted} starts)</span>
+                            </div>
+                          </div>
                         </div>
-                        <div className="text-xs text-muted truncate mt-0.5 flex items-center gap-1.5">
-                          <span className="text-emerald-400 font-bold font-mono">${asset.cost} FAAB</span>
-                          <span>•</span>
-                          <span className="text-gray-300 font-medium">{asset.managerName}</span>
-                          <span>•</span>
-                          <span>Wk {asset.weekAcquired} ({asset.weeksStarted} starts)</span>
+
+                        <div className="text-left sm:text-right shrink-0 sm:ml-3 pl-10 sm:pl-0 border-t sm:border-t-0 border-white/5 pt-2 sm:pt-0 flex sm:flex-col sm:items-end justify-between">
+                          <div className="text-base sm:text-lg font-mono font-bold text-emerald-400">
+                            {asset.ppd.toFixed(1)}{' '}
+                            <span className="text-xs text-muted font-normal">pts/$</span>
+                          </div>
+                          <div className="text-[11px] text-muted font-mono">
+                            {asset.starterPoints.toFixed(1)} starter pts
+                          </div>
                         </div>
                       </div>
+                    );
+                  })}
+
+                  {ppdLedger.length === 0 && (
+                    <div className="p-12 text-center text-muted italic bg-white/[0.01] rounded-xl border border-dashed border-white/10">
+                      No paid FAAB data recorded for this position in this season.
                     </div>
-
-                    <div className="text-right shrink-0 ml-3">
-                      <div className="text-base sm:text-lg font-mono font-bold text-emerald-400">
-                        {asset.ppd.toFixed(1)}{' '}
-                        <span className="text-xs text-muted font-normal">pts/$</span>
+                  )}
+                </div>
+              </Card>
+            </>
+          ) : (
+            <>
+              {/* Free Waiver Priority Season Layout */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Hit Rate */}
+                <Card title="Waiver Hit Rate (Starter Conversion)">
+                  <div className="chart-header mb-4">
+                    <div className="chart-description">
+                      Percentage of waiver pickups that started ≥1 matchup on the acquiring manager's roster.
+                    </div>
+                    <div className="chart-legend-grid pt-3 mt-3 border-t border-white/5">
+                      <div className="legend-item">
+                        <div className="legend-item-header"><span className="text-emerald-400">🟩</span> Hits</div>
+                        <div className="legend-item-desc">Started ≥1 game on roster.</div>
                       </div>
-                      <div className="text-[11px] text-muted font-mono">
-                        {asset.starterPoints.toFixed(1)} starter pts
+                      <div className="legend-item">
+                        <div className="legend-item-header"><span className="text-rose-400">🟥</span> Busts</div>
+                        <div className="legend-item-desc">0 starts (benched or dropped).</div>
                       </div>
                     </div>
                   </div>
-                );
-              })}
+                  <MobileTapHint />
+                  <div style={{ height: 360 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={hitRateData} layout="vertical" margin={{ left: 110, right: 30, top: 10, bottom: 10 }}>
+                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.05)" />
+                        <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 12 }} domain={[0, 100]} unit="%" />
+                        <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11 }} width={100} tickMargin={8} />
+                        <RechartsTooltip
+                          cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                          contentStyle={{ backgroundColor: 'rgba(15,17,21,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
+                          formatter={(val: any, name: any, item: any) => {
+                            if (name === 'hitPct') return [`${item.payload.hits} hits (${val}%)`, 'Hit Rate'];
+                            return [`${item.payload.busts} busts (${val}%)`, 'Bust Rate'];
+                          }}
+                        />
+                        <Bar dataKey="hitPct" stackId="a" fill="#10b981" isAnimationActive={false} name="hitPct" />
+                        <Bar dataKey="bustPct" stackId="a" fill="#f43f5e" radius={[0, 4, 4, 0]} isAnimationActive={false} name="bustPct" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </Card>
 
-              {ppdLedger.length === 0 && (
-                <div className="p-12 text-center text-muted italic bg-white/[0.01] rounded-xl border border-dashed border-white/10">
-                  No paid FAAB data recorded for this season.
+                {/* Total Points Generated */}
+                <Card>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                    <div>
+                      <h2 className="text-xl font-bold text-white">Waiver Points Generated</h2>
+                      <p className="text-sm text-muted mt-0.5">
+                        Total fantasy points contributed by all in-season waiver additions.
+                      </p>
+                    </div>
+                    <div className="glass-toggle-container self-start sm:self-auto shrink-0">
+                      <button
+                        onClick={() => setPointFilter('starters')}
+                        className={`glass-toggle-btn ${pointFilter === 'starters' ? 'active' : ''}`}
+                      >
+                        Starters
+                      </button>
+                      <button
+                        onClick={() => setPointFilter('bench')}
+                        className={`glass-toggle-btn ${pointFilter === 'bench' ? 'active' : ''}`}
+                      >
+                        Bench
+                      </button>
+                      <button
+                        onClick={() => setPointFilter('all')}
+                        className={`glass-toggle-btn ${pointFilter === 'all' ? 'active' : ''}`}
+                      >
+                        All
+                      </button>
+                    </div>
+                  </div>
+                  <MobileTapHint />
+                  <div style={{ height: 360 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={pointsData} layout="vertical" margin={{ left: 110, right: 30, top: 10, bottom: 10 }}>
+                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.05)" />
+                        <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 11 }} />
+                        <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11 }} width={100} tickMargin={8} />
+                        <RechartsTooltip
+                          cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                          contentStyle={{ backgroundColor: 'rgba(15,17,21,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
+                          formatter={(val: any) => [`${val} pts`, 'Points Generated']}
+                        />
+                        <Bar dataKey="points" fill="#3b82f6" radius={[0, 4, 4, 0]} isAnimationActive={false} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </Card>
+              </div>
+
+              {/* Top Waiver Additions Leaderboard */}
+              <Card>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                  <div>
+                    <h2 className="text-xl font-bold text-white">Top Waiver Wire Additions</h2>
+                    <p className="text-sm text-muted mt-0.5">
+                      Most impactful free agent and waiver pickups ranked by total fantasy starter points produced.
+                    </p>
+                  </div>
+                  {/* Position Filter Pills */}
+                  <div className="flex flex-wrap items-center gap-1.5 bg-black/40 p-1 rounded-xl border border-white/10 shrink-0">
+                    {['ALL', 'QB', 'RB', 'WR', 'TE', 'IDP', 'K'].map(pos => (
+                      <button
+                        key={pos}
+                        onClick={() => setPosFilter(pos)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                          posFilter === pos
+                            ? 'bg-amber-500 text-black shadow-sm'
+                            : 'text-gray-400 hover:text-white hover:bg-white/5'
+                        }`}
+                      >
+                        {pos}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              )}
-            </div>
-          </Card>
+
+                <div className="space-y-3 overflow-y-auto pr-1.5 custom-scrollbar" style={{ maxHeight: '480px' }}>
+                  {topWaiverPickups.map((asset, idx) => {
+                    const isTop3 = idx < 3;
+                    const rankBadgeClass =
+                      idx === 0
+                        ? 'text-amber-400 border-amber-500/40 bg-amber-500/10'
+                        : idx === 1
+                        ? 'text-slate-300 border-slate-400/40 bg-slate-400/10'
+                        : idx === 2
+                        ? 'text-amber-600 border-amber-700/40 bg-amber-700/10'
+                        : 'text-muted border-white/5 bg-white/5';
+
+                    return (
+                      <div
+                        key={`top-pickup-${asset.playerId}-${idx}`}
+                        className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl border transition-all hover:bg-white/[0.04] group ${
+                          isTop3 ? 'border-amber-500/30 bg-black/40' : 'border-white/5 bg-black/25'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3.5 min-w-0">
+                          <div
+                            className={`w-7 h-7 rounded-lg border font-mono font-bold text-xs flex items-center justify-center shrink-0 ${rankBadgeClass}`}
+                          >
+                            #{idx + 1}
+                          </div>
+
+                          <img
+                            src={`https://sleepercdn.com/content/nfl/players/thumb/${asset.playerId}.jpg`}
+                            alt=""
+                            className="w-10 h-10 rounded-full object-cover border border-amber-500/30 bg-black/40 shrink-0"
+                            onError={e => {
+                              (e.target as HTMLImageElement).src =
+                                'https://sleepercdn.com/images/v2/icons/player_default.webp';
+                            }}
+                          />
+
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 min-w-0 flex-wrap sm:flex-nowrap">
+                              <span className="font-bold text-white text-sm sm:text-base group-hover:text-amber-400 transition-colors">
+                                {asset.playerName}
+                              </span>
+                              <DraftPositionBadge position={asset.position} />
+                            </div>
+                            <div className="text-xs text-muted truncate mt-0.5 flex items-center gap-1.5 flex-wrap">
+                              <span className="text-gray-300 font-medium">{asset.managerName}</span>
+                              <span>•</span>
+                              <span>Wk {asset.weekAcquired} ({asset.weeksStarted} starts)</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="text-left sm:text-right shrink-0 sm:ml-3 pl-10 sm:pl-0 border-t sm:border-t-0 border-white/5 pt-2 sm:pt-0 flex sm:flex-col sm:items-end justify-between">
+                          <div className="text-base sm:text-lg font-mono font-bold text-amber-400">
+                            {asset.starterPoints.toFixed(1)}{' '}
+                            <span className="text-xs text-muted font-normal">pts</span>
+                          </div>
+                          <div className="text-[11px] text-muted font-mono">
+                            {asset.weeksStarted} starts
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {topWaiverPickups.length === 0 && (
+                    <div className="p-12 text-center text-muted italic bg-white/[0.01] rounded-xl border border-dashed border-white/10">
+                      No waiver data recorded for this position in this season.
+                    </div>
+                  )}
+                </div>
+              </Card>
+            </>
+          )}
         </div>
       )}
 
       {/* TAB 2: BIDDING STRATEGY & MARKET DYNAMICS */}
       {activeTab === 'strategy' && (
         <div className="space-y-8 animate-fade-in">
-          {/* Row 1: Bid Aggressiveness & FAAB ROI Matrices */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Bid Aggressiveness Matrix */}
-            <Card title="Bid Aggressiveness Matrix">
-              <div className="chart-header">
-                <div className="chart-description">
-                  Compares average winning bid against margin of victory (how much more they bid than the runner-up).
-                </div>
-                <div className="chart-legend-grid">
-                  <div className="legend-item">
-                    <div className="legend-item-header">👻 Uncontested Overpays</div>
-                    <div className="legend-item-desc">High margin of victory on moderate bids (bidding against nobody).</div>
+          {isFaabActive ? (
+            <>
+              {/* Row 1: Bid Aggressiveness & FAAB ROI Matrices */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Bid Aggressiveness Matrix */}
+                <Card title="Bid Aggressiveness Matrix">
+                  <div className="chart-header">
+                    <div className="chart-description">
+                      Compares average winning bid against margin of victory (how much more they bid than the runner-up).
+                    </div>
+                    <div className="chart-legend-grid">
+                      <div className="legend-item">
+                        <div className="legend-item-header">👻 Uncontested Overpays</div>
+                        <div className="legend-item-desc">High margin of victory on moderate bids (bidding against nobody).</div>
+                      </div>
+                      <div className="legend-item">
+                        <div className="legend-item-header">💥 Massive Overpays</div>
+                        <div className="legend-item-desc">Huge bids that far outpaced all runner-up offers.</div>
+                      </div>
+                      <div className="legend-item">
+                        <div className="legend-item-header">🛒 Bargain Hunters</div>
+                        <div className="legend-item-desc">Cheap bids with thin margins of victory.</div>
+                      </div>
+                      <div className="legend-item">
+                        <div className="legend-item-header">🎯 Market Experts</div>
+                        <div className="legend-item-desc">Heavy spending with razor-thin victory margins.</div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="legend-item">
-                    <div className="legend-item-header">💥 Massive Overpays</div>
-                    <div className="legend-item-desc">Huge bids that far outpaced all runner-up offers.</div>
+                  <MobileTapHint />
+                  <div style={{ height: 350 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <ScatterChart margin={{ top: 20, right: 30, bottom: 30, left: 20 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                        <XAxis type="number" dataKey="averageBidAmount" name="Avg Bid" stroke="#94a3b8" tick={{ fontSize: 12 }}>
+                          <Label value="Avg Winning Bid ($)" position="insideBottom" offset={-15} fill="#64748b" style={{ fontSize: '0.75rem', fontWeight: 500 }} />
+                        </XAxis>
+                        <YAxis type="number" dataKey="averageRunnerUpDelta" name="Margin of Victory" stroke="#94a3b8" tick={{ fontSize: 12 }}>
+                          <Label value="Avg Runner-Up Delta ($)" angle={-90} position="insideLeft" offset={10} style={{ textAnchor: 'middle', fill: '#64748b', fontSize: '0.75rem', fontWeight: 500 }} />
+                        </YAxis>
+                        <RechartsTooltip content={<CustomScatterTooltip />} cursor={{ strokeDasharray: '3 3', stroke: 'rgba(255,255,255,0.1)' }} />
+                        <ReferenceLine x={scatterAvgs.averageBidAmount} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" />
+                        <ReferenceLine y={scatterAvgs.averageRunnerUpDelta} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" />
+                        <Scatter name="Teams" data={scatterDataOverpay} shape={<CustomAvatarDot />} />
+                      </ScatterChart>
+                    </ResponsiveContainer>
                   </div>
-                  <div className="legend-item">
-                    <div className="legend-item-header">🛒 Bargain Hunters</div>
-                    <div className="legend-item-desc">Cheap bids with thin margins of victory.</div>
-                  </div>
-                  <div className="legend-item">
-                    <div className="legend-item-header">🎯 Market Experts</div>
-                    <div className="legend-item-desc">Heavy spending with razor-thin victory margins.</div>
-                  </div>
-                </div>
-              </div>
-              <MobileTapHint />
-              <div style={{ height: 350 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <ScatterChart margin={{ top: 20, right: 30, bottom: 30, left: 20 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                    <XAxis type="number" dataKey="averageBidAmount" name="Avg Bid" stroke="#94a3b8" tick={{ fontSize: 12 }}>
-                      <Label value="Avg Winning Bid ($)" position="insideBottom" offset={-15} fill="#64748b" style={{ fontSize: '0.75rem', fontWeight: 500 }} />
-                    </XAxis>
-                    <YAxis type="number" dataKey="averageRunnerUpDelta" name="Margin of Victory" stroke="#94a3b8" tick={{ fontSize: 12 }}>
-                      <Label value="Avg Runner-Up Delta ($)" angle={-90} position="insideLeft" offset={10} style={{ textAnchor: 'middle', fill: '#64748b', fontSize: '0.75rem', fontWeight: 500 }} />
-                    </YAxis>
-                    <RechartsTooltip content={<CustomScatterTooltip />} cursor={{ strokeDasharray: '3 3', stroke: 'rgba(255,255,255,0.1)' }} />
-                    <ReferenceLine x={scatterAvgs.averageBidAmount} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" />
-                    <ReferenceLine y={scatterAvgs.averageRunnerUpDelta} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" />
-                    <Scatter name="Teams" data={scatterDataOverpay} shape={<CustomAvatarDot />} />
-                  </ScatterChart>
-                </ResponsiveContainer>
-              </div>
-            </Card>
+                </Card>
 
-            {/* FAAB ROI vs Win Rate */}
-            <Card title="FAAB ROI vs Win Rate">
-              <div className="chart-header">
-                <div className="chart-description">
-                  Correlates FAAB Efficiency (Starter points per dollar spent) with regular season win percentage.
-                </div>
-                <div className="chart-legend-grid">
-                  <div className="legend-item">
-                    <div className="legend-item-header">🏋️ Won Despite Bad Pickups</div>
-                    <div className="legend-item-desc">High win % achieved despite low waiver efficiency.</div>
+                {/* FAAB ROI vs Win Rate */}
+                <Card title="FAAB ROI vs Win Rate">
+                  <div className="chart-header">
+                    <div className="chart-description">
+                      Correlates FAAB Efficiency (Starter points per dollar spent) with regular season win percentage.
+                    </div>
+                    <div className="chart-legend-grid">
+                      <div className="legend-item">
+                        <div className="legend-item-header">🏋️ Won Despite Bad Pickups</div>
+                        <div className="legend-item-desc">High win % achieved despite low waiver efficiency.</div>
+                      </div>
+                      <div className="legend-item">
+                        <div className="legend-item-header">👑 Waiver Wire Masters</div>
+                        <div className="legend-item-desc">Elite FAAB efficiency directly powered high win rates.</div>
+                      </div>
+                      <div className="legend-item">
+                        <div className="legend-item-header">💀 Complete Whiffs</div>
+                        <div className="legend-item-desc">Low FAAB efficiency matched poor overall record.</div>
+                      </div>
+                      <div className="legend-item">
+                        <div className="legend-item-header">💎 Great Pickups, Bad Team</div>
+                        <div className="legend-item-desc">Outstanding waiver steals sunk by other roster holes.</div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="legend-item">
-                    <div className="legend-item-header">👑 Waiver Wire Masters</div>
-                    <div className="legend-item-desc">Elite FAAB efficiency directly powered high win rates.</div>
+                  <MobileTapHint />
+                  <div style={{ height: 350 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <ScatterChart margin={{ top: 20, right: 30, bottom: 30, left: 20 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                        <XAxis type="number" dataKey="faabEfficiency" name="FAAB Efficiency" stroke="#94a3b8" tick={{ fontSize: 12 }}>
+                          <Label value="FAAB Efficiency (pts/$)" position="insideBottom" offset={-15} fill="#64748b" style={{ fontSize: '0.75rem', fontWeight: 500 }} />
+                        </XAxis>
+                        <YAxis type="number" dataKey="winPct" name="Win %" stroke="#94a3b8" tick={{ fontSize: 12 }}>
+                          <Label value="Win %" angle={-90} position="insideLeft" offset={10} style={{ textAnchor: 'middle', fill: '#64748b', fontSize: '0.75rem', fontWeight: 500 }} />
+                        </YAxis>
+                        <RechartsTooltip content={<CustomScatterTooltip />} cursor={{ strokeDasharray: '3 3', stroke: 'rgba(255,255,255,0.1)' }} />
+                        <ReferenceLine x={scatterAvgs.faabEfficiency} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" />
+                        <ReferenceLine y={scatterAvgs.winPct} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" />
+                        <Scatter name="Teams" data={scatterDataWins} shape={<CustomAvatarDot />} />
+                      </ScatterChart>
+                    </ResponsiveContainer>
                   </div>
-                  <div className="legend-item">
-                    <div className="legend-item-header">💀 Complete Whiffs</div>
-                    <div className="legend-item-desc">Low FAAB efficiency matched poor overall record.</div>
-                  </div>
-                  <div className="legend-item">
-                    <div className="legend-item-header">💎 Great Pickups, Bad Team</div>
-                    <div className="legend-item-desc">Outstanding waiver steals sunk by other roster holes.</div>
-                  </div>
-                </div>
+                </Card>
               </div>
-              <MobileTapHint />
-              <div style={{ height: 350 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <ScatterChart margin={{ top: 20, right: 30, bottom: 30, left: 20 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                    <XAxis type="number" dataKey="faabEfficiency" name="FAAB Efficiency" stroke="#94a3b8" tick={{ fontSize: 12 }}>
-                      <Label value="FAAB Efficiency (pts/$)" position="insideBottom" offset={-15} fill="#64748b" style={{ fontSize: '0.75rem', fontWeight: 500 }} />
-                    </XAxis>
-                    <YAxis type="number" dataKey="winPct" name="Win %" stroke="#94a3b8" tick={{ fontSize: 12 }}>
-                      <Label value="Win %" angle={-90} position="insideLeft" offset={10} style={{ textAnchor: 'middle', fill: '#64748b', fontSize: '0.75rem', fontWeight: 500 }} />
-                    </YAxis>
-                    <RechartsTooltip content={<CustomScatterTooltip />} cursor={{ strokeDasharray: '3 3', stroke: 'rgba(255,255,255,0.1)' }} />
-                    <ReferenceLine x={scatterAvgs.faabEfficiency} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" />
-                    <ReferenceLine y={scatterAvgs.winPct} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" />
-                    <Scatter name="Teams" data={scatterDataWins} shape={<CustomAvatarDot />} />
-                  </ScatterChart>
-                </ResponsiveContainer>
-              </div>
-            </Card>
-          </div>
 
-          {/* Row 2: Spending Velocity */}
-          <Card title="Spending Velocity">
-            <div className="chart-header mb-4">
-              <div className="chart-description">
-                Cumulative FAAB expenditure by week. Click manager pills below the chart to isolate specific spending trajectories.
-              </div>
-            </div>
-            <MobileTapHint />
-            <div style={{ height: 420 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={velocityData} margin={{ top: 10, right: 20, left: 10, bottom: 10 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                  <XAxis dataKey="week" stroke="#94a3b8" tick={{ fontSize: 11 }} />
-                  <YAxis stroke="#94a3b8" tick={{ fontSize: 11 }}>
-                    <Label value="Cumulative Spent ($)" angle={-90} position="insideLeft" offset={10} style={{ textAnchor: 'middle', fill: '#64748b', fontSize: '0.75rem', fontWeight: 500 }} />
-                  </YAxis>
-                  <RechartsTooltip
-                    contentStyle={{ backgroundColor: 'rgba(15,17,21,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}
-                  />
+              {/* Row 2: Spending Velocity */}
+              <Card title="Spending Velocity">
+                <div className="chart-header mb-4">
+                  <div className="chart-description">
+                    Cumulative FAAB expenditure by week. Click manager pills below the chart to isolate specific spending trajectories.
+                  </div>
+                </div>
+                <MobileTapHint />
+                <div style={{ height: 420 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={velocityData} margin={{ top: 10, right: 20, left: 10, bottom: 10 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                      <XAxis dataKey="week" stroke="#94a3b8" tick={{ fontSize: 11 }} />
+                      <YAxis stroke="#94a3b8" tick={{ fontSize: 11 }}>
+                        <Label value="Cumulative Spent ($)" angle={-90} position="insideLeft" offset={10} style={{ textAnchor: 'middle', fill: '#64748b', fontSize: '0.75rem', fontWeight: 500 }} />
+                      </YAxis>
+                      <RechartsTooltip
+                        contentStyle={{ backgroundColor: 'rgba(15,17,21,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}
+                      />
+                      {faabData.map((d, i) => {
+                        const name = d.user?.display_name || `Team ${d.roster_id}`;
+                        return (
+                          <Line
+                            key={d.roster_id}
+                            type="monotone"
+                            dataKey={name}
+                            stroke={TEAM_COLORS[i % TEAM_COLORS.length]}
+                            strokeWidth={2.5}
+                            dot={{ r: 3, fill: TEAM_COLORS[i % TEAM_COLORS.length] }}
+                            activeDot={{ r: 6 }}
+                            connectNulls={true}
+                            isAnimationActive={false}
+                            hide={hiddenTeams.includes(name)}
+                          />
+                        );
+                      })}
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="flex flex-wrap justify-center gap-2 mt-6 border-t border-white/5 pt-4">
                   {faabData.map((d, i) => {
                     const name = d.user?.display_name || `Team ${d.roster_id}`;
+                    const isHidden = hiddenTeams.includes(name);
                     return (
-                      <Line
+                      <button
                         key={d.roster_id}
-                        type="monotone"
-                        dataKey={name}
-                        stroke={TEAM_COLORS[i % TEAM_COLORS.length]}
-                        strokeWidth={2.5}
-                        dot={{ r: 3, fill: TEAM_COLORS[i % TEAM_COLORS.length] }}
-                        activeDot={{ r: 6 }}
-                        connectNulls={true}
-                        isAnimationActive={false}
-                        hide={hiddenTeams.includes(name)}
-                      />
+                        onClick={() => toggleTeam(name)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer flex items-center gap-2 ${
+                          isHidden
+                            ? 'bg-black/20 text-gray-500 border-white/5'
+                            : 'bg-black/40 text-white border-white/15 hover:border-white/30'
+                        }`}
+                      >
+                        <span style={{ color: TEAM_COLORS[i % TEAM_COLORS.length], fontSize: '0.9rem' }}>●</span>
+                        <span className="truncate">{name}</span>
+                      </button>
                     );
                   })}
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="flex flex-wrap justify-center gap-2 mt-6 border-t border-white/5 pt-4">
-              {faabData.map((d, i) => {
-                const name = d.user?.display_name || `Team ${d.roster_id}`;
-                const isHidden = hiddenTeams.includes(name);
-                return (
-                  <button
-                    key={d.roster_id}
-                    onClick={() => toggleTeam(name)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer flex items-center gap-2 ${
-                      isHidden
-                        ? 'bg-black/20 text-gray-500 border-white/5'
-                        : 'bg-black/40 text-white border-white/15 hover:border-white/30'
-                    }`}
-                  >
-                    <span style={{ color: TEAM_COLORS[i % TEAM_COLORS.length], fontSize: '0.9rem' }}>●</span>
-                    <span className="truncate">{name}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </Card>
+                </div>
+              </Card>
 
-          {/* Row 3: Positional FAAB Strategy Map */}
-          <Card title="Positional FAAB Strategy Map">
-            <div className="chart-header mb-4">
-              <div className="chart-description">
-                Distribution of FAAB spending by position. Axes are normalized (0-100%) against the league's maximum spender at each position.
-                <span className="block mt-1 text-[11px] text-muted/80">
-                  👆 Click manager pills below to compare spending profiles (showing {activeRadarProfiles.length}/4 selected).
-                </span>
+              {/* Row 3: Positional FAAB Strategy Map */}
+              <Card title="Positional FAAB Strategy Map">
+                <div className="chart-header mb-4">
+                  <div className="chart-description">
+                    Distribution of FAAB spending by position. Axes are normalized (0-100%) against the league's maximum spender at each position.
+                    <span className="block mt-1 text-[11px] text-muted/80">
+                      👆 Click manager pills below to compare spending profiles (showing {activeRadarProfiles.length}/4 selected).
+                    </span>
+                  </div>
+                </div>
+                <div style={{ height: 360 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart outerRadius="75%" data={radarData}>
+                      <PolarGrid stroke="rgba(255,255,255,0.1)" />
+                      <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 600 }} />
+                      <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                      <RechartsTooltip content={<CustomRadarTooltip />} cursor={false} />
+                      {activeRadarProfiles.map((p, idx) => (
+                        <Radar
+                          key={p.roster_id}
+                          name={p.user?.display_name || `Team ${p.roster_id}`}
+                          dataKey={`data${idx}`}
+                          stroke={CHART_COLORS[idx]}
+                          fill={CHART_COLORS[idx]}
+                          fillOpacity={0.25}
+                          strokeWidth={2}
+                        />
+                      ))}
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="flex flex-wrap justify-center gap-2 mt-6 border-t border-white/5 pt-4 w-full">
+                  {radarProfiles.map(p => {
+                    const activeIdx = radarMgrs.indexOf(p.roster_id);
+                    const isActive = activeIdx !== -1;
+                    const color = isActive ? CHART_COLORS[activeIdx] : '#64748b';
+
+                    return (
+                      <button
+                        key={p.roster_id}
+                        onClick={() => handleToggle(p.roster_id)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer flex items-center gap-2 ${
+                          isActive
+                            ? 'bg-black/60 text-white shadow-md'
+                            : 'bg-black/20 text-gray-400 border-white/5 hover:border-white/15'
+                        }`}
+                        style={{
+                          borderColor: isActive ? color : undefined
+                        }}
+                      >
+                        <div className="w-2.5 h-2.5 rounded-full" style={{ background: color }}></div>
+                        <span className="truncate">{p.user?.display_name || `Team ${p.roster_id}`}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </Card>
+            </>
+          ) : (
+            <Card>
+              <div className="p-12 text-center text-muted">
+                <div className="text-3xl mb-3">🏷️</div>
+                <div className="font-bold text-white text-base">Bidding Strategy Not Applicable</div>
+                <div className="text-xs text-muted max-w-md mx-auto mt-1">
+                  FAAB dollar bids and spending velocity metrics are exclusive to seasons with active FAAB waiver budgets. The {selectedSeason.league.season} season used traditional rolling waiver priority.
+                </div>
               </div>
-            </div>
-            <div style={{ height: 360 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart outerRadius="75%" data={radarData}>
-                  <PolarGrid stroke="rgba(255,255,255,0.1)" />
-                  <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 600 }} />
-                  <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                  <RechartsTooltip content={<CustomRadarTooltip />} cursor={false} />
-                  {activeRadarProfiles.map((p, idx) => (
-                    <Radar
-                      key={p.roster_id}
-                      name={p.user?.display_name || `Team ${p.roster_id}`}
-                      dataKey={`data${idx}`}
-                      stroke={CHART_COLORS[idx]}
-                      fill={CHART_COLORS[idx]}
-                      fillOpacity={0.25}
-                      strokeWidth={2}
-                    />
-                  ))}
-                </RadarChart>
-              </ResponsiveContainer>
-            </div>
-
-            <div className="flex flex-wrap justify-center gap-2 mt-6 border-t border-white/5 pt-4 w-full">
-              {radarProfiles.map(p => {
-                const activeIdx = radarMgrs.indexOf(p.roster_id);
-                const isActive = activeIdx !== -1;
-                const color = isActive ? CHART_COLORS[activeIdx] : '#64748b';
-
-                return (
-                  <button
-                    key={p.roster_id}
-                    onClick={() => handleToggle(p.roster_id)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer flex items-center gap-2 ${
-                      isActive
-                        ? 'bg-black/60 text-white shadow-md'
-                        : 'bg-black/20 text-gray-400 border-white/5 hover:border-white/15'
-                    }`}
-                    style={{
-                      borderColor: isActive ? color : undefined
-                    }}
-                  >
-                    <div className="w-2.5 h-2.5 rounded-full" style={{ background: color }}></div>
-                    <span className="truncate">{p.user?.display_name || `Team ${p.roster_id}`}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </Card>
+            </Card>
+          )}
         </div>
       )}
     </div>
