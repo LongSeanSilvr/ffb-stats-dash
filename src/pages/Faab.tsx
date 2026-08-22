@@ -118,6 +118,7 @@ export const Faab: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'performance' | 'strategy'>('performance');
   const [pointFilter, setPointFilter] = useState<'all' | 'starters' | 'bench'>('starters');
   const [posFilter, setPosFilter] = useState<string>('ALL');
+  const [valueIndexMode, setValueIndexMode] = useState<'paid' | 'free'>('paid');
   const [hiddenTeams, setHiddenTeams] = useState<string[]>([]);
 
   // Default to top 2 spenders for radar
@@ -175,6 +176,15 @@ export const Faab: React.FC = () => {
       .filter(a => posFilter === 'ALL' || a.position === posFilter)
       .map(a => ({ ...a, ppd: Number((a.starterPoints / a.cost).toFixed(2)) }))
       .sort((a, b) => b.ppd - a.ppd)
+      .slice(0, 25);
+  }, [faabTopAssets, posFilter]);
+
+  // $0 bids and Free Agent Gems (by total starter points) with position filter
+  const freeGemsLedger = useMemo(() => {
+    return faabTopAssets.all
+      .filter(a => a.cost === 0 && a.starterPoints > 0)
+      .filter(a => posFilter === 'ALL' || a.position === posFilter)
+      .sort((a, b) => b.starterPoints - a.starterPoints)
       .slice(0, 25);
   }, [faabTopAssets, posFilter]);
 
@@ -962,36 +972,62 @@ export const Faab: React.FC = () => {
                 </div>
               </Card>
 
-              {/* Row 3: FAAB Value Index (pts/$) */}
+              {/* Row 3: FAAB Value Index & $0 Free Agent Gems */}
               <Card>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4">
                   <div>
-                    <h2 className="text-xl font-bold text-white">FAAB Value Index (pts/$)</h2>
+                    <h2 className="text-xl font-bold text-white">
+                      {valueIndexMode === 'paid' ? 'FAAB Value Index (pts/$)' : '$0 Bids & Free Agent Gems'}
+                    </h2>
                     <p className="text-sm text-muted mt-0.5">
-                      Top individual waiver wire steals ranked by starter points created per dollar spent. Excludes $0 acquisitions.
+                      {valueIndexMode === 'paid'
+                        ? 'Top individual waiver wire steals ranked by starter points created per dollar spent.'
+                        : 'Top $0 waiver claims and post-waiver free agent finds ranked by total starter fantasy points produced.'}
                     </p>
                   </div>
-                  {/* Position Filter Pills */}
-                  <div className="flex flex-wrap items-center gap-1.5 bg-black/40 p-1 rounded-xl border border-white/10 shrink-0">
-                    {['ALL', 'QB', 'RB', 'WR', 'TE', 'IDP', 'K'].map(pos => (
+
+                  <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                    {/* Mode Toggle */}
+                    <div className="glass-toggle-container">
                       <button
-                        key={pos}
-                        onClick={() => setPosFilter(pos)}
-                        className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                          posFilter === pos
-                            ? 'bg-emerald-500 text-black shadow-sm'
-                            : 'text-gray-400 hover:text-white hover:bg-white/5'
-                        }`}
+                        onClick={() => setValueIndexMode('paid')}
+                        className={`glass-toggle-btn ${valueIndexMode === 'paid' ? 'active' : ''}`}
                       >
-                        {pos}
+                        Paid FAAB ($/pts)
                       </button>
-                    ))}
+                      <button
+                        onClick={() => setValueIndexMode('free')}
+                        className={`glass-toggle-btn ${valueIndexMode === 'free' ? 'active' : ''}`}
+                      >
+                        $0 & Free Gems
+                      </button>
+                    </div>
+
+                    {/* Position Filter Pills */}
+                    <div className="flex flex-wrap items-center gap-1 bg-black/40 p-1 rounded-xl border border-white/10 shrink-0">
+                      {['ALL', 'QB', 'RB', 'WR', 'TE', 'IDP', 'K'].map(pos => (
+                        <button
+                          key={pos}
+                          onClick={() => setPosFilter(pos)}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                            posFilter === pos
+                              ? valueIndexMode === 'paid'
+                                ? 'bg-emerald-500 text-black shadow-sm'
+                                : 'bg-amber-500 text-black shadow-sm'
+                              : 'text-gray-400 hover:text-white hover:bg-white/5'
+                          }`}
+                        >
+                          {pos}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
                 <div className="space-y-3 overflow-y-auto pr-1.5 custom-scrollbar" style={{ maxHeight: '520px' }}>
-                  {ppdLedger.map((asset, idx) => {
+                  {(valueIndexMode === 'paid' ? ppdLedger : freeGemsLedger).map((asset, idx) => {
                     const isTop3 = idx < 3;
+                    const isPaid = valueIndexMode === 'paid';
                     const rankBadgeClass =
                       idx === 0
                         ? 'text-amber-400 border-amber-500/40 bg-amber-500/10'
@@ -1001,12 +1037,21 @@ export const Faab: React.FC = () => {
                         ? 'text-amber-600 border-amber-700/40 bg-amber-700/10'
                         : 'text-muted border-white/5 bg-white/5';
 
+                    const borderClass = isPaid
+                      ? isTop3
+                        ? 'border-emerald-500/30 bg-black/40'
+                        : 'border-white/5 bg-black/25'
+                      : isTop3
+                      ? 'border-amber-500/30 bg-black/40'
+                      : 'border-white/5 bg-black/25';
+
+                    const textHoverClass = isPaid ? 'group-hover:text-emerald-400' : 'group-hover:text-amber-400';
+                    const imgBorderClass = isPaid ? 'border-emerald-500/30' : 'border-amber-500/30';
+
                     return (
                       <div
-                        key={`ppd-${asset.playerId}-${idx}`}
-                        className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl border transition-all hover:bg-white/[0.04] group ${
-                          isTop3 ? 'border-emerald-500/30 bg-black/40' : 'border-white/5 bg-black/25'
-                        }`}
+                        key={`val-index-${asset.playerId}-${idx}`}
+                        className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl border transition-all hover:bg-white/[0.04] group ${borderClass}`}
                       >
                         <div className="flex items-center gap-3.5 min-w-0">
                           <div
@@ -1019,7 +1064,7 @@ export const Faab: React.FC = () => {
                           <img
                             src={`https://sleepercdn.com/content/nfl/players/thumb/${asset.playerId}.jpg`}
                             alt=""
-                            className="w-10 h-10 rounded-full object-cover border border-emerald-500/30 bg-black/40 shrink-0"
+                            className={`w-10 h-10 rounded-full object-cover border ${imgBorderClass} bg-black/40 shrink-0`}
                             onError={e => {
                               (e.target as HTMLImageElement).src =
                                 'https://sleepercdn.com/images/v2/icons/player_default.webp';
@@ -1028,13 +1073,17 @@ export const Faab: React.FC = () => {
 
                           <div className="min-w-0">
                             <div className="flex items-center gap-2 min-w-0 flex-wrap sm:flex-nowrap">
-                              <span className="font-bold text-white text-sm sm:text-base group-hover:text-emerald-400 transition-colors">
+                              <span className={`font-bold text-white text-sm sm:text-base ${textHoverClass} transition-colors`}>
                                 {asset.playerName}
                               </span>
                               <DraftPositionBadge position={asset.position} />
                             </div>
                             <div className="text-xs text-muted truncate mt-0.5 flex items-center gap-1.5 flex-wrap">
-                              <span className="text-emerald-400 font-bold font-mono">${asset.cost} FAAB</span>
+                              {isPaid ? (
+                                <span className="text-emerald-400 font-bold font-mono">${asset.cost} FAAB</span>
+                              ) : (
+                                <span className="text-amber-400 font-bold font-mono">$0 / Free</span>
+                              )}
                               <span>•</span>
                               <span className="text-gray-300 font-medium">{asset.managerName}</span>
                               <span>•</span>
@@ -1044,21 +1093,37 @@ export const Faab: React.FC = () => {
                         </div>
 
                         <div className="text-left sm:text-right shrink-0 sm:ml-3 pl-10 sm:pl-0 border-t sm:border-t-0 border-white/5 pt-2 sm:pt-0 flex sm:flex-col sm:items-end justify-between">
-                          <div className="text-base sm:text-lg font-mono font-bold text-emerald-400">
-                            {asset.ppd.toFixed(1)}{' '}
-                            <span className="text-xs text-muted font-normal">pts/$</span>
-                          </div>
-                          <div className="text-[11px] text-muted font-mono">
-                            {asset.starterPoints.toFixed(1)} starter pts
-                          </div>
+                          {isPaid ? (
+                            <>
+                              <div className="text-base sm:text-lg font-mono font-bold text-emerald-400">
+                                {('ppd' in asset ? (asset.ppd as number) : (asset.cost > 0 ? asset.starterPoints / asset.cost : 0)).toFixed(1)}{' '}
+                                <span className="text-xs text-muted font-normal">pts/$</span>
+                              </div>
+                              <div className="text-[11px] text-muted font-mono">
+                                {asset.starterPoints.toFixed(1)} starter pts
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="text-base sm:text-lg font-mono font-bold text-amber-400">
+                                {asset.starterPoints.toFixed(1)}{' '}
+                                <span className="text-xs text-muted font-normal">pts</span>
+                              </div>
+                              <div className="text-[11px] text-muted font-mono">
+                                {asset.weeksStarted} starts
+                              </div>
+                            </>
+                          )}
                         </div>
                       </div>
                     );
                   })}
 
-                  {ppdLedger.length === 0 && (
+                  {(valueIndexMode === 'paid' ? ppdLedger : freeGemsLedger).length === 0 && (
                     <div className="p-12 text-center text-muted italic bg-white/[0.01] rounded-xl border border-dashed border-white/10">
-                      No paid FAAB data recorded for this position in this season.
+                      {valueIndexMode === 'paid'
+                        ? 'No paid FAAB data recorded for this position in this season.'
+                        : 'No $0 or free agent data recorded for this position in this season.'}
                     </div>
                   )}
                 </div>
