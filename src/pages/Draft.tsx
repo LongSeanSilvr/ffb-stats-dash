@@ -445,12 +445,44 @@ export const Draft: React.FC = () => {
         )}
       </div>
 
-      <div className="flex items-center gap-3 mb-8 border-b border-white/10 pb-4 overflow-x-auto custom-scrollbar">
-        <button onClick={() => setActiveTab('performance')} className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer whitespace-nowrap ${activeTab === 'performance' ? 'bg-accent-color text-white shadow-lg shadow-accent-color/20' : 'bg-white/5 text-muted hover:bg-white/10 hover:text-white'}`}>
-          <LayoutGrid size={16} /><span>Draft Performance & Heatmap</span>
+      {/* 2-Hub Tab Navigation */}
+      <div className="bg-black/40 backdrop-blur-md p-1.5 rounded-2xl border border-white/10 shadow-xl inline-flex flex-wrap sm:flex-nowrap gap-2 mb-8 w-full sm:w-auto">
+        <button
+          onClick={() => setActiveTab('performance')}
+          className={`flex-1 sm:flex-initial flex items-center justify-center sm:justify-start gap-3 px-5 py-3 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+            activeTab === 'performance'
+              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25 border border-blue-400/30'
+              : 'text-gray-300 hover:text-white hover:bg-white/5 border border-transparent'
+          }`}
+        >
+          <div className={`p-2 rounded-lg ${activeTab === 'performance' ? 'bg-white/20 text-white' : 'bg-white/5 text-gray-400'}`}>
+            <LayoutGrid size={18} />
+          </div>
+          <div className="text-left">
+            <div className="leading-tight text-sm sm:text-base font-bold">Draft Performance & Heatmap</div>
+            <div className={`text-[11px] font-normal mt-0.5 ${activeTab === 'performance' ? 'text-blue-100' : 'text-gray-400'}`}>
+              Steals, Hit Rates, Keepers & Board Heatmap
+            </div>
+          </div>
         </button>
-        <button onClick={() => setActiveTab('strategy')} className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer whitespace-nowrap ${activeTab === 'strategy' ? 'bg-accent-color text-white shadow-lg shadow-accent-color/20' : 'bg-white/5 text-muted hover:bg-white/10 hover:text-white'}`}>
-          <Target size={16} /><span>Strategy & Capital Matrices</span>
+
+        <button
+          onClick={() => setActiveTab('strategy')}
+          className={`flex-1 sm:flex-initial flex items-center justify-center sm:justify-start gap-3 px-5 py-3 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+            activeTab === 'strategy'
+              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25 border border-blue-400/30'
+              : 'text-gray-300 hover:text-white hover:bg-white/5 border border-transparent'
+          }`}
+        >
+          <div className={`p-2 rounded-lg ${activeTab === 'strategy' ? 'bg-white/20 text-white' : 'bg-white/5 text-gray-400'}`}>
+            <Target size={18} />
+          </div>
+          <div className="text-left">
+            <div className="leading-tight text-sm sm:text-base font-bold">Strategy & Capital Matrices</div>
+            <div className={`text-[11px] font-normal mt-0.5 ${activeTab === 'strategy' ? 'text-blue-100' : 'text-gray-400'}`}>
+              4-Quadrant Scatter Charts & Positional Radars
+            </div>
+          </div>
         </button>
       </div>
 
