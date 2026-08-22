@@ -52,7 +52,7 @@ export const FlippedMatchupModal: React.FC<Props> = ({ matchup, onClose }) => {
             </div>
             <div>
               <h2 className="text-lg md:text-xl font-bold text-white leading-none mb-1">
-                Matchup Flipped: Week {matchup.week}
+                Clutch Playoff Pickup: Week {matchup.week}
               </h2>
               <p className="text-muted text-xs md:text-sm font-medium uppercase tracking-wider">
                 Impact of In-Season Acquisition on Playoff Outcome

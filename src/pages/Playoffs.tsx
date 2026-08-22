@@ -538,8 +538,8 @@ export const Playoffs = () => {
 
         {/* SIDE-BY-SIDE MATCHUP NARRATIVES GRID */}
         <div className="grid lg:grid-cols-2 gap-8">
-          {/* MATCHUPS FLIPPED */}
-          <Card title="High Stakes Matchups Flipped" className="stagger-3 flex flex-col justify-between">
+          {/* CLUTCH PLAYOFF PICKUPS */}
+          <Card title="Clutch Playoff Pickups" className="stagger-3 flex flex-col justify-between">
             <div>
               <div className="chart-header mb-4">
                 <div className="chart-description">
