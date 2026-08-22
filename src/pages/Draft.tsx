@@ -393,22 +393,48 @@ export const Draft: React.FC = () => {
         {biggestSteal && (
           <div className="glass-card p-4 rounded-xl border border-emerald-500/20 flex flex-col justify-between">
             <div>
-              <div className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5 mb-2"><Sparkles size={14} className="text-emerald-400" /><span>Biggest Steal</span></div>
-              <div className="flex items-center gap-3">
+              <div className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                <Sparkles size={14} className="text-emerald-400" />
+                <span>Biggest Steal</span>
+              </div>
+              <div className="flex items-center gap-2.5">
                 <div className="relative shrink-0">
-                  <img src={`https://sleepercdn.com/content/nfl/players/thumb/${biggestSteal.playerId}.jpg`} alt="" className="w-10 h-10 rounded-full border border-emerald-500/40 object-cover bg-black/40" onError={e => { (e.target as HTMLImageElement).src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }} />
-                  {biggestSteal.avatar && <img src={`https://sleepercdn.com/avatars/thumbs/${biggestSteal.avatar}`} alt={biggestSteal.managerName} className="w-4 h-4 rounded-full border border-black absolute -bottom-0.5 -right-0.5 shadow" />}
+                  <img
+                    src={`https://sleepercdn.com/content/nfl/players/thumb/${biggestSteal.playerId}.jpg`}
+                    alt=""
+                    className="w-10 h-10 rounded-full border border-emerald-500/40 object-cover bg-black/40"
+                    onError={e => {
+                      (e.target as HTMLImageElement).src =
+                        'https://sleepercdn.com/images/v2/icons/player_default.webp';
+                    }}
+                  />
+                  {biggestSteal.avatar && (
+                    <img
+                      src={`https://sleepercdn.com/avatars/thumbs/${biggestSteal.avatar}`}
+                      alt={biggestSteal.managerName}
+                      className="w-4 h-4 rounded-full border border-black absolute -bottom-0.5 -right-0.5 shadow"
+                    />
+                  )}
                 </div>
-                <div className="min-w-0">
-                  <div className="font-bold text-white text-sm truncate flex items-center gap-1.5"><span className="truncate">{biggestSteal.playerName}</span><DraftPositionBadge position={biggestSteal.position} /></div>
-                  <div className="text-xs text-muted mt-0.5 truncate">
-                    <span className="font-mono text-emerald-400 font-semibold">Rd {biggestSteal.round}</span> • <span className="text-gray-200">{biggestSteal.managerName}</span>{' '}
-                    <span className="text-emerald-400 font-mono">({biggestSteal.valOverPos > 0 ? `+${biggestSteal.valOverPos.toFixed(0)}` : biggestSteal.starterPoints.toFixed(0)} vs {biggestSteal.position})</span>
+                <div className="min-w-0 flex-1">
+                  <div className="font-bold text-white text-xs sm:text-sm flex items-center gap-1.5 leading-snug">
+                    <span className="truncate">{biggestSteal.playerName}</span>
+                    <DraftPositionBadge position={biggestSteal.position} />
+                  </div>
+                  <div className="text-[11px] text-muted truncate mt-0.5 flex items-center gap-1 font-mono">
+                    <span className="text-emerald-400 font-bold">Rd {biggestSteal.round}</span>
+                    <span>•</span>
+                    <span className="text-gray-200 font-sans truncate">{biggestSteal.managerName}</span>
+                    <span className="text-emerald-400 font-semibold shrink-0">
+                      (+{biggestSteal.valOverPos > 0 ? biggestSteal.valOverPos.toFixed(0) : biggestSteal.starterPoints.toFixed(0)})
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">Highest fantasy value over positional baseline (Round 7+)</div>
+            <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
+              Highest fantasy value over positional baseline (Round 7+)
+            </div>
           </div>
         )}
 
@@ -542,24 +568,52 @@ export const Draft: React.FC = () => {
                 </div>
               </Card>
               <Card title="Top Keepers Leaderboard">
-                <div className="chart-header mb-4"><div className="chart-description">Most impactful retained assets ranked by value created over positional average.</div></div>
-                <div className="space-y-3 overflow-y-auto pr-1" style={{ maxHeight: '350px' }}>
+                <div className="chart-header mb-4">
+                  <div className="chart-description">
+                    Most impactful retained assets ranked by value created over positional average.
+                  </div>
+                </div>
+                <div className="space-y-3 overflow-y-auto pr-1.5 custom-scrollbar" style={{ maxHeight: '360px' }}>
                   {allKeepers.slice(0, 15).map((pick, i) => (
-                    <div key={`${pick.playerId}-${pick.rosterId}`} className="flex items-center justify-between p-3 rounded-xl border border-white/5 bg-black/30 hover:border-emerald-500/40 hover:bg-black/40 transition-all group">
+                    <div
+                      key={`${pick.playerId}-${pick.rosterId}`}
+                      className="flex items-center justify-between p-3 rounded-xl border border-white/5 bg-black/30 hover:border-emerald-500/40 hover:bg-black/40 transition-all group"
+                    >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="text-xs font-mono font-bold text-emerald-400 w-5 text-right shrink-0">#{i + 1}</div>
-                        <img src={`https://sleepercdn.com/content/nfl/players/thumb/${pick.playerId}.jpg`} alt="" className="w-9 h-9 rounded-full object-cover border border-emerald-500/30 bg-black/40 shrink-0" onError={e => { (e.target as HTMLImageElement).src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }} />
+                        <div className="text-xs font-mono font-bold text-emerald-400 w-5 text-right shrink-0">
+                          #{i + 1}
+                        </div>
+                        <img
+                          src={`https://sleepercdn.com/content/nfl/players/thumb/${pick.playerId}.jpg`}
+                          alt=""
+                          className="w-9 h-9 rounded-full object-cover border border-emerald-500/30 bg-black/40 shrink-0"
+                          onError={e => {
+                            (e.target as HTMLImageElement).src =
+                              'https://sleepercdn.com/images/v2/icons/player_default.webp';
+                          }}
+                        />
                         <div className="min-w-0">
-                          <div className="flex items-center gap-1.5"><span className="font-bold text-white text-xs sm:text-sm truncate group-hover:text-emerald-400 transition-colors">{pick.playerName}</span><DraftPositionBadge position={pick.position} /></div>
-                          <div className="text-[11px] text-muted truncate mt-0.5">Rd {pick.round} • <span className="text-gray-300">{pick.managerName}</span></div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-white text-xs sm:text-sm truncate group-hover:text-emerald-400 transition-colors">
+                              {pick.playerName}
+                            </span>
+                            <DraftPositionBadge position={pick.position} />
+                          </div>
+                          <div className="text-[11px] text-muted truncate mt-0.5">
+                            Rd {pick.round} • <span className="text-gray-300">{pick.managerName}</span>
+                          </div>
                         </div>
                       </div>
                       <div className="text-right shrink-0 ml-2">
                         <div className="text-sm font-mono font-bold text-emerald-400">
                           {pick.valOverPos > 0 ? `+${pick.valOverPos.toFixed(1)}` : pick.starterPoints.toFixed(1)}{' '}
-                          <span className="text-[10px] text-muted">{pick.valOverPos > 0 ? `vs ${pick.position}` : 'pts'}</span>
+                          <span className="text-[10px] text-muted">
+                            {pick.valOverPos > 0 ? `vs ${pick.position}` : 'pts'}
+                          </span>
                         </div>
-                        <div className="text-[10px] text-muted font-mono">{pick.starterPoints.toFixed(1)} pts • {pick.gamesStartedOnRoster} starts</div>
+                        <div className="text-[10px] text-muted font-mono">
+                          {pick.starterPoints.toFixed(1)} pts • {pick.gamesStartedOnRoster} starts
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -693,7 +747,14 @@ export const Draft: React.FC = () => {
             </Card>
           </div>
           <Card title="Positional Strategy Radar Maps">
-            <div className="chart-header"><div className="chart-description">Concentration of draft picks allocated to each position across different phases of the draft.</div></div>
+            <div className="chart-header">
+              <div className="chart-description">
+                Concentration of draft picks allocated to each position across different draft phases.
+                <span className="block mt-1 text-[11px] text-muted/80">
+                  👆 Click manager pills below to compare strategies (showing {activeRadarProfiles.length}/4 selected).
+                </span>
+              </div>
+            </div>
             <MobileTapHint />
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 my-4">
               {[{ title: 'Early Phase (Rounds 1–4)', data: earlyRadarData }, { title: 'Middle Phase (Rounds 5–9)', data: midRadarData }, { title: 'Late Phase (Rounds 10+)', data: lateRadarData }].map((hub, i) => (
