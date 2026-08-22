@@ -25,10 +25,7 @@ import {
   ArrowRightLeft,
   UserPlus,
   Shield,
-  User,
-  Info,
   Crown,
-  Flame,
   ArrowRight,
 } from 'lucide-react';
 import type { MatchupFlipped } from '../types/playoffs';
@@ -74,7 +71,7 @@ const CustomBarTooltip = ({ active, payload }: any) => {
         </div>
         {data.acquisitionType && (
           <div className="text-xs text-muted mt-1.5 flex items-center gap-1.5">
-            <span>Acquired via:</span>
+            <span>Acquired:</span>
             <span className="font-bold text-accent-color">{data.acquisitionType}</span>
           </div>
         )}
@@ -147,20 +144,20 @@ const CustomScatterTooltip = ({ active, payload }: any) => {
           <span className="font-bold text-base text-white">{data.managerName}</span>
         </div>
         <div className="text-xs text-muted flex justify-between gap-4">
-          <span>Regular Season Avg:</span>
-          <span className="text-white font-mono font-bold">{data.regAvg} pts</span>
+          <span>Regular Season:</span>
+          <span className="text-white font-mono font-bold">{data.regAvg} PPG</span>
         </div>
         <div className="text-xs text-muted flex justify-between gap-4 mt-1">
-          <span>Playoff Avg:</span>
-          <span className="text-white font-mono font-bold">{data.playAvg} pts</span>
+          <span>Playoffs:</span>
+          <span className="text-white font-mono font-bold">{data.playAvg} PPG</span>
         </div>
         <div className="text-xs text-muted mt-2 pt-2 border-t border-white/10 flex justify-between gap-4">
-          <span>Performance Diff:</span>
+          <span>Scoring Shift:</span>
           <span
             className="font-bold font-mono"
             style={{ color: isOverperformed ? 'var(--success-color)' : 'var(--danger-color)' }}
           >
-            {isOverperformed ? '+' : ''}{data.diff} pts
+            {isOverperformed ? '+' : ''}{data.diff} PPG
           </span>
         </div>
       </div>
@@ -193,7 +190,7 @@ export const Playoffs = () => {
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <div className="loading-spinner"></div>
         <div className="text-muted text-sm font-medium">
-          Synthesizing playoff narratives & game logs...
+          Loading playoff stats and game logs...
         </div>
       </div>
     );
@@ -213,6 +210,7 @@ export const Playoffs = () => {
       case 'Trade':
         return <ArrowRightLeft size={13} className="text-accent-color" />;
       case 'Free Agency':
+      case 'Waiver':
         return <UserPlus size={13} className="text-amber-400" />;
       default:
         return <Shield size={13} className="text-success-color" />;
@@ -229,7 +227,7 @@ export const Playoffs = () => {
         The Playoff Run ({season})
       </h1>
       <p className="text-muted mb-8">
-        The regular season is about proficiency. The playoffs are about peaking at exactly the right time.
+        Postseason scoring trends, clutch performers, decisive lineup choices, and championship game logs.
       </p>
 
       {/* Champion Spotlight Banner */}
@@ -290,7 +288,7 @@ export const Playoffs = () => {
             <Card title="Regular Season vs Playoff Performance" className="stagger-1">
               <div className="chart-header">
                 <div className="chart-description">
-                  Did your team show up when it mattered most? Teams <strong>above the diagonal line</strong> overperformed their regular season expectations in the playoffs. Teams <strong>below the line</strong> underperformed.
+                  Team scoring in the regular season versus the playoffs. Teams <strong>above the diagonal line</strong> scored more points per game in the playoffs than during the regular season; teams <strong>below the line</strong> scored fewer.
                 </div>
                 <div className="chart-legend-grid">
                   <div className="legend-item">
@@ -306,7 +304,7 @@ export const Playoffs = () => {
                       />{' '}
                       Overperformed
                     </div>
-                    <div className="legend-item-desc">Playoff Average &gt; Regular Season Average</div>
+                    <div className="legend-item-desc">Playoff PPG &gt; Regular Season PPG</div>
                   </div>
                   <div className="legend-item">
                     <div className="legend-item-header">
@@ -321,7 +319,7 @@ export const Playoffs = () => {
                       />{' '}
                       Underperformed
                     </div>
-                    <div className="legend-item-desc">Playoff Average &lt; Regular Season Average</div>
+                    <div className="legend-item-desc">Playoff PPG &lt; Regular Season PPG</div>
                   </div>
                 </div>
               </div>
@@ -338,7 +336,7 @@ export const Playoffs = () => {
                       tick={{ fontSize: 12, fill: 'var(--text-secondary)' }}
                       domain={[minAvg, maxAvg]}
                       label={{
-                        value: 'Regular Season Avg (pts/game)',
+                        value: 'Regular Season PPG',
                         position: 'insideBottom',
                         offset: -12,
                         fill: 'var(--text-secondary)',
@@ -353,7 +351,7 @@ export const Playoffs = () => {
                       tick={{ fontSize: 12, fill: 'var(--text-secondary)' }}
                       domain={[minAvg, maxAvg]}
                       label={{
-                        value: 'Playoff Avg (pts/game)',
+                        value: 'Playoff PPG',
                         angle: -90,
                         position: 'insideLeft',
                         fill: 'var(--text-secondary)',
@@ -396,9 +394,9 @@ export const Playoffs = () => {
         <Card title="Playoff Winners & Chokers" className="stagger-2 flex flex-col">
           <div className="chart-header">
             <div className="chart-description">
-              Comparing each player's playoff scoring average against their regular season baseline on starting rosters.{' '}
-              <strong className="text-success-color">League Winners</strong> surged when it mattered most, while{' '}
-              <strong className="text-danger-color">Playoff Chokers</strong> were regular-season studs whose scoring drastically collapsed in the postseason.
+              Starter scoring changes from the regular season to the playoffs.{' '}
+              <strong className="text-success-color">League Winners</strong> increased their scoring average significantly during the playoffs, while{' '}
+              <strong className="text-danger-color">Playoff Chokers</strong> experienced sharp declines.
             </div>
           </div>
 
@@ -406,7 +404,7 @@ export const Playoffs = () => {
             <div className="flex flex-col items-center justify-center mt-6 p-8 border border-dashed border-white/10 rounded-2xl bg-white/[0.02]">
               <TrendingUp size={32} className="text-muted/50 mb-3" />
               <div className="text-muted italic text-center">
-                No significant playoff performance outliers detected for this season.
+                No significant playoff scoring shifts detected for this season.
               </div>
             </div>
           ) : (
@@ -415,11 +413,11 @@ export const Playoffs = () => {
               <div className="space-y-4">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-success-color flex items-center gap-2 border-b border-success-color/20 pb-2.5">
                   <Trophy size={15} className="text-success-color" />
-                  <span>The Trophy Case (League Winners)</span>
+                  <span>League Winners (Largest Scoring Surges)</span>
                 </h3>
                 {winners.length === 0 ? (
                   <div className="text-sm text-muted italic p-4 text-center bg-white/[0.02] rounded-xl border border-white/5">
-                    No players met the league winner criteria.
+                    No starting players met the surge criteria this season.
                   </div>
                 ) : (
                   <div className="flex flex-col gap-3">
@@ -477,11 +475,11 @@ export const Playoffs = () => {
               <div className="space-y-4">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-danger-color flex items-center gap-2 border-b border-danger-color/20 pb-2.5">
                   <TrendingDown size={15} className="text-danger-color" />
-                  <span>The Wall of Shame (Playoff Chokers)</span>
+                  <span>Playoff Chokers (Largest Scoring Drops)</span>
                 </h3>
                 {chokers.length === 0 ? (
                   <div className="text-sm text-muted italic p-4 text-center bg-white/[0.02] rounded-xl border border-white/5">
-                    No players met the playoff choker criteria.
+                    No starting players met the drop criteria this season.
                   </div>
                 ) : (
                   <div className="flex flex-col gap-3">
@@ -545,7 +543,7 @@ export const Playoffs = () => {
             <div>
               <div className="chart-header mb-4">
                 <div className="chart-description">
-                  Playoff matchups won solely because of a mid-season acquisition (via Trade or Waiver Wire). If the manager had started their drafted/baseline replacement instead of this pickup, they would have lost the matchup.
+                  Playoff games won by in-season trade or waiver acquisitions. Without these additions, the manager's baseline replacement lineup would have lost.
                 </div>
               </div>
 
@@ -553,7 +551,7 @@ export const Playoffs = () => {
                 <div className="flex flex-col items-center justify-center p-8 border border-dashed border-white/10 rounded-2xl bg-white/[0.02]">
                   <Shield size={32} className="text-muted/50 mb-3" />
                   <div className="text-muted italic text-center">
-                    No playoff matchups were flipped by mid-season acquisitions this year.
+                    No playoff matchups were flipped by in-season acquisitions this season.
                   </div>
                 </div>
               ) : (
@@ -605,7 +603,7 @@ export const Playoffs = () => {
             </div>
             {matchupsFlipped.length > 0 && (
               <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs text-muted">
-                <span>Tap any card for Alternate Reality breakdown</span>
+                <span>Tap to view counterfactual roster breakdown</span>
                 <ArrowRight size={14} className="text-purple-400" />
               </div>
             )}
@@ -616,7 +614,7 @@ export const Playoffs = () => {
             <div>
               <div className="chart-header mb-4">
                 <div className="chart-description">
-                  Managers eliminated from the playoffs because their optimal bench lineup would have won the matchup.
+                  Playoff eliminations caused by lineup decisions. These managers lost their matchup, but had bench players who would have won the game if started.
                 </div>
               </div>
 
@@ -624,7 +622,7 @@ export const Playoffs = () => {
                 <div className="flex flex-col items-center justify-center p-8 border border-dashed border-white/10 rounded-2xl bg-white/[0.02]">
                   <Trophy size={32} className="text-muted/50 mb-3" />
                   <div className="text-muted italic text-center">
-                    Perfect managing! No playoff matchups were lost due to bench points.
+                    Clean managing: no playoff games were lost due to unstarted bench points.
                   </div>
                 </div>
               ) : (
@@ -672,7 +670,7 @@ export const Playoffs = () => {
             </div>
             {benchBlues.length > 0 && (
               <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs text-muted">
-                <span>Tap any card for Lineup Alternate Reality</span>
+                <span>Tap to view optimal lineup comparison</span>
                 <ArrowRight size={14} className="text-amber-400" />
               </div>
             )}
@@ -683,7 +681,7 @@ export const Playoffs = () => {
         <Card title="Playoff MVPs (Weeks 15-17)" className="stagger-4">
           <div className="chart-header">
             <div className="chart-description">
-              The highest-scoring players on starting rosters during the fantasy playoffs, color-coded by acquisition method.
+              Top total scorers on active starting rosters during the fantasy playoffs (Weeks 15–17), grouped by how they were acquired.
             </div>
             <div className="chart-legend-grid">
               <div className="legend-item">
@@ -699,7 +697,7 @@ export const Playoffs = () => {
                   />{' '}
                   Drafted
                 </div>
-                <div className="legend-item-desc">Selected in the draft</div>
+                <div className="legend-item-desc">Selected in draft</div>
               </div>
               <div className="legend-item">
                 <div className="legend-item-header">

@@ -52,10 +52,10 @@ export const FlippedMatchupModal: React.FC<Props> = ({ matchup, onClose }) => {
             </div>
             <div>
               <h2 className="text-lg md:text-xl font-bold text-white leading-none mb-1">
-                Alternate Reality: Week {matchup.week}
+                Matchup Flipped: Week {matchup.week}
               </h2>
               <p className="text-muted text-xs md:text-sm font-medium uppercase tracking-wider">
-                Full Roster Breakdown of the Decisive Acquisition
+                Impact of In-Season Acquisition on Playoff Outcome
               </p>
             </div>
           </div>
@@ -74,7 +74,7 @@ export const FlippedMatchupModal: React.FC<Props> = ({ matchup, onClose }) => {
             <div className="bg-white/[0.04] px-4 py-3 border-b border-white/10 flex items-center justify-between">
               <span className="text-xs uppercase tracking-widest font-black text-white flex items-center gap-2">
                 <Sparkles size={12} className="text-accent-color" />
-                The Acquisition Details
+                Acquisition Summary
               </span>
               <span className="text-[10px] bg-accent-color/10 border border-accent-color/20 text-accent-color font-bold px-2 py-0.5 rounded-full">
                 Week {details?.week || matchup.week} Acquisition
@@ -99,7 +99,7 @@ export const FlippedMatchupModal: React.FC<Props> = ({ matchup, onClose }) => {
                         ))}
                       </div>
                     ) : (
-                      <span className="text-xs text-muted italic">Nothing (Roster spot trade)</span>
+                      <span className="text-xs text-muted italic">None (Roster spot trade)</span>
                     )}
                   </div>
 
@@ -132,7 +132,7 @@ export const FlippedMatchupModal: React.FC<Props> = ({ matchup, onClose }) => {
                         <div>
                           <div className="text-sm font-black text-white">{matchup.playerName}</div>
                           <div className="text-[10px] text-muted uppercase font-semibold">
-                            Keystone Acquisition
+                            Acquired Starter
                           </div>
                         </div>
                       </div>
@@ -167,7 +167,7 @@ export const FlippedMatchupModal: React.FC<Props> = ({ matchup, onClose }) => {
                       <div className="text-base font-black text-white">{matchup.playerName}</div>
                       <div className="text-xs text-muted flex items-center gap-1.5 mt-0.5">
                         <UserPlus size={12} className="text-amber-400" />
-                        Acquired off the Waiver Wire in Week {details?.week || matchup.week}
+                        Acquired off waivers in Week {details?.week || matchup.week}
                       </div>
                     </div>
                   </div>
@@ -187,7 +187,7 @@ export const FlippedMatchupModal: React.FC<Props> = ({ matchup, onClose }) => {
             {/* Column 1: Reality */}
             <div className="text-center md:border-r md:border-white/10">
               <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase text-success-color bg-success-color/10 border border-success-color/20 px-2 py-0.5 rounded-full mb-2">
-                <Shield size={10} /> Reality (Actual)
+                <Shield size={10} /> Actual Result (Win)
               </span>
               <div className="text-3xl font-black text-white font-mono leading-none mb-1">
                 {matchup.actualPoints.toFixed(1)}
@@ -201,7 +201,7 @@ export const FlippedMatchupModal: React.FC<Props> = ({ matchup, onClose }) => {
             {/* Column 2: The Point Swing */}
             <div className="text-center md:border-r md:border-white/10 px-2">
               <div className="inline-flex items-center gap-1 text-[10px] font-black uppercase text-accent-color bg-accent-color/10 border border-accent-color/20 px-2 py-0.5 rounded-full mb-2">
-                <Sparkles size={10} /> The Difference Maker
+                <Sparkles size={10} /> Acquisition Swing
               </div>
               <div className="text-2xl font-black text-accent-color font-mono leading-none mb-1">
                 +{pointSwing.toFixed(1)}{' '}
@@ -211,24 +211,21 @@ export const FlippedMatchupModal: React.FC<Props> = ({ matchup, onClose }) => {
                 <strong className="text-white font-semibold">
                   {matchup.playerName.split(' ').pop()}
                 </strong>{' '}
-                scored <strong className="text-accent-color">{matchup.pointsScored.toFixed(1)}</strong>, while the replacement (<strong className="text-white">{replacementPlayer.name}</strong>) would have scored <strong className="text-danger-color">{replacementPlayer.pts.toFixed(1)}</strong>.
+                scored <strong className="text-accent-color">{matchup.pointsScored.toFixed(1)}</strong> vs{' '}
+                <strong className="text-danger-color">{replacementPlayer.pts.toFixed(1)}</strong> from replacement (<strong className="text-white">{replacementPlayer.name}</strong>).
               </div>
             </div>
 
             {/* Column 3: Alternate Reality */}
             <div className="text-center">
               <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase text-danger-color bg-danger-color/10 border border-danger-color/20 px-2 py-0.5 rounded-full mb-2">
-                <TrendingDown size={10} /> Alternate Reality
+                <TrendingDown size={10} /> Without Acquisition (Loss)
               </span>
               <div className="text-3xl font-black text-white/50 font-mono leading-none mb-1">
                 {matchup.hypotheticalPoints.toFixed(1)}
               </div>
               <div className="text-xs text-muted font-medium mt-1">
-                Would have{' '}
-                <strong className="text-danger-color font-bold uppercase tracking-wider">
-                  LOST
-                </strong>{' '}
-                to {matchup.opponentName} by{' '}
+                Would have lost to {matchup.opponentName} by{' '}
                 <strong className="text-white">
                   {(matchup.opponentPoints - matchup.hypotheticalPoints).toFixed(1)} pts
                 </strong>
@@ -241,10 +238,10 @@ export const FlippedMatchupModal: React.FC<Props> = ({ matchup, onClose }) => {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
                 <Info size={14} className="text-accent-color" />
-                Full Roster Lineup Breakdown
+                Full Roster Comparison
               </h3>
               <span className="hidden md:inline-flex items-center gap-2 text-xs text-muted bg-white/5 px-2.5 py-1 rounded-lg">
-                <span className="w-2 h-2 rounded bg-accent-color"></span> Acquired Keystone
+                <span className="w-2 h-2 rounded bg-accent-color"></span> Acquired Starter
                 <span className="w-2 h-2 rounded bg-danger-color ml-2"></span> Replacement Player
               </span>
             </div>
@@ -255,7 +252,7 @@ export const FlippedMatchupModal: React.FC<Props> = ({ matchup, onClose }) => {
                 <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
                   <span className="text-xs font-bold text-success-color uppercase tracking-wider flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-success-color"></span>
-                    Roster With {matchup.playerName.split(' ').pop()}
+                    Actual Lineup (With {matchup.playerName.split(' ').pop()})
                   </span>
                   <span className="font-mono text-sm text-white font-bold">
                     {matchup.actualPoints.toFixed(1)} pts
@@ -265,7 +262,7 @@ export const FlippedMatchupModal: React.FC<Props> = ({ matchup, onClose }) => {
                 {/* Starters */}
                 <div>
                   <div className="text-[11px] uppercase tracking-wider font-bold text-muted mb-2">
-                    Active Starters ({matchup.actualStarters.length})
+                    Starters ({matchup.actualStarters.length})
                   </div>
                   <div className="space-y-1.5">
                     {matchup.actualStarters.map((s, idx) => {
@@ -314,7 +311,7 @@ export const FlippedMatchupModal: React.FC<Props> = ({ matchup, onClose }) => {
                           <div className="flex items-center gap-2 shrink-0 ml-2">
                             {isThePlayer && (
                               <span className="text-[8px] uppercase font-black text-accent-color border border-accent-color/30 bg-accent-color/5 px-1.5 py-0.5 rounded tracking-widest hidden sm:inline">
-                                KEYSTONE
+                                ACQUIRED
                               </span>
                             )}
                             <span
@@ -335,7 +332,7 @@ export const FlippedMatchupModal: React.FC<Props> = ({ matchup, onClose }) => {
                 {actualBench.length > 0 && (
                   <div className="pt-2">
                     <div className="text-[11px] uppercase tracking-wider font-bold text-muted mb-2">
-                      Bench Depth ({actualBench.length})
+                      Bench ({actualBench.length})
                     </div>
                     <div className="space-y-1.5 opacity-85">
                       {actualBench.map((b, idx) => (
@@ -371,7 +368,7 @@ export const FlippedMatchupModal: React.FC<Props> = ({ matchup, onClose }) => {
                 <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
                   <span className="text-xs font-bold text-danger-color uppercase tracking-wider flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-danger-color"></span>
-                    Roster Without {matchup.playerName.split(' ').pop()}
+                    Counterfactual Lineup (Without {matchup.playerName.split(' ').pop()})
                   </span>
                   <span className="font-mono text-sm text-white/50 font-bold">
                     {matchup.hypotheticalPoints.toFixed(1)} pts
@@ -381,7 +378,7 @@ export const FlippedMatchupModal: React.FC<Props> = ({ matchup, onClose }) => {
                 {/* Starters */}
                 <div>
                   <div className="text-[11px] uppercase tracking-wider font-bold text-muted mb-2">
-                    Hypothetical Starters ({matchup.hypotheticalStarters.length})
+                    Starters ({matchup.hypotheticalStarters.length})
                   </div>
                   <div className="space-y-1.5">
                     {matchup.hypotheticalStarters.map((s, idx) => {
@@ -461,7 +458,7 @@ export const FlippedMatchupModal: React.FC<Props> = ({ matchup, onClose }) => {
                 {hypotheticalBench.length > 0 && (
                   <div className="pt-2">
                     <div className="text-[11px] uppercase tracking-wider font-bold text-muted mb-2">
-                      Hypothetical Bench ({hypotheticalBench.length})
+                      Bench ({hypotheticalBench.length})
                     </div>
                     <div className="space-y-1.5 opacity-85">
                       {hypotheticalBench.map((b, idx) => (
@@ -497,9 +494,8 @@ export const FlippedMatchupModal: React.FC<Props> = ({ matchup, onClose }) => {
 
         {/* Footer */}
         <div className="p-4 md:p-6 bg-white/[0.02] border-t border-white/10 text-center text-[10px] md:text-xs text-muted leading-relaxed">
-          The Alternate Reality uses the <span className="text-white font-medium">Expected Replacement Value (ERV)</span> model. 
-          It removes the acquired player from the roster, retains the manager's actual starting decisions for remaining positions, 
-          and starts the next-best eligible player on their bench or applies replacement baseline points if no bench players of that position exist.
+          The counterfactual model removes the acquired player, preserves all other starting lineup choices, 
+          and starts the next best eligible bench player (or positional baseline) to verify whether this acquisition was decisive.
         </div>
       </div>
     </div>,

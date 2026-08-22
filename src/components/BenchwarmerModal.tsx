@@ -39,7 +39,7 @@ export const BenchwarmerModal: React.FC<Props> = ({ matchup, onClose }) => {
                 Benchwarmer Blues: Week {matchup.week}
               </h2>
               <p className="text-muted text-xs md:text-sm font-medium uppercase tracking-wider">
-                Full Roster Lineup Alternate Reality Analysis
+                Optimal Lineup vs Actual Starting Roster
               </p>
             </div>
           </div>
@@ -58,7 +58,7 @@ export const BenchwarmerModal: React.FC<Props> = ({ matchup, onClose }) => {
             <div className="bg-white/[0.03] border border-white/10 rounded-xl p-4 flex flex-col items-center justify-center text-center">
               <div className="text-muted text-[11px] uppercase font-bold tracking-widest mb-1 flex items-center gap-1.5">
                 <AlertTriangle size={12} className="text-danger-color" />
-                <span>Actual Reality</span>
+                <span>Actual Result</span>
               </div>
               <div className="text-danger-color font-black text-2xl font-mono">
                 {matchup.actualScore.toFixed(1)}
@@ -75,13 +75,13 @@ export const BenchwarmerModal: React.FC<Props> = ({ matchup, onClose }) => {
             <div className="bg-white/[0.03] border border-white/10 rounded-xl p-4 flex flex-col items-center justify-center text-center">
               <div className="text-muted text-[11px] uppercase font-bold tracking-widest mb-1 flex items-center gap-1.5">
                 <CheckCircle2 size={12} className="text-success-color" />
-                <span>Optimal Lineup</span>
+                <span>Optimal Result</span>
               </div>
               <div className="text-success-color font-black text-2xl font-mono">
                 {matchup.optimalScore.toFixed(1)}
               </div>
               <div className="text-muted text-xs mt-1">
-                Would have WON vs {matchup.opponentName}
+                Would have won against {matchup.opponentName}
               </div>
             </div>
           </div>
@@ -100,7 +100,7 @@ export const BenchwarmerModal: React.FC<Props> = ({ matchup, onClose }) => {
               <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
                 <h3 className="font-bold text-white text-sm flex items-center gap-2">
                   <div className="w-2.5 h-2.5 rounded-full bg-danger-color"></div>
-                  <span>The Reality (Actual Roster)</span>
+                  <span>Actual Starting Lineup</span>
                 </h3>
                 <span className="text-danger-color font-mono font-bold text-sm">
                   {matchup.actualScore.toFixed(1)} pts
@@ -110,7 +110,7 @@ export const BenchwarmerModal: React.FC<Props> = ({ matchup, onClose }) => {
               {/* Actual Starters */}
               <div>
                 <div className="text-[11px] uppercase tracking-wider font-bold text-muted mb-2">
-                  Active Starters ({matchup.actualStarters.length})
+                  Starters ({matchup.actualStarters.length})
                 </div>
                 <div className="space-y-1.5">
                   {matchup.actualStarters.map((s, idx) => {
@@ -170,7 +170,7 @@ export const BenchwarmerModal: React.FC<Props> = ({ matchup, onClose }) => {
               {actualBench.length > 0 && (
                 <div className="pt-2">
                   <div className="text-[11px] uppercase tracking-wider font-bold text-muted mb-2">
-                    Bench Players ({actualBench.length})
+                    Bench ({actualBench.length})
                   </div>
                   <div className="space-y-1.5 opacity-90">
                     {actualBench.map((b, idx) => {
@@ -208,7 +208,7 @@ export const BenchwarmerModal: React.FC<Props> = ({ matchup, onClose }) => {
                           <div className="flex items-center gap-2 shrink-0 ml-2">
                             {wouldHaveStarted && (
                               <span className="text-[9px] uppercase font-bold text-amber-400 border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 rounded">
-                                Should Have Started
+                                Optimal Starter
                               </span>
                             )}
                             <span
@@ -232,7 +232,7 @@ export const BenchwarmerModal: React.FC<Props> = ({ matchup, onClose }) => {
               <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
                 <h3 className="font-bold text-white text-sm flex items-center gap-2">
                   <div className="w-2.5 h-2.5 rounded-full bg-success-color"></div>
-                  <span>Optimal Lineup (Winning Alternate Reality)</span>
+                  <span>Optimal Winning Lineup</span>
                 </h3>
                 <span className="text-success-color font-mono font-bold text-sm">
                   {matchup.optimalScore.toFixed(1)} pts
