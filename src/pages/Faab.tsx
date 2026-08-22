@@ -419,23 +419,33 @@ export const Faab: React.FC = () => {
                       <Sparkles size={14} className="text-emerald-400 shrink-0" />
                       <span className="truncate">Top Waiver Steal</span>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={`https://sleepercdn.com/content/nfl/players/thumb/${heroKpis.bestPickup.playerId}.jpg`}
-                        alt=""
-                        className="w-10 h-10 rounded-full border border-emerald-400/40 object-cover bg-black/40 shrink-0"
-                        onError={e => {
-                          (e.target as HTMLImageElement).src = 'https://sleepercdn.com/images/v2/icons/player_default.webp';
-                        }}
-                      />
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <span className="font-bold text-white text-sm truncate">{heroKpis.bestPickup.playerName}</span>
+                    <div className="flex items-center gap-2.5">
+                      <div className="relative shrink-0">
+                        <img
+                          src={`https://sleepercdn.com/content/nfl/players/thumb/${heroKpis.bestPickup.playerId}.jpg`}
+                          alt=""
+                          className="w-10 h-10 rounded-full border border-emerald-400/40 object-cover bg-black/40"
+                          onError={e => {
+                            (e.target as HTMLImageElement).src = 'https://sleepercdn.com/images/v2/icons/player_default.webp';
+                          }}
+                        />
+                        {heroKpis.bestPickup.managerAvatar && (
+                          <img
+                            src={`https://sleepercdn.com/avatars/thumbs/${heroKpis.bestPickup.managerAvatar}`}
+                            alt={heroKpis.bestPickup.managerName}
+                            className="w-4 h-4 rounded-full border border-black absolute -bottom-0.5 -right-0.5 shadow"
+                          />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-bold text-white text-xs sm:text-sm flex items-center gap-1.5 leading-snug">
+                          <span className="truncate">{heroKpis.bestPickup.playerName}</span>
                           <DraftPositionBadge position={heroKpis.bestPickup.position} />
                         </div>
-                        <div className="text-[11px] text-muted truncate mt-0.5">
-                          ${heroKpis.bestPickup.cost} • <span className="text-gray-300">{heroKpis.bestPickup.managerName}</span>{' '}
-                          <span className="text-emerald-400 font-bold font-mono">({heroKpis.bestPickup.ppd.toFixed(1)} pts/$)</span>
+                        <div className="text-[11px] text-muted truncate mt-0.5 flex items-center gap-1.5 font-mono">
+                          <span className="text-emerald-400 font-bold">{heroKpis.bestPickup.ppd.toFixed(1)} pts/$</span>
+                          <span>•</span>
+                          <span className="text-gray-300 font-sans">${heroKpis.bestPickup.cost} FAAB</span>
                         </div>
                       </div>
                     </div>
@@ -673,23 +683,33 @@ export const Faab: React.FC = () => {
                       <Sparkles size={14} className="text-amber-400 shrink-0" />
                       <span className="truncate">Top Waiver Pickup</span>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={`https://sleepercdn.com/content/nfl/players/thumb/${heroKpis.topPickup.playerId}.jpg`}
-                        alt=""
-                        className="w-10 h-10 rounded-full border border-amber-400/40 object-cover bg-black/40 shrink-0"
-                        onError={e => {
-                          (e.target as HTMLImageElement).src = 'https://sleepercdn.com/images/v2/icons/player_default.webp';
-                        }}
-                      />
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <span className="font-bold text-white text-sm truncate">{heroKpis.topPickup.playerName}</span>
+                    <div className="flex items-center gap-2.5">
+                      <div className="relative shrink-0">
+                        <img
+                          src={`https://sleepercdn.com/content/nfl/players/thumb/${heroKpis.topPickup.playerId}.jpg`}
+                          alt=""
+                          className="w-10 h-10 rounded-full border border-amber-400/40 object-cover bg-black/40"
+                          onError={e => {
+                            (e.target as HTMLImageElement).src = 'https://sleepercdn.com/images/v2/icons/player_default.webp';
+                          }}
+                        />
+                        {heroKpis.topPickup.managerAvatar && (
+                          <img
+                            src={`https://sleepercdn.com/avatars/thumbs/${heroKpis.topPickup.managerAvatar}`}
+                            alt={heroKpis.topPickup.managerName}
+                            className="w-4 h-4 rounded-full border border-black absolute -bottom-0.5 -right-0.5 shadow"
+                          />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-bold text-white text-xs sm:text-sm flex items-center gap-1.5 leading-snug">
+                          <span className="truncate">{heroKpis.topPickup.playerName}</span>
                           <DraftPositionBadge position={heroKpis.topPickup.position} />
                         </div>
-                        <div className="text-[11px] text-muted truncate mt-0.5">
-                          <span className="text-gray-300">{heroKpis.topPickup.managerName}</span> •{' '}
-                          <span className="text-amber-400 font-bold font-mono">{heroKpis.topPickup.starterPoints.toFixed(1)} pts</span>
+                        <div className="text-[11px] text-muted truncate mt-0.5 flex items-center gap-1.5 font-mono">
+                          <span className="text-amber-400 font-bold">{heroKpis.topPickup.starterPoints.toFixed(1)} pts</span>
+                          <span>•</span>
+                          <span className="text-gray-300 font-sans">{heroKpis.topPickup.managerName}</span>
                         </div>
                       </div>
                     </div>
@@ -813,7 +833,7 @@ export const Faab: React.FC = () => {
                       Total FAAB budget spent on players who never contributed a single starter point.
                     </div>
                   </div>
-                  <div className="space-y-3 overflow-y-auto pr-1.5 custom-scrollbar" style={{ maxHeight: '350px' }}>
+                  <div className="space-y-3 overflow-y-auto pr-1.5 custom-scrollbar" style={{ maxHeight: '480px' }}>
                     {wastedFaabData.map((d, i) => {
                       const maxWasted = Math.max(...wastedFaabData.map(w => w.wastedFaab), 1);
                       const pct = Math.round((d.wastedFaab / maxWasted) * 100);
