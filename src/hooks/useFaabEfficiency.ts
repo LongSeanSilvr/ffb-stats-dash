@@ -150,6 +150,13 @@ export async function calculateFaabMetrics(selectedSeason: any): Promise<FaabEff
       }
     });
   });
+
+  // Fill forward remaining weeks so cumulative spend does not plunge to 0
+  Object.values(rosterData).forEach(rd => {
+    for (let w = lastRegularWeek; w < 18; w++) {
+      rd.spendingVelocity[w] = rd.spendingVelocity[lastRegularWeek - 1];
+    }
+  });
   
   // Calculate points
   weeksData.forEach((weekData, index) => {
