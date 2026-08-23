@@ -897,72 +897,150 @@ export const Trades: React.FC = () => {
                         {/* Lineup Comparison */}
                         {fm.actualStarters && fm.hypotheticalStarters && (
                           <div className="px-5 md:px-6 py-5 md:py-6">
+                            {/* Color Legend */}
+                            <div className="flex flex-wrap items-center justify-center gap-4 py-2 px-3 bg-black/30 rounded-xl border border-white/5 text-[11px] font-medium text-muted mb-4">
+                              <div className="flex items-center gap-1.5">
+                                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0"></span>
+                                <span className="text-emerald-300 font-bold">Acquired via Trade</span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0"></span>
+                                <span className="text-amber-300 font-bold">Trade-Promoted Starter</span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="w-2.5 h-2.5 rounded-full bg-blue-400 shrink-0"></span>
+                                <span className="text-blue-300 font-bold">Surrendered Asset</span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="w-2.5 h-2.5 rounded-full bg-rose-400 shrink-0"></span>
+                                <span className="text-rose-300 font-bold">Replacement Level (ERV)</span>
+                              </div>
+                            </div>
+
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
                               {/* Actual */}
                               <div>
                                 <div className="flex items-center justify-between mb-3 px-1">
                                   <h3 className="font-bold text-white flex items-center gap-2">
-                                    <div className="w-2 h-2 rounded-full bg-success-color" />
-                                    Actual Lineup
+                                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+                                    Actual Lineup (With Trade)
                                   </h3>
                                 </div>
                                 <div className="space-y-2">
                                   {fm.actualStarters.map((s: any, sIdx: number) => {
-                                    const isAcquired = fm.transactionDetails?.received?.some((r: string) => r.includes(s.name) || s.name.includes(r.split(' ')[0]));
+                                    const isAcquired = fm.transactionDetails?.received?.some((r: string) => r.toLowerCase().includes(s.name.toLowerCase()) || s.name.toLowerCase().includes(r.split(' ')[0].toLowerCase()));
+                                    const isBenchedWithoutTrade = !fm.hypotheticalStarters.some((hs: any) => hs.id === s.id);
                                     const displaySlot = (s.rosterSlot || '').replace('SUPER_FLEX', 'SFLX').replace('_FLEX', ' FLX');
+                                    
                                     return (
-                                      <div key={sIdx} className={`flex items-center justify-between p-2 md:p-3 rounded-lg border ${
-                                        isAcquired ? 'bg-accent-color/10 border-accent-color/20' : 'bg-white/[0.02] border-white/5'
-                                      }`}>
+                                      <div
+                                        key={sIdx}
+                                        className={`flex items-center justify-between p-2.5 md:p-3 rounded-xl border transition-all ${
+                                          isAcquired
+                                            ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 shadow-sm shadow-emerald-500/10'
+                                            : isBenchedWithoutTrade
+                                            ? 'bg-amber-500/10 border-amber-500/30 text-amber-200 shadow-sm shadow-amber-500/5'
+                                            : 'bg-white/[0.02] border-white/5 opacity-60 hover:opacity-100'
+                                        }`}
+                                      >
                                         <div className="flex items-center gap-2 md:gap-3 overflow-hidden">
-                                          <span className="text-[9px] md:text-[10px] font-bold text-white/30 uppercase w-6 md:w-8 text-center tracking-wider shrink-0">{displaySlot}</span>
-                                          <img src={s.avatar} alt="" className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black/40 shrink-0" onError={(e) => { (e.target as HTMLImageElement).src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }} />
-                                          <span className={`text-xs md:text-sm font-medium truncate ${isAcquired ? 'text-accent-color font-bold' : 'text-white'}`}>{s.name}</span>
+                                          <span className="text-[9px] md:text-[10px] font-bold text-white/40 uppercase w-6 md:w-8 text-center tracking-wider shrink-0">{displaySlot}</span>
+                                          <img
+                                            src={s.avatar}
+                                            alt=""
+                                            className={`w-7 h-7 md:w-8 md:h-8 rounded-full shrink-0 bg-black/40 ${isAcquired ? 'ring-2 ring-emerald-400/60' : isBenchedWithoutTrade ? 'ring-2 ring-amber-400/50' : ''}`}
+                                            onError={(e) => { (e.target as HTMLImageElement).src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }}
+                                          />
+                                          <span className={`text-xs md:text-sm font-medium truncate ${isAcquired ? 'text-emerald-300 font-bold' : isBenchedWithoutTrade ? 'text-amber-200 font-bold' : 'text-white'}`}>
+                                            {s.name}
+                                          </span>
                                         </div>
                                         <div className="flex items-center gap-2 shrink-0 ml-2">
-                                          {isAcquired && <span className="text-[10px] uppercase font-bold text-accent-color border border-accent-color/20 px-1 rounded hidden sm:inline">Acquired</span>}
-                                          <span className={`font-mono text-xs ${isAcquired ? 'text-accent-color font-bold' : 'text-muted'}`}>{s.pts.toFixed(1)}</span>
+                                          {isAcquired && (
+                                            <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-300 bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 rounded-md hidden sm:inline">
+                                              Acquired
+                                            </span>
+                                          )}
+                                          {isBenchedWithoutTrade && !isAcquired && (
+                                            <span className="text-[10px] uppercase font-bold tracking-wider text-amber-300 bg-amber-500/20 border border-amber-500/30 px-2 py-0.5 rounded-md hidden sm:inline">
+                                              Trade-Promoted
+                                            </span>
+                                          )}
+                                          <span className={`font-mono text-xs font-bold ${isAcquired ? 'text-emerald-400' : isBenchedWithoutTrade ? 'text-amber-400' : 'text-muted'}`}>
+                                            {s.pts.toFixed(1)}
+                                          </span>
                                         </div>
                                       </div>
                                     );
                                   })}
                                 </div>
                               </div>
+
                               {/* Hypothetical */}
                               <div>
                                 <div className="flex items-center justify-between mb-3 px-1">
                                   <h3 className="font-bold text-white flex items-center gap-2">
-                                    <div className="w-2 h-2 rounded-full bg-danger-color" />
-                                    Without Trades
+                                    <div className="w-2.5 h-2.5 rounded-full bg-rose-400" />
+                                    Without Trades (Counterfactual)
                                   </h3>
                                 </div>
                                 <div className="space-y-2">
                                   {fm.hypotheticalStarters.map((s: any, sIdx: number) => {
                                     const isReplacement = s.id.startsWith('REP_');
+                                    const isSurrendered = fm.transactionDetails?.gaveUp?.some((g: string) => g.toLowerCase().includes(s.name.toLowerCase()) || s.name.toLowerCase().includes(g.split(' ')[0].toLowerCase()));
                                     const isNew = !fm.actualStarters.some((as: any) => as.id === s.id);
                                     const displaySlot = (s.rosterSlot || '').replace('SUPER_FLEX', 'SFLX').replace('_FLEX', ' FLX');
-                                    const isChanged = isReplacement || isNew;
+                                    
                                     return (
-                                      <div key={sIdx} className={`flex items-center justify-between p-2 md:p-3 rounded-lg border ${
-                                        isReplacement ? 'bg-danger-color/10 border-danger-color/30 border-l-2 border-l-danger-color' : isNew ? 'bg-white/5 border-white/10 border-l-2 border-l-white/30' : 'bg-white/[0.02] border-white/5'
-                                      }`}>
+                                      <div
+                                        key={sIdx}
+                                        className={`flex items-center justify-between p-2.5 md:p-3 rounded-xl border transition-all ${
+                                          isSurrendered
+                                            ? 'bg-blue-500/15 border-blue-500/40 text-blue-300 shadow-sm shadow-blue-500/10'
+                                            : isReplacement
+                                            ? 'bg-rose-500/15 border-rose-500/40 text-rose-300 shadow-sm shadow-rose-500/10'
+                                            : isNew
+                                            ? 'bg-purple-500/15 border-purple-500/40 text-purple-300 shadow-sm shadow-purple-500/10'
+                                            : 'bg-white/[0.02] border-white/5 opacity-60 hover:opacity-100'
+                                        }`}
+                                      >
                                         <div className="flex items-center gap-2 md:gap-3 overflow-hidden">
-                                          <span className="text-[9px] md:text-[10px] font-bold text-white/30 uppercase w-6 md:w-8 text-center tracking-wider shrink-0">{displaySlot}</span>
+                                          <span className="text-[9px] md:text-[10px] font-bold text-white/40 uppercase w-6 md:w-8 text-center tracking-wider shrink-0">{displaySlot}</span>
                                           {!isReplacement ? (
-                                            <img src={s.avatar} alt="" className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black/40 shrink-0" onError={(e) => { (e.target as HTMLImageElement).src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }} />
+                                            <img
+                                              src={s.avatar}
+                                              alt=""
+                                              className={`w-7 h-7 md:w-8 md:h-8 rounded-full shrink-0 bg-black/40 ${isSurrendered ? 'ring-2 ring-blue-400/60' : isNew ? 'ring-2 ring-purple-400/50' : ''}`}
+                                              onError={(e) => { (e.target as HTMLImageElement).src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }}
+                                            />
                                           ) : (
-                                            <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-white/5 flex items-center justify-center shrink-0">
-                                              <User size={10} className="text-muted" />
+                                            <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-rose-500/20 border border-rose-500/30 flex items-center justify-center shrink-0">
+                                              <User size={12} className="text-rose-400" />
                                             </div>
                                           )}
-                                          <span className={`text-xs md:text-sm font-medium truncate ${isReplacement ? 'text-danger-color font-bold' : isNew ? 'text-white font-bold' : 'text-white'}`}>
+                                          <span className={`text-xs md:text-sm font-medium truncate ${isSurrendered ? 'text-blue-300 font-bold' : isReplacement ? 'text-rose-300 font-bold' : isNew ? 'text-purple-300 font-bold' : 'text-white'}`}>
                                             {isReplacement ? `ERV: ${s.name}` : s.name}
                                           </span>
                                         </div>
                                         <div className="flex items-center gap-2 shrink-0 ml-2">
-                                          {isReplacement && <span className="text-[10px] uppercase font-bold text-danger-color border border-danger-color/30 px-1 rounded hidden sm:inline">Replacement</span>}
-                                          {isNew && !isReplacement && <span className="text-[10px] uppercase font-bold text-muted border border-white/10 px-1 rounded hidden sm:inline">Promoted</span>}
-                                          <span className={`font-mono text-xs ${isChanged ? (isReplacement ? 'text-danger-color font-bold' : 'text-muted font-bold') : 'text-muted'}`}>{s.pts.toFixed(1)}</span>
+                                          {isSurrendered && (
+                                            <span className="text-[10px] uppercase font-bold tracking-wider text-blue-300 bg-blue-500/20 border border-blue-500/30 px-2 py-0.5 rounded-md hidden sm:inline">
+                                              Surrendered
+                                            </span>
+                                          )}
+                                          {isReplacement && (
+                                            <span className="text-[10px] uppercase font-bold tracking-wider text-rose-300 bg-rose-500/20 border border-rose-500/30 px-2 py-0.5 rounded-md hidden sm:inline">
+                                              Replacement
+                                            </span>
+                                          )}
+                                          {isNew && !isReplacement && !isSurrendered && (
+                                            <span className="text-[10px] uppercase font-bold tracking-wider text-purple-300 bg-purple-500/20 border border-purple-500/30 px-2 py-0.5 rounded-md hidden sm:inline">
+                                              Promoted
+                                            </span>
+                                          )}
+                                          <span className={`font-mono text-xs font-bold ${isSurrendered ? 'text-blue-400' : isReplacement ? 'text-rose-400' : isNew ? 'text-purple-400' : 'text-muted'}`}>
+                                            {s.pts.toFixed(1)}
+                                          </span>
                                         </div>
                                       </div>
                                     );
