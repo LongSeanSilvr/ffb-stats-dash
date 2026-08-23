@@ -1111,31 +1111,31 @@ export const Managers: React.FC = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-2 pt-3 mt-3 border-t border-white/5">
                   <div className="flex items-center gap-2 p-2.5 rounded-xl bg-blue-500/5 border border-blue-500/20 text-xs">
-                    <span className="text-sm shrink-0">🧪</span>
+                    <span className="text-sm shrink-0">🛟</span>
                     <div className="min-w-0">
-                      <span className="font-bold text-blue-400">FAAB Specialists</span>
-                      <div className="text-[10px] text-muted truncate">Top-Left • High FAAB %, Low Draft %</div>
+                      <span className="font-bold text-blue-400">Wire Snipers</span>
+                      <div className="text-[10px] text-muted truncate">Top-Left • High Wire %, Low Draft %</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-xs">
-                    <span className="text-sm shrink-0">🎯</span>
+                    <span className="text-sm shrink-0">👑</span>
                     <div className="min-w-0">
-                      <span className="font-bold text-emerald-400">Surgical Snipers</span>
-                      <div className="text-[10px] text-muted truncate">Top-Right • Elite accuracy on both channels</div>
+                      <span className="font-bold text-emerald-400">Master Evaluators</span>
+                      <div className="text-[10px] text-muted truncate">Top-Right • Elite Across Both Channels</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 p-2.5 rounded-xl bg-rose-500/5 border border-rose-500/20 text-xs">
-                    <span className="text-sm shrink-0">🎰</span>
+                    <span className="text-sm shrink-0">🎲</span>
                     <div className="min-w-0">
-                      <span className="font-bold text-rose-400">Lottery Pickers</span>
-                      <div className="text-[10px] text-muted truncate">Bottom-Left • Below average hit rates</div>
+                      <span className="font-bold text-rose-400">Speculative Gamblers</span>
+                      <div className="text-[10px] text-muted truncate">Bottom-Left • Below Average Hit Rates</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 p-2.5 rounded-xl bg-teal-500/5 border border-teal-500/20 text-xs">
-                    <span className="text-sm shrink-0">🛡️</span>
+                    <span className="text-sm shrink-0">📋</span>
                     <div className="min-w-0">
-                      <span className="font-bold text-teal-400">Draft Specialists</span>
-                      <div className="text-[10px] text-muted truncate">Bottom-Right • High Draft %, Low FAAB %</div>
+                      <span className="font-bold text-teal-400">Draft Anchored</span>
+                      <div className="text-[10px] text-muted truncate">Bottom-Right • High Draft %, Low Wire %</div>
                     </div>
                   </div>
                 </div>
