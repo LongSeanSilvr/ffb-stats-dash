@@ -226,7 +226,7 @@ export const Trades: React.FC = () => {
           currentManagerName: timingView === 'buyer' ? buyerName : sellerName,
           ringColor: timingView === 'buyer'
             ? (delta > 0 ? '#10b981' : delta < 0 ? '#f43f5e' : '#64748b')
-            : (delta < 0 ? '#3b82f6' : delta > 0 ? '#f43f5e' : '#64748b')
+            : (delta < 0 ? '#10b981' : delta > 0 ? '#f43f5e' : '#64748b')
         };
       });
   }, [tradeData, selectedSeason, timingView]);
@@ -863,20 +863,41 @@ export const Trades: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 pt-3 mt-1 border-t border-white/5">
-                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-xs">
-                    <span className="text-sm shrink-0">📈</span>
-                    <div className="min-w-0">
-                      <span className="font-bold text-emerald-400">Breakouts</span>
-                      <div className="text-[10px] text-muted truncate">Above Line • Scoring surged (+PPG)</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-rose-500/5 border border-rose-500/20 text-xs">
-                    <span className="text-sm shrink-0">📉</span>
-                    <div className="min-w-0">
-                      <span className="font-bold text-rose-400">Regressions</span>
-                      <div className="text-[10px] text-muted truncate">Below Line • Scoring dropped (-PPG)</div>
-                    </div>
-                  </div>
+                  {timingView === 'buyer' ? (
+                    <>
+                      <div className="flex items-center gap-2 p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-xs">
+                        <span className="text-sm shrink-0">📈</span>
+                        <div className="min-w-0">
+                          <span className="font-bold text-emerald-400">Breakouts</span>
+                          <div className="text-[10px] text-muted truncate">Above Line • Buyer Win (+PPG surge)</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 p-2.5 rounded-xl bg-rose-500/5 border border-rose-500/20 text-xs">
+                        <span className="text-sm shrink-0">📉</span>
+                        <div className="min-w-0">
+                          <span className="font-bold text-rose-400">Regressions</span>
+                          <div className="text-[10px] text-muted truncate">Below Line • Buyer Loss (-PPG dip)</div>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-2 p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-xs">
+                        <span className="text-sm shrink-0">📉</span>
+                        <div className="min-w-0">
+                          <span className="font-bold text-emerald-400">Dips Avoided</span>
+                          <div className="text-[10px] text-muted truncate">Below Line • Seller Win (Sold before dip)</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 p-2.5 rounded-xl bg-rose-500/5 border border-rose-500/20 text-xs">
+                        <span className="text-sm shrink-0">📈</span>
+                        <div className="min-w-0">
+                          <span className="font-bold text-rose-400">Surges Missed</span>
+                          <div className="text-[10px] text-muted truncate">Above Line • Seller Loss (Surged after sale)</div>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
               <MobileTapHint />
