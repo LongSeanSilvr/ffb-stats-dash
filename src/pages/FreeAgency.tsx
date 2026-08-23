@@ -53,7 +53,7 @@ const CustomAvatarDot = (props: any) => {
 
   return (
     <g 
-      className="cursor-pointer transition-transform hover:scale-115"
+      className="cursor-pointer group"
       onClick={() => onClick && onClick(payload.rawResult || payload)}
     >
       <defs>
@@ -61,6 +61,8 @@ const CustomAvatarDot = (props: any) => {
           <circle cx={cx} cy={cy} r={size / 2 - 1.5} />
         </clipPath>
       </defs>
+      {/* Invisible hit expander */}
+      <circle cx={cx} cy={cy} r={size / 2 + 4} fill="transparent" />
       {/* Outer border ring */}
       <circle 
         cx={cx} 
@@ -69,6 +71,7 @@ const CustomAvatarDot = (props: any) => {
         fill="#0f1115" 
         stroke="rgba(255,255,255,0.4)" 
         strokeWidth="1.5" 
+        className="group-hover:stroke-white group-hover:stroke-[2.5px] transition-all"
       />
       {avatarUrl ? (
         <image 
@@ -501,40 +504,46 @@ export const FreeAgency: React.FC = () => {
       </div>
 
       {/* ─── 3-Hub Navigation Bar ─── */}
-      <div className="flex items-center gap-2 p-1.5 bg-[#0f1115]/80 backdrop-blur-md rounded-2xl border border-white/10 mb-8 overflow-x-auto">
+      <div className="bg-black/40 backdrop-blur-md p-1.5 rounded-2xl border border-white/10 shadow-xl grid grid-cols-1 md:grid-cols-3 gap-2 mb-8 w-full">
         <button
           onClick={() => setActiveTab('matrices')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 shrink-0 ${
+          className={`flex items-center justify-center gap-2.5 py-3 px-4 rounded-xl font-bold text-sm transition-all cursor-pointer w-full ${
             activeTab === 'matrices'
-              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20'
-              : 'text-muted hover:text-white hover:bg-white/[0.04]'
+              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25 border border-blue-400/30'
+              : 'text-muted hover:text-white hover:bg-white/5'
           }`}
         >
-          <Sparkles size={16} />
+          <div className={`p-1.5 rounded-lg ${activeTab === 'matrices' ? 'bg-white/20' : 'bg-white/5'}`}>
+            <Sparkles size={16} />
+          </div>
           <span>Reliance & Strategy Matrices</span>
         </button>
 
         <button
           onClick={() => setActiveTab('positional')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 shrink-0 ${
+          className={`flex items-center justify-center gap-2.5 py-3 px-4 rounded-xl font-bold text-sm transition-all cursor-pointer w-full ${
             activeTab === 'positional'
-              ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/20'
-              : 'text-muted hover:text-white hover:bg-white/[0.04]'
+              ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/25 border border-emerald-400/30'
+              : 'text-muted hover:text-white hover:bg-white/5'
           }`}
         >
-          <Layers size={16} />
+          <div className={`p-1.5 rounded-lg ${activeTab === 'positional' ? 'bg-white/20' : 'bg-white/5'}`}>
+            <Layers size={16} />
+          </div>
           <span>Positional Overlays & Timing</span>
         </button>
 
         <button
           onClick={() => setActiveTab('ledger')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 shrink-0 ${
+          className={`flex items-center justify-center gap-2.5 py-3 px-4 rounded-xl font-bold text-sm transition-all cursor-pointer w-full ${
             activeTab === 'ledger'
-              ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/20'
-              : 'text-muted hover:text-white hover:bg-white/[0.04]'
+              ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/25 border border-purple-400/30'
+              : 'text-muted hover:text-white hover:bg-white/5'
           }`}
         >
-          <FileSpreadsheet size={16} />
+          <div className={`p-1.5 rounded-lg ${activeTab === 'ledger' ? 'bg-white/20' : 'bg-white/5'}`}>
+            <FileSpreadsheet size={16} />
+          </div>
           <span>Acquisition Ledger & Impact</span>
         </button>
       </div>
@@ -555,7 +564,7 @@ export const FreeAgency: React.FC = () => {
             {/* Modern Cartesian Quadrant Badges */}
             <div className="grid grid-cols-2 gap-2 mb-4 p-2.5 rounded-xl bg-white/[0.02] border border-white/5 text-[11px]">
               <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                <div className="font-semibold text-blue-400">🛡️ Draft Driven</div>
+                <div className="font-semibold text-blue-400">🛡️ Draft Dominant</div>
                 <div className="text-muted text-[10px] mt-0.5">Top-Left • Low Waiver %, High Win %</div>
               </div>
               <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
@@ -567,7 +576,7 @@ export const FreeAgency: React.FC = () => {
                 <div className="text-muted text-[10px] mt-0.5">Bottom-Left • Low Waiver %, Low Win %</div>
               </div>
               <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                <div className="font-semibold text-amber-400">🌊 Treading Water</div>
+                <div className="font-semibold text-amber-400">🌊 Empty Churn</div>
                 <div className="text-muted text-[10px] mt-0.5">Bottom-Right • High Waiver %, Low Win %</div>
               </div>
             </div>
@@ -627,20 +636,20 @@ export const FreeAgency: React.FC = () => {
             {/* Modern Cartesian Quadrant Badges */}
             <div className="grid grid-cols-2 gap-2 mb-4 p-2.5 rounded-xl bg-white/[0.02] border border-white/5 text-[11px]">
               <div className="p-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
-                <div className="font-semibold text-indigo-400">⏳ Patient Investors</div>
-                <div className="text-muted text-[10px] mt-0.5">Top-Left • Low Pickups, Long Hold Time</div>
+                <div className="font-semibold text-indigo-400">🎯 Targeted Stashers</div>
+                <div className="text-muted text-[10px] mt-0.5">Top-Left • Low Volume, Long Hold Duration</div>
               </div>
               <div className="p-2 rounded-lg bg-teal-500/10 border border-teal-500/20">
-                <div className="font-semibold text-teal-400">💎 Roster Maximizers</div>
-                <div className="text-muted text-[10px] mt-0.5">Top-Right • High Pickups, Long Hold Time</div>
+                <div className="font-semibold text-teal-400">🏗️ Active Builders</div>
+                <div className="text-muted text-[10px] mt-0.5">Top-Right • High Volume, Long Hold Duration</div>
               </div>
               <div className="p-2 rounded-lg bg-slate-500/10 border border-slate-500/20">
-                <div className="font-semibold text-slate-300">😴 Inactive Wire</div>
-                <div className="text-muted text-[10px] mt-0.5">Bottom-Left • Low Pickups, Short Hold Time</div>
+                <div className="font-semibold text-slate-300">🛡️ Set & Forget</div>
+                <div className="text-muted text-[10px] mt-0.5">Bottom-Left • Low Volume, Short Hold Duration</div>
               </div>
               <div className="p-2 rounded-lg bg-purple-500/10 border border-purple-500/20">
-                <div className="font-semibold text-purple-400">🔄 Churn Streamers</div>
-                <div className="text-muted text-[10px] mt-0.5">Bottom-Right • High Pickups, Short Hold Time</div>
+                <div className="font-semibold text-purple-400">🔄 Weekly Streamers</div>
+                <div className="text-muted text-[10px] mt-0.5">Bottom-Right • High Volume, Short Hold Duration</div>
               </div>
             </div>
 

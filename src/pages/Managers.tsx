@@ -27,12 +27,14 @@ const CustomAvatarDot = (props: any) => {
   const clipId = `clip-mgr-${safeName}-${Math.round(cx)}-${Math.round(cy)}`;
 
   return (
-    <g className="cursor-pointer transition-transform hover:scale-110">
+    <g className="cursor-pointer group">
       <defs>
         <clipPath id={clipId}>
           <circle cx={cx} cy={cy} r={size/2 - 1.5} />
         </clipPath>
       </defs>
+      {/* Invisible hit expander */}
+      <circle cx={cx} cy={cy} r={size/2 + 4} fill="transparent" />
       {/* Outer border ring */}
       <circle 
         cx={cx} 
@@ -41,6 +43,7 @@ const CustomAvatarDot = (props: any) => {
         fill="#0f1115" 
         stroke="rgba(255,255,255,0.4)" 
         strokeWidth="1.5"
+        className="group-hover:stroke-white group-hover:stroke-[2.5px] transition-all"
       />
       {avatarUrl ? (
         <image 
