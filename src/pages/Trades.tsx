@@ -924,10 +924,19 @@ export const Trades: React.FC = () => {
                                 </div>
                                 <div className="space-y-2">
                                   {fm.actualStarters.map((s: any, sIdx: number) => {
+                                    const extractPlayerName = (str: string) => {
+                                      if (!str) return '';
+                                      if (/Rd\s+\d+/i.test(str) && str.includes('(') && str.includes(')')) {
+                                        const match = str.match(/\(([^)]+)\)/);
+                                        if (match && match[1]) return match[1].trim().toLowerCase();
+                                      }
+                                      return str.replace(/\s*\([A-Z0-9_]+\)$/i, '').replace(/\s*Pick$/i, '').trim().toLowerCase();
+                                    };
+
                                     const isAcquired = (fm.transactionDetails?.receivedAssetIds && fm.transactionDetails.receivedAssetIds.includes(s.id)) ||
                                       fm.transactionDetails?.received?.some((r: string) => {
-                                        const cleanR = r.replace(/^Rd\s+\d+\s+(Pick\s+)?\(?/i, '').replace(/\)?\s*(\([A-Z]+\))?$/i, '').trim().toLowerCase();
-                                        return cleanR.length > 2 && s.name.toLowerCase().includes(cleanR);
+                                        const cleanR = extractPlayerName(r);
+                                        return cleanR.length > 2 && (s.name.toLowerCase().includes(cleanR) || cleanR.includes(s.name.toLowerCase()));
                                       });
                                     const isBenchedWithoutTrade = !fm.hypotheticalStarters.some((hs: any) => hs.id === s.id);
                                     const displaySlot = (s.rosterSlot || '').replace('SUPER_FLEX', 'SFLX').replace('_FLEX', ' FLX');
@@ -986,11 +995,20 @@ export const Trades: React.FC = () => {
                                 </div>
                                 <div className="space-y-2">
                                   {fm.hypotheticalStarters.map((s: any, sIdx: number) => {
+                                    const extractPlayerName = (str: string) => {
+                                      if (!str) return '';
+                                      if (/Rd\s+\d+/i.test(str) && str.includes('(') && str.includes(')')) {
+                                        const match = str.match(/\(([^)]+)\)/);
+                                        if (match && match[1]) return match[1].trim().toLowerCase();
+                                      }
+                                      return str.replace(/\s*\([A-Z0-9_]+\)$/i, '').replace(/\s*Pick$/i, '').trim().toLowerCase();
+                                    };
+
                                     const isReplacement = s.id.startsWith('REP_');
                                     const isSurrendered = (fm.transactionDetails?.gaveAssetIds && fm.transactionDetails.gaveAssetIds.includes(s.id)) ||
                                       fm.transactionDetails?.gaveUp?.some((g: string) => {
-                                        const cleanG = g.replace(/^Rd\s+\d+\s+(Pick\s+)?\(?/i, '').replace(/\)?\s*(\([A-Z]+\))?$/i, '').trim().toLowerCase();
-                                        return cleanG.length > 2 && s.name.toLowerCase().includes(cleanG);
+                                        const cleanG = extractPlayerName(g);
+                                        return cleanG.length > 2 && (s.name.toLowerCase().includes(cleanG) || cleanG.includes(s.name.toLowerCase()));
                                       });
                                     const isNew = !fm.actualStarters.some((as: any) => as.id === s.id);
                                     const displaySlot = (s.rosterSlot || '').replace('SUPER_FLEX', 'SFLX').replace('_FLEX', ' FLX');
