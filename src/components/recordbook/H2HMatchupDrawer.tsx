@@ -112,9 +112,10 @@ export const H2HMatchupDrawer: React.FC<H2HMatchupDrawerProps> = ({
               return (
                 <div
                   key={`${game.season}-${game.week}-${i}`}
-                  className="p-3.5 sm:p-4 rounded-xl bg-white/[0.03] border border-white/5 hover:border-white/15 transition-all space-y-2.5 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-4"
+                  className="h2h-game-row"
                 >
-                  <div className="flex items-center justify-between sm:justify-start gap-2">
+                  {/* Left Column on Desktop / Top Bar on Mobile: Date, Playoffs Badge, and Mobile Margin */}
+                  <div className="flex items-center justify-between sm:justify-start gap-2 sm:w-44 shrink-0">
                     <div className="flex items-center gap-1.5 sm:gap-2">
                       <span className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-white/5 text-gray-300 border border-white/5 shrink-0">
                         <Calendar size={13} />
@@ -127,25 +128,50 @@ export const H2HMatchupDrawer: React.FC<H2HMatchupDrawerProps> = ({
                       )}
                     </div>
 
-                    <div className="sm:hidden text-xs font-mono text-purple-400 font-semibold px-2 py-0.5 rounded bg-purple-500/10 border border-purple-500/20">
+                    {/* Margin on Mobile Only */}
+                    <div className="h2h-mobile-only text-xs font-mono text-purple-400 font-semibold px-2 py-0.5 rounded bg-purple-500/10 border border-purple-500/20 shrink-0">
                       +{game.margin.toFixed(1)}
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/5 sm:border-t-0 sm:pt-0 sm:flex sm:items-center sm:justify-end sm:gap-5 flex-1 min-w-0">
-                    <div className={`flex items-center justify-between sm:justify-start gap-2 p-2 sm:p-0 rounded-lg bg-white/[0.02] sm:bg-transparent min-w-0 ${m1Won ? 'font-bold text-success-color' : 'text-gray-300'}`}>
-                      <span className="text-xs text-muted truncate">{manager1.name}:</span>
-                      <span className="font-mono text-xs sm:text-sm font-bold shrink-0">{game.manager1Pts.toFixed(1)}</span>
-                    </div>
+                  {/* Manager 1 (Desktop) / Team 1 Box (Mobile) */}
+                  <div className={`flex items-center justify-between sm:justify-end gap-2.5 p-2 sm:p-0 rounded-lg sm:rounded-none border sm:border-none min-w-0 ${
+                    m1Won 
+                      ? 'bg-emerald-500/10 border-emerald-500/30 text-success-color sm:bg-transparent' 
+                      : 'bg-white/[0.02] border-white/5 text-gray-400 sm:bg-transparent'
+                  }`}>
+                    <span className={`text-xs truncate font-medium ${m1Won ? 'text-white font-semibold' : 'text-muted'}`}>
+                      {manager1.name}
+                    </span>
+                    <span className={`font-mono text-xs sm:text-base font-bold shrink-0 ${m1Won ? 'text-success-color' : 'text-gray-400'}`}>
+                      {game.manager1Pts.toFixed(1)}
+                    </span>
+                  </div>
 
-                    <div className={`flex items-center justify-between sm:justify-start gap-2 p-2 sm:p-0 rounded-lg bg-white/[0.02] sm:bg-transparent min-w-0 ${m2Won ? 'font-bold text-success-color' : 'text-gray-300'}`}>
-                      <span className="text-xs text-muted truncate">{manager2.name}:</span>
-                      <span className="font-mono text-xs sm:text-sm font-bold shrink-0">{game.manager2Pts.toFixed(1)}</span>
-                    </div>
+                  {/* VS Divider (Desktop Only) */}
+                  <div className="h2h-desktop-only items-center justify-center text-[10px] font-bold text-muted uppercase tracking-wider px-2 py-0.5 rounded bg-white/5 border border-white/5 shrink-0">
+                    vs
+                  </div>
 
-                    <div className="hidden sm:block text-xs font-mono text-purple-400 pl-3 border-l border-white/10 shrink-0 font-semibold">
+                  {/* Manager 2 (Desktop) / Team 2 Box (Mobile) */}
+                  <div className={`flex items-center justify-between sm:justify-start gap-2.5 p-2 sm:p-0 rounded-lg sm:rounded-none border sm:border-none min-w-0 ${
+                    m2Won 
+                      ? 'bg-emerald-500/10 border-emerald-500/30 text-success-color sm:bg-transparent' 
+                      : 'bg-white/[0.02] border-white/5 text-gray-400 sm:bg-transparent'
+                  }`}>
+                    <span className={`text-xs truncate font-medium sm:order-2 ${m2Won ? 'text-white font-semibold' : 'text-muted'}`}>
+                      {manager2.name}
+                    </span>
+                    <span className={`font-mono text-xs sm:text-base font-bold shrink-0 sm:order-1 ${m2Won ? 'text-success-color' : 'text-gray-400'}`}>
+                      {game.manager2Pts.toFixed(1)}
+                    </span>
+                  </div>
+
+                  {/* Right Column on Desktop: Margin Badge */}
+                  <div className="h2h-desktop-only justify-end shrink-0">
+                    <span className="inline-block text-xs font-mono text-purple-400 font-semibold px-2 py-0.5 rounded bg-purple-500/10 border border-purple-500/20">
                       +{game.margin.toFixed(1)}
-                    </div>
+                    </span>
                   </div>
                 </div>
               );

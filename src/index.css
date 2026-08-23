@@ -62,6 +62,45 @@ a:hover {
   color: #60a5fa;
 }
 
+/* Head-to-Head Matchup Drawer Rows */
+.h2h-game-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease;
+}
+.h2h-game-row:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+@media (min-width: 640px) {
+  .h2h-game-row {
+    display: grid !important;
+    grid-template-columns: 215px 1fr 36px 1fr 75px !important;
+    align-items: center !important;
+    gap: 1rem !important;
+  }
+  .h2h-mobile-only {
+    display: none !important;
+  }
+  .h2h-desktop-only {
+    display: flex !important;
+  }
+}
+
+@media (max-width: 639px) {
+  .h2h-mobile-only {
+    display: flex !important;
+  }
+  .h2h-desktop-only {
+    display: none !important;
+  }
+}
+
 /* Glassmorphic Utilities */
 .glass-card {
   background: rgba(22, 26, 35, 0.75);
