@@ -750,6 +750,16 @@ export const Managers: React.FC = () => {
                         <div className="min-w-0 flex-1">
                           <div className="font-bold text-sm text-white truncate flex items-center gap-1.5">
                             <span className="truncate">{user?.display_name || `Team ${r.roster_id}`}</span>
+                            {i < 2 && (
+                              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-300 border border-amber-500/25 shrink-0">
+                                BYE
+                              </span>
+                            )}
+                            {i >= 2 && i < 6 && (
+                              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/25 shrink-0">
+                                PLAYOFF
+                              </span>
+                            )}
                             <ChevronRight size={14} className="text-muted shrink-0 opacity-60" />
                           </div>
                           <div className="text-xs text-muted font-medium mt-0.5">{r.settings.wins}-{r.settings.losses}{r.settings.ties > 0 ? `-${r.settings.ties}` : ''}</div>
@@ -845,8 +855,18 @@ export const Managers: React.FC = () => {
                             ) : (
                               <div className="team-avatar-placeholder"></div>
                             )}
-                            <span className="font-semibold text-white group-hover:text-accent-color transition-colors">
-                              {selectedSeason.rosterToUser[r.roster_id]?.display_name || `Team ${r.roster_id}`}
+                            <span className="font-semibold text-white group-hover:text-accent-color transition-colors flex items-center gap-2">
+                              <span>{selectedSeason.rosterToUser[r.roster_id]?.display_name || `Team ${r.roster_id}`}</span>
+                              {i < 2 && (
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/25">
+                                  BYE
+                                </span>
+                              )}
+                              {i >= 2 && i < 6 && (
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/25">
+                                  PLAYOFFS
+                                </span>
+                              )}
                             </span>
                           </td>
                           <td className="text-center text-base font-bold font-mono text-white">{r.settings.wins}-{r.settings.losses}{r.settings.ties > 0 ? `-${r.settings.ties}` : ''}</td>
