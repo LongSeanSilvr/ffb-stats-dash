@@ -402,20 +402,22 @@ export const Trades: React.FC = () => {
         </div>
       )}
 
-      {/* 2-Hub Navigation Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-1.5 bg-black/40 rounded-2xl border border-white/10 mb-8 backdrop-blur-md">
+      {/* 2-Hub Tab Command Bar (Full Width 2-Column Grid) */}
+      <div className="bg-black/40 backdrop-blur-md p-1.5 rounded-2xl border border-white/10 shadow-xl grid grid-cols-1 md:grid-cols-2 gap-2 mb-8 w-full">
         <button
           onClick={() => setActiveTab('performance')}
-          className={`flex-1 flex items-center justify-center gap-2.5 py-3 px-5 rounded-xl font-bold text-sm transition-all cursor-pointer ${
+          className={`flex items-center gap-3.5 px-6 py-3.5 rounded-xl text-sm font-bold transition-all cursor-pointer w-full ${
             activeTab === 'performance'
-              ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20'
-              : 'text-gray-400 hover:text-white hover:bg-white/5'
+              ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/25 border border-emerald-400/30'
+              : 'text-gray-300 hover:text-white hover:bg-white/5 border border-transparent'
           }`}
         >
-          <BarChart3 size={18} />
+          <div className={`p-2 rounded-lg ${activeTab === 'performance' ? 'bg-white/20 text-white' : 'bg-white/5 text-gray-400'}`}>
+            <BarChart3 size={18} />
+          </div>
           <div className="text-left">
             <div>Trade Performance & Ledger</div>
-            <div className={`text-[10px] font-normal ${activeTab === 'performance' ? 'text-black/80' : 'text-muted'}`}>
+            <div className={`text-[10px] font-normal ${activeTab === 'performance' ? 'text-white/80' : 'text-muted'}`}>
               Matchups Flipped, Net Margins & Full Transaction History
             </div>
           </div>
@@ -423,16 +425,18 @@ export const Trades: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('dynamics')}
-          className={`flex-1 flex items-center justify-center gap-2.5 py-3 px-5 rounded-xl font-bold text-sm transition-all cursor-pointer ${
+          className={`flex items-center gap-3.5 px-6 py-3.5 rounded-xl text-sm font-bold transition-all cursor-pointer w-full ${
             activeTab === 'dynamics'
-              ? 'bg-blue-500 text-black shadow-lg shadow-blue-500/20'
-              : 'text-gray-400 hover:text-white hover:bg-white/5'
+              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25 border border-blue-400/30'
+              : 'text-gray-300 hover:text-white hover:bg-white/5 border border-transparent'
           }`}
         >
-          <Zap size={18} />
+          <div className={`p-2 rounded-lg ${activeTab === 'dynamics' ? 'bg-white/20 text-white' : 'bg-white/5 text-gray-400'}`}>
+            <Zap size={18} />
+          </div>
           <div className="text-left">
             <div>Market Dynamics & Timing</div>
-            <div className={`text-[10px] font-normal ${activeTab === 'dynamics' ? 'text-black/80' : 'text-muted'}`}>
+            <div className={`text-[10px] font-normal ${activeTab === 'dynamics' ? 'text-white/80' : 'text-muted'}`}>
               Trade Typology Matrix & Market Timing Breakdown
             </div>
           </div>
