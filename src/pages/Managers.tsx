@@ -1,9 +1,14 @@
-import React, { useState } from 'react';
-import { Info, Trophy, Crown, Target, Zap, LayoutGrid, Radar as RadarIcon, BarChart3, TrendingUp, Award, User } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { 
+  Info, Trophy, Crown, Target, Zap, LayoutGrid, Radar as RadarIcon, 
+  BarChart3, TrendingUp, Award, User, X, Sparkles, Layers, ShieldCheck, 
+  ChevronRight, ArrowRight, ShoppingCart, RefreshCw
+} from 'lucide-react';
 import { Card } from '../components/Card';
 import { MobileTapHint } from '../components/MobileTapHint';
 import { useLeagueContext } from '../context/LeagueContext';
-import { useManagerAnalytics } from '../hooks/useManagerAnalytics';
+import { useManagerAnalytics, type ManagerProfile } from '../hooks/useManagerAnalytics';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
   ResponsiveContainer, ScatterChart, Scatter, ReferenceLine, Label,
@@ -84,11 +89,26 @@ export const Managers: React.FC = () => {
   const { profiles, loading: analyticsLoading } = useManagerAnalytics();
   
   const [activeTab, setActiveTab] = useState<'standings' | 'matrices' | 'radars'>('standings');
+  const [compositeMetric, setCompositeMetric] = useState<'overall' | 'draft' | 'faab' | 'trade'>('overall');
+  const [selectedManagerProfile, setSelectedManagerProfile] = useState<ManagerProfile | null>(null);
+  
   const [radarMgrs, setRadarMgrs] = useState<number[]>([]);
   const [dnaMgrs, setDnaMgrs] = useState<number[]>([]);
   const [posMgrs, setPosMgrs] = useState<number[]>([]);
 
   const loading = ctxLoading || analyticsLoading;
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (selectedManagerProfile) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [selectedManagerProfile]);
 
   // Initialize default selections with Top 3
   React.useEffect(() => {
@@ -163,12 +183,30 @@ export const Managers: React.FC = () => {
       }))
     : [];
 
-  // 3. Composite Score ranking
+  // 3. Composite Score ranking (Dynamic Metric)
   const compositeData = showAnalytics
-    ? [...profiles].sort((a, b) => b.compositeScore - a.compositeScore).map(p => ({
-        name: p.user?.display_name || `Team ${p.roster_id}`,
-        Score: p.compositeScore,
-      }))
+    ? [...profiles]
+        .map(p => {
+          let score = p.compositeScore;
+          let metricLabel = 'Composite Score';
+          if (compositeMetric === 'draft') {
+            score = p.idxDraft ?? 0;
+            metricLabel = 'Draft Mastery Index';
+          } else if (compositeMetric === 'faab') {
+            score = p.idxAcq ?? 0;
+            metricLabel = 'Free Agency Mastery Index';
+          } else if (compositeMetric === 'trade') {
+            score = p.idxTrade ?? 0;
+            metricLabel = 'Trade Mastery Index';
+          }
+          return {
+            name: p.user?.display_name || `Team ${p.roster_id}`,
+            Score: score,
+            metricLabel,
+            profile: p
+          };
+        })
+        .sort((a, b) => b.Score - a.Score)
     : [];
 
   // 4. Hit Rate comparison (Draft vs FAAB) matrix
@@ -616,14 +654,15 @@ export const Managers: React.FC = () => {
                 return (
                   <div 
                     key={r.roster_id} 
-                    className={`p-4 rounded-xl border transition-all ${
+                    onClick={() => profile && setSelectedManagerProfile(profile)}
+                    className={`p-4 rounded-xl border transition-all cursor-pointer hover:border-white/20 active:scale-[0.99] ${
                       i === 0 
                         ? 'bg-amber-500/5 border-amber-500/25 shadow-lg shadow-amber-500/5' 
                         : i === 1 
                         ? 'bg-slate-400/5 border-slate-400/25' 
                         : i === 2 
                         ? 'bg-amber-700/5 border-amber-700/25' 
-                        : 'bg-black/30 border-white/5'
+                        : 'bg-black/30 border-white/5 hover:bg-white/[0.02]'
                     }`}
                   >
                     <div className="flex items-center justify-between gap-3 border-b border-white/5 pb-3 mb-3">
@@ -642,7 +681,10 @@ export const Managers: React.FC = () => {
                           <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/50 shrink-0">N/A</div>
                         )}
                         <div className="min-w-0 flex-1">
-                          <div className="font-bold text-sm text-white truncate">{user?.display_name || `Team ${r.roster_id}`}</div>
+                          <div className="font-bold text-sm text-white truncate flex items-center gap-1.5">
+                            <span className="truncate">{user?.display_name || `Team ${r.roster_id}`}</span>
+                            <ChevronRight size={14} className="text-muted shrink-0 opacity-60" />
+                          </div>
                           <div className="text-xs text-muted font-medium mt-0.5">{r.settings.wins}-{r.settings.losses}{r.settings.ties > 0 ? `-${r.settings.ties}` : ''}</div>
                         </div>
                       </div>
@@ -710,6 +752,7 @@ export const Managers: React.FC = () => {
                           </div>
                         </th>
                       )}
+                      <th className="text-center">Dossier</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -718,10 +761,10 @@ export const Managers: React.FC = () => {
                       return (
                         <tr 
                           key={r.roster_id} 
-                          className="standings-row"
+                          onClick={() => profile && setSelectedManagerProfile(profile)}
+                          className="standings-row hover:bg-white/[0.04] transition-colors cursor-pointer group"
                           style={{ 
-                            background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)',
-                            cursor: 'default'
+                            background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)'
                           }}
                         >
                           <td className="team-cell">
@@ -735,7 +778,7 @@ export const Managers: React.FC = () => {
                             ) : (
                               <div className="team-avatar-placeholder"></div>
                             )}
-                            <span className="font-semibold text-white">
+                            <span className="font-semibold text-white group-hover:text-accent-color transition-colors">
                               {selectedSeason.rosterToUser[r.roster_id]?.display_name || `Team ${r.roster_id}`}
                             </span>
                           </td>
@@ -749,6 +792,12 @@ export const Managers: React.FC = () => {
                               {profile?.compositeScore.toFixed(1)}
                             </td>
                           )}
+                          <td className="text-center">
+                            <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg bg-white/5 group-hover:bg-blue-500/20 text-muted group-hover:text-blue-400 border border-white/10 group-hover:border-blue-500/30 transition-all">
+                              <span>Inspect</span>
+                              <ChevronRight size={12} />
+                            </span>
+                          </td>
                         </tr>
                       );
                     })}
@@ -758,15 +807,75 @@ export const Managers: React.FC = () => {
             </div>
           </Card>
 
-          {/* Manager Composite Strength Card */}
+          {/* Manager Composite Strength Card with Sub-Metric Toggle */}
           {showAnalytics && (
             <Card title="Manager Composite Strength Ranking" className="stagger-2">
-              <div className="text-sm text-muted mb-4">
-                Weighted percentile ranking evaluating sourcing dominance across 
-                <span className="text-white font-medium mx-1">Drafting (40%)</span>, 
-                <span className="text-white font-medium mx-1">FAAB + Waivers (40%)</span>, and 
-                <span className="text-white font-medium mx-1">Trades (20%)</span>.
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                <div className="text-sm text-muted">
+                  {compositeMetric === 'overall' && (
+                    <>
+                      Weighted percentile ranking evaluating sourcing dominance across 
+                      <span className="text-white font-medium mx-1">Drafting (40%)</span>, 
+                      <span className="text-white font-medium mx-1">FAAB + Waivers (40%)</span>, and 
+                      <span className="text-white font-medium mx-1">Trades (20%)</span>.
+                    </>
+                  )}
+                  {compositeMetric === 'draft' && (
+                    <>Percentile mastery ranking across <span className="text-teal-400 font-bold">Drafted & Kept Starter Points (40% weight)</span>.</>
+                  )}
+                  {compositeMetric === 'faab' && (
+                    <>Percentile mastery ranking across <span className="text-emerald-400 font-bold">Free Agency & FAAB Points Generated (40% weight)</span>.</>
+                  )}
+                  {compositeMetric === 'trade' && (
+                    <>Percentile mastery ranking across <span className="text-purple-400 font-bold">Trade Net Points Gained (20% weight)</span>.</>
+                  )}
+                </div>
+
+                {/* Metric Selector Pills */}
+                <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-black/40 border border-white/10 shrink-0">
+                  <button
+                    onClick={() => setCompositeMetric('overall')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      compositeMetric === 'overall'
+                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                        : 'text-muted hover:text-white'
+                    }`}
+                  >
+                    🌟 Composite
+                  </button>
+                  <button
+                    onClick={() => setCompositeMetric('draft')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      compositeMetric === 'draft'
+                        ? 'bg-teal-600 text-white shadow-md shadow-teal-500/20'
+                        : 'text-muted hover:text-white'
+                    }`}
+                  >
+                    🎯 Draft (40%)
+                  </button>
+                  <button
+                    onClick={() => setCompositeMetric('faab')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      compositeMetric === 'faab'
+                        ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/20'
+                        : 'text-muted hover:text-white'
+                    }`}
+                  >
+                    🛒 FAAB (40%)
+                  </button>
+                  <button
+                    onClick={() => setCompositeMetric('trade')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      compositeMetric === 'trade'
+                        ? 'bg-purple-600 text-white shadow-md shadow-purple-500/20'
+                        : 'text-muted hover:text-white'
+                    }`}
+                  >
+                    🔄 Trades (20%)
+                  </button>
+                </div>
               </div>
+
               <div style={{ height: 420 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={compositeData} layout="vertical" margin={{ left: 10, right: 30, top: 10, bottom: 10 }}>
@@ -778,12 +887,18 @@ export const Managers: React.FC = () => {
                       content={({ active, payload }) => {
                         if (active && payload && payload.length) {
                           const data = payload[0].payload;
-                          const profile = profiles.find(p => (p.user?.display_name || `Team ${p.roster_id}`) === data.name);
+                          const profile = data.profile as ManagerProfile;
                           return (
                             <div className="bg-[#0f1115]/95 border border-white/10 rounded-xl p-3.5 shadow-2xl min-w-[220px]">
                               <div className="font-bold text-sm text-white mb-1.5 pb-1 border-b border-white/10 flex items-center justify-between">
                                 <span>{data.name}</span>
-                                <span className="font-mono text-accent-color font-bold">{data.Score.toFixed(1)}</span>
+                                <span className="font-mono font-bold" style={{
+                                  color: compositeMetric === 'draft' ? '#2dd4bf' :
+                                         compositeMetric === 'faab' ? '#34d399' :
+                                         compositeMetric === 'trade' ? '#c084fc' : 'var(--accent-color)'
+                                }}>
+                                  {data.Score.toFixed(1)} / 100
+                                </span>
                               </div>
                               {profile && (
                                 <div className="space-y-1 text-xs text-muted">
@@ -811,7 +926,15 @@ export const Managers: React.FC = () => {
                         return null;
                       }}
                     />
-                    <Bar dataKey="Score" fill="var(--accent-color)" radius={[0, 6, 6, 0]} />
+                    <Bar 
+                      dataKey="Score" 
+                      fill={
+                        compositeMetric === 'draft' ? '#14b8a6' :
+                        compositeMetric === 'faab' ? '#10b981' :
+                        compositeMetric === 'trade' ? '#a855f7' : 'var(--accent-color)'
+                      } 
+                      radius={[0, 6, 6, 0]} 
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -1020,6 +1143,175 @@ export const Managers: React.FC = () => {
             {renderSelector(posMgrs, setPosMgrs)}
           </Card>
         </div>
+      )}
+
+      {/* Manager Executive Dossier Modal */}
+      {selectedManagerProfile && createPortal(
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-fade-in overflow-y-auto"
+          onClick={() => setSelectedManagerProfile(null)}
+        >
+          <div 
+            className="bg-[#0f1115] border border-white/15 rounded-3xl w-full max-w-2xl max-h-[88vh] overflow-y-auto p-5 sm:p-8 shadow-2xl relative space-y-6 my-auto"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button 
+              onClick={() => setSelectedManagerProfile(null)}
+              className="absolute top-6 right-6 p-2 rounded-xl bg-white/5 hover:bg-white/10 text-muted hover:text-white transition-colors cursor-pointer"
+            >
+              <X size={20} />
+            </button>
+
+            {/* Header */}
+            <div className="flex items-center gap-4 border-b border-white/10 pb-6">
+              {selectedManagerProfile.user?.avatar ? (
+                <img 
+                  src={`https://sleepercdn.com/avatars/thumbs/${selectedManagerProfile.user.avatar}`} 
+                  alt="" 
+                  className="w-16 h-16 rounded-full border-2 border-white/20 object-cover shadow-xl"
+                />
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-slate-700 flex items-center justify-center text-lg font-bold text-white/50">
+                  N/A
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="text-xs text-accent-color uppercase tracking-wider font-bold mb-0.5">Manager Dossier</div>
+                <h2 className="text-xl md:text-2xl font-bold text-white truncate">
+                  {selectedManagerProfile.user?.display_name || `Team ${selectedManagerProfile.roster_id}`}
+                </h2>
+                <div className="flex flex-wrap items-center gap-3 text-xs text-muted mt-1 font-mono">
+                  <span>Record: <strong className="text-white">{selectedManagerProfile.wins}-{selectedManagerProfile.losses}</strong></span>
+                  <span>•</span>
+                  <span>PF: <strong className="text-accent-color">{selectedManagerProfile.totalPointsFor.toFixed(1)}</strong></span>
+                  <span>•</span>
+                  <span>All-Play: <strong className="text-emerald-400">{selectedManagerProfile.allPlayWins}-{selectedManagerProfile.allPlayLosses}</strong></span>
+                </div>
+              </div>
+            </div>
+
+            {/* Executive Composite Rating */}
+            <div className="p-5 rounded-2xl bg-gradient-to-br from-blue-950/40 via-indigo-950/20 to-purple-950/40 border border-blue-500/20 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm font-bold text-blue-300">
+                  <Sparkles size={16} className="text-blue-400" />
+                  <span>Composite Index Rating</span>
+                </div>
+                <div className="font-mono text-2xl font-black text-accent-color">
+                  {selectedManagerProfile.compositeScore.toFixed(1)} <span className="text-xs text-muted font-normal">/ 100</span>
+                </div>
+              </div>
+              
+              {/* Sub-index Progress Bars */}
+              <div className="grid grid-cols-3 gap-3 pt-2">
+                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5">
+                  <div className="text-[10px] text-muted uppercase tracking-wider font-semibold mb-1">Drafting (40%)</div>
+                  <div className="font-mono text-base font-bold text-teal-400">{selectedManagerProfile.idxDraft ?? '--'}</div>
+                </div>
+                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5">
+                  <div className="text-[10px] text-muted uppercase tracking-wider font-semibold mb-1">Free Agency (40%)</div>
+                  <div className="font-mono text-base font-bold text-emerald-400">{selectedManagerProfile.idxAcq ?? '--'}</div>
+                </div>
+                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5">
+                  <div className="text-[10px] text-muted uppercase tracking-wider font-semibold mb-1">Trading (20%)</div>
+                  <div className="font-mono text-base font-bold text-purple-400">{selectedManagerProfile.idxTrade ?? '--'}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Sourcing Channel Breakdown */}
+            <div className="space-y-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-1.5">
+                <Layers size={14} />
+                <span>Point Sourcing Attribution</span>
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {/* Draft */}
+                <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
+                  <div className="text-xs font-semibold text-teal-400 flex items-center justify-between">
+                    <span>🎯 Draft & Keepers</span>
+                    <span className="font-mono">{selectedManagerProfile.draftPct}%</span>
+                  </div>
+                  <div className="font-mono text-lg font-bold text-white">
+                    {(selectedManagerProfile.draftPoints + selectedManagerProfile.keeperPoints).toFixed(1)} <span className="text-xs text-muted">pts</span>
+                  </div>
+                  <div className="text-[11px] text-muted">Hit Rate: <strong className="text-white">{selectedManagerProfile.draftHitRate}%</strong></div>
+                </div>
+
+                {/* FAAB & Waivers */}
+                <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
+                  <div className="text-xs font-semibold text-emerald-400 flex items-center justify-between">
+                    <span>🛒 Free Agency</span>
+                    <span className="font-mono">{selectedManagerProfile.faabPct}%</span>
+                  </div>
+                  <div className="font-mono text-lg font-bold text-white">
+                    {(selectedManagerProfile.faabPoints + selectedManagerProfile.waiverPoints).toFixed(1)} <span className="text-xs text-muted">pts</span>
+                  </div>
+                  <div className="text-[11px] text-muted">Hit Rate: <strong className="text-white">{selectedManagerProfile.faabHitRate}%</strong></div>
+                </div>
+
+                {/* Trades */}
+                <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
+                  <div className="text-xs font-semibold text-purple-400 flex items-center justify-between">
+                    <span>🔄 Trades</span>
+                    <span className="font-mono">{selectedManagerProfile.tradePct}%</span>
+                  </div>
+                  <div className="font-mono text-lg font-bold text-white">
+                    {selectedManagerProfile.tradeNetPoints > 0 ? '+' : ''}{selectedManagerProfile.tradeNetPoints.toFixed(1)} <span className="text-xs text-muted">net</span>
+                  </div>
+                  <div className="text-[11px] text-muted">Win Rate: <strong className="text-white">{selectedManagerProfile.tradeWinRate}%</strong></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Coaching & Lineup Management */}
+            <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <div className="text-xs font-bold text-white flex items-center gap-1.5 mb-0.5">
+                  <Target size={14} className="text-emerald-400" />
+                  <span>Coaching Efficiency & Optimization</span>
+                </div>
+                <div className="text-xs text-muted">Points captured from optimal possible lineup</div>
+              </div>
+              <div className="flex items-center gap-4 text-right">
+                <div>
+                  <div className="text-[10px] text-muted uppercase">Lineup Acc</div>
+                  <div className="font-mono font-bold text-lg text-emerald-400">{selectedManagerProfile.coachingEfficiency}%</div>
+                </div>
+                <div>
+                  <div className="text-[10px] text-muted uppercase">Points on Bench</div>
+                  <div className="font-mono font-medium text-lg text-rose-400">{selectedManagerProfile.pointsLeftOnBench.toFixed(1)}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Positional Distribution Grid */}
+            {selectedManagerProfile.positionalPoints && (
+              <div className="space-y-2">
+                <div className="text-xs font-bold uppercase tracking-wider text-muted">Positional Scoring Yield</div>
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 text-center text-xs">
+                  {['QB', 'RB', 'WR', 'TE', 'K', 'IDP'].map(pos => {
+                    let pts = selectedManagerProfile.positionalPoints[pos] || 0;
+                    if (pos === 'IDP') {
+                      pts = (selectedManagerProfile.positionalPoints['IDP'] || 0) + 
+                            (selectedManagerProfile.positionalPoints['DL'] || 0) + 
+                            (selectedManagerProfile.positionalPoints['LB'] || 0) + 
+                            (selectedManagerProfile.positionalPoints['DB'] || 0);
+                    }
+                    return (
+                      <div key={pos} className="p-2.5 rounded-xl bg-white/[0.02] border border-white/5">
+                        <div className="text-[10px] text-muted uppercase font-bold">{pos}</div>
+                        <div className="font-mono font-bold text-white mt-0.5">{pts.toFixed(1)}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

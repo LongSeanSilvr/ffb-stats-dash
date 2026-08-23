@@ -44,6 +44,9 @@ export interface ManagerProfile {
 
   // Composite score (higher = better overall manager)
   compositeScore: number;
+  idxDraft: number;
+  idxAcq: number;
+  idxTrade: number;
 }
 
 export function useManagerAnalytics() {
@@ -200,7 +203,13 @@ export function useManagerAnalytics() {
 
       // Clean up and finalize
       const { rawDraftScore, rawAcqScore, rawTradeScore, ...rest } = m;
-      return { ...rest, compositeScore };
+      return { 
+        ...rest, 
+        compositeScore,
+        idxDraft: Number(idxDraft.toFixed(1)),
+        idxAcq: Number(idxAcq.toFixed(1)),
+        idxTrade: Number(idxTrade.toFixed(1))
+      };
     });
 
     setProfiles(finalProfiles.sort((a, b) => b.compositeScore - a.compositeScore));
