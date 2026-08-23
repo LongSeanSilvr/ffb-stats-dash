@@ -37,6 +37,8 @@ export interface TopAcquisitionLedger {
   managerName: string;
   managerAvatar?: string;
   starterPoints: number;
+  benchPoints: number;
+  ppg: number;
   weeksStarted: number;
   weekAcquired: number;
   cost: number;
@@ -183,6 +185,8 @@ function aggregateViews(
         managerName: rosterData[a.rosterId]?.user?.display_name || `Team ${a.rosterId}`,
         managerAvatar: rosterData[a.rosterId]?.user?.avatar || undefined,
         starterPoints: Number(a.starterPoints.toFixed(1)),
+        benchPoints: Number(a.benchPoints.toFixed(1)),
+        ppg: a.weeksStartedCount > 0 ? Number((a.starterPoints / a.weeksStartedCount).toFixed(1)) : 0,
         weeksStarted: a.weeksStartedCount,
         weekAcquired: a.startWeek,
         cost: a.cost,

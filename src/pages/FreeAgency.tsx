@@ -1,8 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Card } from '../components/Card';
 import { MobileTapHint } from '../components/MobileTapHint';
 import { useLeagueContext } from '../context/LeagueContext';
-import { useFreeAgencyEfficiency, type AcqFilter, type FreeAgencyResult } from '../hooks/useFreeAgencyEfficiency';
+import { 
+  useFreeAgencyEfficiency, 
+  type AcqFilter, 
+  type FreeAgencyResult,
+  type TopAcquisitionLedger 
+} from '../hooks/useFreeAgencyEfficiency';
 import {
   ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
   ResponsiveContainer, BarChart, Bar, Label, ReferenceLine,
@@ -14,9 +20,15 @@ import {
   Zap, 
   Shield, 
   Sparkles, 
-  Calendar,
   Layers,
-  FileSpreadsheet
+  FileSpreadsheet,
+  X,
+  TrendingUp,
+  Clock,
+  DollarSign,
+  Activity,
+  Flame,
+  CheckCircle2
 } from 'lucide-react';
 
 const CHART_COLORS = ['#3b82f6', '#10b981', '#8b5cf6', '#f97316', '#ec4899'];
@@ -32,7 +44,7 @@ const ChartToggle = ({ value, onChange }: { value: AcqFilter; onChange: (v: AcqF
 );
 
 const CustomAvatarDot = (props: any) => {
-  const { cx, cy, payload } = props;
+  const { cx, cy, payload, onClick } = props;
   const size = 28;
   const avatarUrl = payload.avatar ? `https://sleepercdn.com/avatars/thumbs/${payload.avatar}` : null;
   if (!cx || !cy) return null;
@@ -40,7 +52,10 @@ const CustomAvatarDot = (props: any) => {
   const clipId = `clip-fa-${safeName}-${Math.round(cx)}-${Math.round(cy)}`;
 
   return (
-    <g className="cursor-pointer transition-transform hover:scale-110">
+    <g 
+      className="cursor-pointer transition-transform hover:scale-115"
+      onClick={() => onClick && onClick(payload.rawResult || payload)}
+    >
       <defs>
         <clipPath id={clipId}>
           <circle cx={cx} cy={cy} r={size / 2 - 1.5} />
@@ -86,6 +101,7 @@ const RelianceTooltip = ({ active, payload }: any) => {
       <div className="text-xs text-muted">Waiver Points: <span className="text-success-color font-bold ml-1 font-mono">{d.points.toFixed(1)}</span></div>
       <div className="text-xs text-muted">Roster Reliance: <span className="text-accent-color font-bold ml-1 font-mono">{d.reliance}%</span></div>
       <div className="text-xs text-muted mt-2 border-t border-white/10 pt-2">Win Rate: <span className="text-white font-bold ml-1 font-mono">{d.winPct}%</span></div>
+      <div className="text-[10px] text-muted/60 mt-1 italic">Click dot to inspect manager dossier</div>
     </div>
   );
 };
@@ -105,6 +121,7 @@ const MatrixTooltip = ({ active, payload }: any) => {
       <div className="text-xs text-muted">Total Pickups: <span className="text-white font-bold ml-1 font-mono">{d.pickups}</span></div>
       <div className="text-xs text-muted">Avg Hold Time: <span className="text-accent-color font-bold ml-1 font-mono">{d.averageWeeksHeld} wks</span></div>
       <div className="text-xs text-muted mt-2 border-t border-white/10 pt-2">Hit Rate: <span className="text-success-color font-bold ml-1 font-mono">{d.hitRate}%</span></div>
+      <div className="text-[10px] text-muted/60 mt-1 italic">Click dot to inspect manager dossier</div>
     </div>
   );
 };
@@ -128,7 +145,8 @@ const toScatter = (data: FreeAgencyResult[]) =>
     winPct: Number(d.winPct.toFixed(1)),
     averageWeeksHeld: d.averageWeeksHeld,
     waiverWins: d.waiverWins,
-    transactionsByDay: d.transactionsByDay
+    transactionsByDay: d.transactionsByDay,
+    rawResult: d
   }));
 
 // ─── Page ────────────────────────────────────────────────────────────────────
@@ -140,6 +158,10 @@ export const FreeAgency: React.FC = () => {
   // Navigation Hub State
   const [activeTab, setActiveTab] = useState<'matrices' | 'positional' | 'ledger'>('matrices');
 
+  // Interactive Modal States
+  const [selectedPlayer, setSelectedPlayer] = useState<TopAcquisitionLedger | null>(null);
+  const [selectedManager, setSelectedManager] = useState<FreeAgencyResult | null>(null);
+
   // Per-chart filter states — toggling never re-fetches
   const [macroFilter, setMacroFilter]   = useState<AcqFilter>('all');
   const [matrixFilter, setMatrixFilter] = useState<AcqFilter>('all');
@@ -150,8 +172,20 @@ export const FreeAgency: React.FC = () => {
 
   const [radarMgrs, setRadarMgrs]       = useState<number[]>([]);
 
+  // Body scroll locking when modals are open
+  useEffect(() => {
+    if (selectedPlayer || selectedManager) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [selectedPlayer, selectedManager]);
+
   // Initialize Radar select to top performers
-  React.useEffect(() => {
+  useEffect(() => {
     if (views.all.length > 0 && !loading) {
       const top3 = [...views.all].sort((a,b) => b.pointsGenerated - a.pointsGenerated).slice(0, 3).map(v => v.roster_id);
       if (radarMgrs.length === 0) setRadarMgrs(top3);
@@ -306,7 +340,10 @@ export const FreeAgency: React.FC = () => {
       {/* ─── Hero KPI Cards ─── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {/* KPI 1: Waiver Wire MVP */}
-        <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-amber-500/30 transition-all group">
+        <div 
+          onClick={() => waiverMvp && setSelectedPlayer(waiverMvp)}
+          className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-amber-500/40 hover:bg-white/[0.04] transition-all cursor-pointer group"
+        >
           <div className="flex items-center gap-2 text-xs font-semibold text-amber-400 uppercase tracking-wider mb-2">
             <Crown size={15} />
             <span>Waiver Wire MVP</span>
@@ -323,7 +360,9 @@ export const FreeAgency: React.FC = () => {
                 <div className="w-10 h-10 rounded-full bg-slate-700 shrink-0" />
               )}
               <div className="min-w-0">
-                <div className="font-bold text-base text-white truncate">{waiverMvp.playerName}</div>
+                <div className="font-bold text-base text-white truncate group-hover:text-amber-300 transition-colors">
+                  {waiverMvp.playerName}
+                </div>
                 <div className="text-xs text-amber-300 font-mono font-semibold">
                   +{waiverMvp.starterPoints.toFixed(1)} pts <span className="text-muted font-normal">· {waiverMvp.managerName}</span>
                 </div>
@@ -332,13 +371,17 @@ export const FreeAgency: React.FC = () => {
           ) : (
             <div className="text-xs text-muted">No data available</div>
           )}
-          <div className="text-[11px] text-muted mt-3 pt-2 border-t border-white/5 truncate">
-            Top single-season starter contribution
+          <div className="text-[11px] text-muted mt-3 pt-2 border-t border-white/5 truncate flex items-center justify-between">
+            <span>Top starter contribution</span>
+            <span className="text-amber-400/80 text-[10px]">Inspect ↗</span>
           </div>
         </div>
 
         {/* KPI 2: Highest Roster Reliance */}
-        <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-emerald-500/30 transition-all group">
+        <div 
+          onClick={() => highestReliance && setSelectedManager(highestReliance)}
+          className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-emerald-500/40 hover:bg-white/[0.04] transition-all cursor-pointer group"
+        >
           <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400 uppercase tracking-wider mb-2">
             <Shield size={15} />
             <span>Top Roster Reliance</span>
@@ -355,7 +398,7 @@ export const FreeAgency: React.FC = () => {
                 <div className="w-10 h-10 rounded-full bg-slate-700 shrink-0" />
               )}
               <div className="min-w-0">
-                <div className="font-bold text-base text-white truncate">
+                <div className="font-bold text-base text-white truncate group-hover:text-emerald-300 transition-colors">
                   {highestReliance.user?.display_name || `Team ${highestReliance.roster_id}`}
                 </div>
                 <div className="text-xs text-emerald-300 font-mono font-semibold">
@@ -366,13 +409,17 @@ export const FreeAgency: React.FC = () => {
           ) : (
             <div className="text-xs text-muted">No data available</div>
           )}
-          <div className="text-[11px] text-muted mt-3 pt-2 border-t border-white/5 truncate">
-            {highestReliance ? `${highestReliance.pointsGenerated.toFixed(1)} waiver pts generated` : 'Waiver dependency'}
+          <div className="text-[11px] text-muted mt-3 pt-2 border-t border-white/5 truncate flex items-center justify-between">
+            <span>{highestReliance ? `${highestReliance.pointsGenerated.toFixed(1)} waiver pts` : 'Waiver dependency'}</span>
+            <span className="text-emerald-400/80 text-[10px]">Inspect ↗</span>
           </div>
         </div>
 
         {/* KPI 3: Top Hit Rate Specialist */}
-        <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-cyan-500/30 transition-all group">
+        <div 
+          onClick={() => topHitRate && setSelectedManager(topHitRate)}
+          className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-cyan-500/40 hover:bg-white/[0.04] transition-all cursor-pointer group"
+        >
           <div className="flex items-center gap-2 text-xs font-semibold text-cyan-400 uppercase tracking-wider mb-2">
             <Target size={15} />
             <span>Hit Rate Leader</span>
@@ -389,7 +436,7 @@ export const FreeAgency: React.FC = () => {
                 <div className="w-10 h-10 rounded-full bg-slate-700 shrink-0" />
               )}
               <div className="min-w-0">
-                <div className="font-bold text-base text-white truncate">
+                <div className="font-bold text-base text-white truncate group-hover:text-cyan-300 transition-colors">
                   {topHitRate.user?.display_name || `Team ${topHitRate.roster_id}`}
                 </div>
                 <div className="text-xs text-cyan-300 font-mono font-semibold">
@@ -400,13 +447,17 @@ export const FreeAgency: React.FC = () => {
           ) : (
             <div className="text-xs text-muted">No data available</div>
           )}
-          <div className="text-[11px] text-muted mt-3 pt-2 border-t border-white/5 truncate">
-            {topHitRate ? `${topHitRate.hits} hits on ${topHitRate.totalPickups} pickups` : 'Starting caliber pickup rate'}
+          <div className="text-[11px] text-muted mt-3 pt-2 border-t border-white/5 truncate flex items-center justify-between">
+            <span>{topHitRate ? `${topHitRate.hits}/${topHitRate.totalPickups} hits` : 'Pickup accuracy'}</span>
+            <span className="text-cyan-400/80 text-[10px]">Inspect ↗</span>
           </div>
         </div>
 
         {/* KPI 4: Waiver Matchup Decider */}
-        <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-purple-500/30 transition-all group">
+        <div 
+          onClick={() => topWinsCreated && setSelectedManager(topWinsCreated)}
+          className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-purple-500/40 hover:bg-white/[0.04] transition-all cursor-pointer group"
+        >
           <div className="flex items-center gap-2 text-xs font-semibold text-purple-400 uppercase tracking-wider mb-2">
             <Zap size={15} />
             <span>Matchups Decided</span>
@@ -423,7 +474,7 @@ export const FreeAgency: React.FC = () => {
                 <div className="w-10 h-10 rounded-full bg-slate-700 shrink-0" />
               )}
               <div className="min-w-0">
-                <div className="font-bold text-base text-white truncate">
+                <div className="font-bold text-base text-white truncate group-hover:text-purple-300 transition-colors">
                   {topWinsCreated.user?.display_name || `Team ${topWinsCreated.roster_id}`}
                 </div>
                 <div className="text-xs text-purple-300 font-mono font-semibold">
@@ -434,8 +485,9 @@ export const FreeAgency: React.FC = () => {
           ) : (
             <div className="text-xs text-muted">No data available</div>
           )}
-          <div className="text-[11px] text-muted mt-3 pt-2 border-t border-white/5 truncate">
-            Wins where waiver pts exceeded victory margin
+          <div className="text-[11px] text-muted mt-3 pt-2 border-t border-white/5 truncate flex items-center justify-between">
+            <span>Decided by waiver points</span>
+            <span className="text-purple-400/80 text-[10px]">Inspect ↗</span>
           </div>
         </div>
       </div>
@@ -544,7 +596,11 @@ export const FreeAgency: React.FC = () => {
                   <ReferenceLine x={avgRelianceMacro} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" />
                   <ReferenceLine y={avgWinPct} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" />
                   <RechartsTooltip content={<RelianceTooltip />} cursor={{ strokeDasharray: '3 3' }} />
-                  <Scatter name="Managers" data={macroData} shape={<CustomAvatarDot />} />
+                  <Scatter 
+                    name="Managers" 
+                    data={macroData} 
+                    shape={<CustomAvatarDot onClick={(r: FreeAgencyResult) => setSelectedManager(r)} />} 
+                  />
                 </ScatterChart>
               </ResponsiveContainer>
             </div>
@@ -611,7 +667,11 @@ export const FreeAgency: React.FC = () => {
                   <ReferenceLine x={avgPickups} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" />
                   <ReferenceLine y={getMedian(matrixData.map(d => d.averageWeeksHeld))} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" />
                   <RechartsTooltip content={<MatrixTooltip />} cursor={{ strokeDasharray: '3 3' }} />
-                  <Scatter name="Managers" data={matrixData} shape={<CustomAvatarDot />} />
+                  <Scatter 
+                    name="Managers" 
+                    data={matrixData} 
+                    shape={<CustomAvatarDot onClick={(r: FreeAgencyResult) => setSelectedManager(r)} />} 
+                  />
                 </ScatterChart>
               </ResponsiveContainer>
             </div>
@@ -674,41 +734,48 @@ export const FreeAgency: React.FC = () => {
 
             <div className="md:hidden text-xs text-muted mb-2 italic">Swipe horizontally for all days</div>
             <div className="overflow-x-auto mt-4">
-              <table className="w-full text-left border-collapse table-fixed min-w-[500px]">
+              <table className="w-full text-left border-collapse min-w-[440px]">
                 <thead>
                   <tr>
-                    <th className="py-2.5 px-3 text-xs font-semibold text-muted border-b border-white/10 w-44">Manager</th>
+                    <th className="py-2.5 px-2 text-xs font-semibold text-muted border-b border-white/10 w-32">Manager</th>
                     {['Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Mon'].map(d => (
-                      <th key={d} className="py-2.5 px-2 text-xs font-semibold text-muted text-center border-b border-white/10">{d}</th>
+                      <th key={d} className="py-2.5 px-1 text-xs font-semibold text-muted text-center border-b border-white/10">{d}</th>
                     ))}
+                    <th className="py-2.5 px-2 text-xs font-semibold text-muted text-right border-b border-white/10 w-14">Tot</th>
                   </tr>
                 </thead>
                 <tbody>
                   {timingData.map(mgr => {
                     const maxVal = Math.max(...Object.values(mgr.transactionsByDay || {}), 1);
                     return (
-                      <tr key={mgr.name} className="border-b border-white/[0.02] transition-colors hover:bg-white/[0.03]">
-                        <td className="py-2.5 px-3">
+                      <tr 
+                        key={mgr.name} 
+                        onClick={() => mgr.rawResult && setSelectedManager(mgr.rawResult)}
+                        className="border-b border-white/[0.02] transition-colors hover:bg-white/[0.04] cursor-pointer group"
+                      >
+                        <td className="py-2 px-2">
                           <div className="flex items-center text-sm font-medium">
                             {mgr.avatar ? (
                               <img 
                                 src={`https://sleepercdn.com/avatars/thumbs/${mgr.avatar}`} 
-                                className="w-6 h-6 rounded-full object-cover shrink-0 mr-2.5 border border-white/10" 
+                                className="w-5 h-5 rounded-full object-cover shrink-0 mr-2 border border-white/10" 
                                 alt=""
                               /> 
                             ) : (
-                              <div className="w-6 h-6 rounded-full bg-slate-700 shrink-0 mr-2.5" />
+                              <div className="w-5 h-5 rounded-full bg-slate-700 shrink-0 mr-2" />
                             )}
-                            <span className="truncate text-white text-xs">{mgr.name}</span>
+                            <span className="truncate text-white text-xs group-hover:text-emerald-300 transition-colors">
+                              {mgr.name}
+                            </span>
                           </div>
                         </td>
                         {['Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Mon'].map(d => {
                           const val = (mgr.transactionsByDay || {})[d] || 0;
                           const opacity = val > 0 ? 0.2 + (val / maxVal) * 0.8 : 0.05;
                           return (
-                            <td key={d} className="py-2 px-1">
+                            <td key={d} className="py-1.5 px-0.5">
                               <div 
-                                className="w-full h-7 rounded flex items-center justify-center mx-auto transition-all" 
+                                className="w-full h-6 rounded flex items-center justify-center mx-auto transition-all" 
                                 style={{ 
                                   backgroundColor: val > 0 ? `rgba(16, 185, 129, ${opacity})` : 'rgba(255,255,255,0.02)',
                                   border: val > 0 ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(255,255,255,0.02)'
@@ -722,6 +789,11 @@ export const FreeAgency: React.FC = () => {
                             </td>
                           );
                         })}
+                        <td className="py-2 px-2 text-right">
+                          <span className="text-xs font-mono font-bold text-emerald-400">
+                            {mgr.pickups}
+                          </span>
+                        </td>
                       </tr>
                     );
                   })}
@@ -734,9 +806,9 @@ export const FreeAgency: React.FC = () => {
 
       {/* ─── TAB 3: ACQUISITION LEDGER & IMPACT ─── */}
       {activeTab === 'ledger' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
-          {/* Left / Top: Top Pickups Acquisition Ledger */}
-          <Card className="lg:col-span-7 stagger-3">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {/* Left: Top Pickups Acquisition Ledger */}
+          <Card className="stagger-3">
             <div className="flex justify-between items-start mb-4">
               <div>
                 <h2 className="text-base font-semibold text-white mb-1">Top Pickups by Starter Points</h2>
@@ -745,20 +817,21 @@ export const FreeAgency: React.FC = () => {
               <ChartToggle value={ledgerFilter} onChange={setLedgerFilter} />
             </div>
             
-            <div className="flex flex-col gap-2 overflow-y-auto pr-1 pb-4" style={{ maxHeight: '600px' }}>
+            <div className="flex flex-col gap-2 overflow-y-auto pr-1 pb-4" style={{ maxHeight: '540px' }}>
               {ledger.map((asset, idx) => {
                 const isTop3 = idx < 3;
                 const rankColor = idx === 0 ? '#fbbf24' : idx === 1 ? '#94a3b8' : idx === 2 ? '#cd7f32' : undefined;
                 return (
                   <div 
                     key={`${asset.playerId}-${idx}`}
-                    className="flex justify-between items-center transition-all hover:bg-white/[0.04] p-3 rounded-xl border border-white/5 bg-white/[0.01]"
+                    onClick={() => setSelectedPlayer(asset)}
+                    className="flex justify-between items-center transition-all hover:bg-white/[0.04] p-3 rounded-xl border border-white/5 bg-white/[0.01] cursor-pointer group"
                     style={{ 
                       borderColor: isTop3 ? rankColor + '40' : undefined,
                       boxShadow: isTop3 ? `0 0 15px ${rankColor}10` : undefined
                     }}
                   >
-                    <div className="flex items-center gap-3.5 min-w-0">
+                    <div className="flex items-center gap-3 min-w-0">
                       <div 
                         className="text-xs font-mono font-bold text-center shrink-0 w-5" 
                         style={{ color: rankColor || 'var(--text-secondary)' }}
@@ -775,7 +848,7 @@ export const FreeAgency: React.FC = () => {
                         <div className="w-8 h-8 rounded-full bg-slate-700 shrink-0" />
                       )}
                       <div className="min-w-0">
-                        <div className="font-bold text-sm text-white truncate flex items-center gap-2">
+                        <div className="font-bold text-sm text-white truncate flex items-center gap-2 group-hover:text-accent-color transition-colors">
                           <span className="truncate">{asset.playerName}</span>
                           <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-white/10 text-slate-300 shrink-0">
                             {asset.position}
@@ -791,8 +864,13 @@ export const FreeAgency: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="font-mono font-bold text-base text-success-color shrink-0 ml-3">
-                      +{asset.starterPoints.toFixed(1)}
+                    <div className="text-right shrink-0 ml-3">
+                      <div className="font-mono font-bold text-base text-success-color">
+                        +{asset.starterPoints.toFixed(1)}
+                      </div>
+                      <div className="text-[10px] text-muted font-mono">
+                        {asset.ppg} PPG
+                      </div>
                     </div>
                   </div>
                 );
@@ -806,7 +884,7 @@ export const FreeAgency: React.FC = () => {
           </Card>
 
           {/* Right: Wins Created Bar Chart */}
-          <Card className="lg:col-span-5 stagger-3">
+          <Card className="stagger-3">
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-base font-semibold text-white">Waiver Matchup Wins Created</h2>
               <ChartToggle value={hitFilter} onChange={setHitFilter} />
@@ -834,6 +912,205 @@ export const FreeAgency: React.FC = () => {
             </div>
           </Card>
         </div>
+      )}
+
+      {/* ─── MODAL 1: PLAYER ACQUISITION DOSSIER ─── */}
+      {selectedPlayer && typeof document !== 'undefined' && createPortal(
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in"
+          onClick={() => setSelectedPlayer(null)}
+        >
+          <div 
+            className="relative w-full max-w-md bg-[#0f1115] border border-white/15 rounded-2xl shadow-2xl p-6 overflow-hidden max-h-[90vh] flex flex-col"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-start justify-between pb-4 border-b border-white/10">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300">
+                  <Flame size={24} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-xl font-bold text-white tracking-tight">{selectedPlayer.playerName}</h3>
+                    <span className="text-xs font-bold px-2 py-0.5 rounded bg-white/10 text-slate-200">
+                      {selectedPlayer.position}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted mt-0.5">
+                    Acquired by <span className="text-accent-color font-semibold">{selectedPlayer.managerName}</span>
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setSelectedPlayer(null)}
+                className="p-1 rounded-lg text-muted hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Body Stats */}
+            <div className="py-4 space-y-4 overflow-y-auto">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                  <div className="text-[10px] text-muted uppercase tracking-wider font-semibold mb-1 flex items-center gap-1.5">
+                    <TrendingUp size={12} className="text-emerald-400" />
+                    <span>Starter Yield</span>
+                  </div>
+                  <div className="text-xl font-mono font-bold text-success-color">
+                    +{selectedPlayer.starterPoints.toFixed(1)} <span className="text-xs text-muted">pts</span>
+                  </div>
+                  <div className="text-[10px] text-muted mt-0.5">{selectedPlayer.ppg} pts per start</div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                  <div className="text-[10px] text-muted uppercase tracking-wider font-semibold mb-1 flex items-center gap-1.5">
+                    <DollarSign size={12} className="text-accent-color" />
+                    <span>Acquisition Method</span>
+                  </div>
+                  <div className="text-lg font-mono font-bold text-white">
+                    {selectedPlayer.acqType === 'faab' ? `$${selectedPlayer.cost} FAAB` : '$0 Free Agent'}
+                  </div>
+                  <div className="text-[10px] text-muted mt-0.5">Claimed in Week {selectedPlayer.weekAcquired}</div>
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 space-y-2 text-xs">
+                <div className="flex justify-between items-center text-muted">
+                  <span>Lineup Starts</span>
+                  <span className="font-mono font-bold text-white">{selectedPlayer.weeksStarted} Matchups</span>
+                </div>
+                <div className="flex justify-between items-center text-muted">
+                  <span>Bench Output</span>
+                  <span className="font-mono font-bold text-slate-300">{selectedPlayer.benchPoints.toFixed(1)} pts</span>
+                </div>
+                <div className="flex justify-between items-center text-muted pt-2 border-t border-white/5">
+                  <span>Total Contribution</span>
+                  <span className="font-mono font-bold text-emerald-400">
+                    +{(selectedPlayer.starterPoints + selectedPlayer.benchPoints).toFixed(1)} pts
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-white/10 flex justify-end">
+              <button 
+                onClick={() => setSelectedPlayer(null)}
+                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white font-medium text-xs transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ─── MODAL 2: MANAGER WAIVER DOSSIER ─── */}
+      {selectedManager && typeof document !== 'undefined' && createPortal(
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in"
+          onClick={() => setSelectedManager(null)}
+        >
+          <div 
+            className="relative w-full max-w-lg bg-[#0f1115] border border-white/15 rounded-2xl shadow-2xl p-6 overflow-hidden max-h-[90vh] flex flex-col"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-start justify-between pb-4 border-b border-white/10">
+              <div className="flex items-center gap-3">
+                {selectedManager.user?.avatar ? (
+                  <img 
+                    src={`https://sleepercdn.com/avatars/thumbs/${selectedManager.user.avatar}`} 
+                    alt="" 
+                    className="w-12 h-12 rounded-full border border-emerald-400/40 object-cover shrink-0 shadow-lg shadow-emerald-500/10" 
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-slate-700 shrink-0" />
+                )}
+                <div>
+                  <h3 className="text-xl font-bold text-white tracking-tight">
+                    {selectedManager.user?.display_name || `Team ${selectedManager.roster_id}`}
+                  </h3>
+                  <p className="text-xs text-muted mt-0.5 flex items-center gap-2">
+                    <span>Record: <strong className="text-white font-mono">{selectedManager.totalWins} Wins ({selectedManager.winPct.toFixed(1)}%)</strong></span>
+                    <span>·</span>
+                    <span>Waiver Reliance: <strong className="text-accent-color font-mono">{((selectedManager.pointsGenerated / Math.max(1, selectedManager.totalRosterPoints)) * 100).toFixed(1)}%</strong></span>
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setSelectedManager(null)}
+                className="p-1 rounded-lg text-muted hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Body Stats */}
+            <div className="py-4 space-y-4 overflow-y-auto">
+              <div className="grid grid-cols-3 gap-2.5 text-center">
+                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                  <div className="text-[10px] text-muted uppercase tracking-wider font-semibold mb-0.5">Starter Points</div>
+                  <div className="text-lg font-mono font-bold text-success-color">+{selectedManager.pointsGenerated.toFixed(1)}</div>
+                </div>
+                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                  <div className="text-[10px] text-muted uppercase tracking-wider font-semibold mb-0.5">Hit Rate</div>
+                  <div className="text-lg font-mono font-bold text-cyan-400">{selectedManager.hitRate}%</div>
+                </div>
+                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                  <div className="text-[10px] text-muted uppercase tracking-wider font-semibold mb-0.5">Avg Hold</div>
+                  <div className="text-lg font-mono font-bold text-amber-400">{selectedManager.averageWeeksHeld} wks</div>
+                </div>
+              </div>
+
+              {selectedManager.topPickup && (
+                <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <Crown size={16} className="text-emerald-400 shrink-0" />
+                    <div>
+                      <div className="text-xs font-bold text-white">{selectedManager.topPickup.playerName}</div>
+                      <div className="text-[10px] text-muted">Best In-Season Addition ({selectedManager.topPickup.position})</div>
+                    </div>
+                  </div>
+                  <div className="text-sm font-mono font-bold text-emerald-300">
+                    +{selectedManager.topPickup.points.toFixed(1)} pts
+                  </div>
+                </div>
+              )}
+
+              <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 space-y-2 text-xs">
+                <div className="flex justify-between items-center text-muted">
+                  <span>Total In-Season Pickups</span>
+                  <span className="font-mono font-bold text-white">{selectedManager.totalPickups} Players</span>
+                </div>
+                <div className="flex justify-between items-center text-muted">
+                  <span>Starting Hits / Busts</span>
+                  <span className="font-mono font-bold text-slate-300">{selectedManager.hits} Hits · {selectedManager.busts} Busts</span>
+                </div>
+                <div className="flex justify-between items-center text-muted">
+                  <span>Bench Points Stashed</span>
+                  <span className="font-mono font-bold text-slate-300">{selectedManager.benchPointsGenerated.toFixed(1)} pts</span>
+                </div>
+                <div className="flex justify-between items-center text-muted pt-2 border-t border-white/5">
+                  <span>Matchup Wins Decided by Waivers</span>
+                  <span className="font-mono font-bold text-purple-400">{selectedManager.waiverWins} Matchups</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-white/10 flex justify-end">
+              <button 
+                onClick={() => setSelectedManager(null)}
+                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white font-medium text-xs transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );
