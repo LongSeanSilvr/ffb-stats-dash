@@ -423,18 +423,18 @@ export const Faab: React.FC = () => {
             <>
               {/* 1. Top Value Steal */}
               {heroKpis.bestPickup && (
-                <div className="glass-card p-4 rounded-xl border border-emerald-500/20 flex flex-col justify-between">
+                <div className="glass-card p-3 sm:p-4 rounded-xl border border-emerald-500/20 flex flex-col justify-between min-w-0 overflow-hidden">
                   <div>
-                    <div className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                    <div className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5 mb-2 min-w-0">
                       <Sparkles size={14} className="text-emerald-400 shrink-0" />
                       <span className="truncate">Top Waiver Steal</span>
                     </div>
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
                       <div className="relative shrink-0">
                         <img
                           src={`https://sleepercdn.com/content/nfl/players/thumb/${heroKpis.bestPickup.playerId}.jpg`}
                           alt=""
-                          className="w-10 h-10 rounded-full border border-emerald-400/40 object-cover bg-black/40"
+                          className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-emerald-400/40 object-cover bg-black/40"
                           onError={e => {
                             (e.target as HTMLImageElement).src = 'https://sleepercdn.com/images/v2/icons/player_default.webp';
                           }}
@@ -452,15 +452,15 @@ export const Faab: React.FC = () => {
                           <span className="truncate">{heroKpis.bestPickup.playerName}</span>
                           <DraftPositionBadge position={heroKpis.bestPickup.position} />
                         </div>
-                        <div className="text-[11px] text-muted truncate mt-0.5 flex items-center gap-1.5 font-mono">
-                          <span className="text-emerald-400 font-bold">{heroKpis.bestPickup.ppd.toFixed(1)} pts/$</span>
-                          <span>•</span>
-                          <span className="text-gray-300 font-sans">${heroKpis.bestPickup.cost} FAAB</span>
+                        <div className="text-[10px] sm:text-[11px] text-muted mt-0.5 flex flex-wrap items-center gap-x-1.5 font-mono leading-snug">
+                          <span className="text-emerald-400 font-bold shrink-0">{heroKpis.bestPickup.ppd.toFixed(1)} pts/$</span>
+                          <span className="text-gray-400">•</span>
+                          <span className="text-gray-300 font-sans shrink-0">${heroKpis.bestPickup.cost} FAAB</span>
                         </div>
                       </div>
                     </div>
                   </div>
-                  <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
+                  <div className="text-[10px] sm:text-[11px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
                     Highest starter points per FAAB dollar
                   </div>
                 </div>
@@ -468,35 +468,35 @@ export const Faab: React.FC = () => {
 
               {/* 2. FAAB ROI Leader */}
               {heroKpis.bestRoiManager && (
-                <div className="glass-card p-4 rounded-xl border border-blue-500/20 flex flex-col justify-between">
+                <div className="glass-card p-3 sm:p-4 rounded-xl border border-blue-500/20 flex flex-col justify-between min-w-0 overflow-hidden">
                   <div>
-                    <div className="text-[11px] font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                    <div className="text-[11px] font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1.5 mb-2 min-w-0">
                       <Zap size={14} className="text-blue-400 shrink-0" />
                       <span className="truncate">FAAB ROI Leader</span>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                       {heroKpis.bestRoiManager.user?.avatar ? (
                         <img
                           src={`https://sleepercdn.com/avatars/thumbs/${heroKpis.bestRoiManager.user.avatar}`}
                           alt=""
-                          className="w-10 h-10 rounded-full border border-blue-400/40 object-cover shrink-0"
+                          className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-blue-400/40 object-cover shrink-0"
                         />
                       ) : (
-                        <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
                           N/A
                         </div>
                       )}
-                      <div className="min-w-0">
-                        <div className="font-bold text-white text-sm truncate">
+                      <div className="min-w-0 flex-1">
+                        <div className="font-bold text-white text-xs sm:text-sm truncate">
                           {heroKpis.bestRoiManager.user?.display_name || `Team ${heroKpis.bestRoiManager.roster_id}`}
                         </div>
-                        <div className="text-xs font-mono font-bold text-blue-400 mt-0.5">
+                        <div className="text-[11px] sm:text-xs font-mono font-bold text-blue-400 mt-0.5 leading-snug">
                           {heroKpis.bestRoiManager.pointsPerDollar.toFixed(1)} pts/$ spent
                         </div>
                       </div>
                     </div>
                   </div>
-                  <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
+                  <div className="text-[10px] sm:text-[11px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
                     Total starter fantasy points per FAAB dollar
                   </div>
                 </div>
@@ -504,35 +504,35 @@ export const Faab: React.FC = () => {
 
               {/* 3. Hit Rate Leader */}
               {heroKpis.bestHitRate && (
-                <div className="glass-card p-4 rounded-xl border border-purple-500/20 flex flex-col justify-between">
+                <div className="glass-card p-3 sm:p-4 rounded-xl border border-purple-500/20 flex flex-col justify-between min-w-0 overflow-hidden">
                   <div>
-                    <div className="text-[11px] font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                    <div className="text-[11px] font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1.5 mb-2 min-w-0">
                       <Target size={14} className="text-purple-400 shrink-0" />
                       <span className="truncate">Hit Rate Leader</span>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                       {heroKpis.bestHitRate.user?.avatar ? (
                         <img
                           src={`https://sleepercdn.com/avatars/thumbs/${heroKpis.bestHitRate.user.avatar}`}
                           alt=""
-                          className="w-10 h-10 rounded-full border border-purple-400/40 object-cover shrink-0"
+                          className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-purple-400/40 object-cover shrink-0"
                         />
                       ) : (
-                        <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
                           N/A
                         </div>
                       )}
-                      <div className="min-w-0">
-                        <div className="font-bold text-white text-sm truncate">
+                      <div className="min-w-0 flex-1">
+                        <div className="font-bold text-white text-xs sm:text-sm truncate">
                           {heroKpis.bestHitRate.user?.display_name || `Team ${heroKpis.bestHitRate.roster_id}`}
                         </div>
-                        <div className="text-xs font-mono font-bold text-purple-400 mt-0.5">
+                        <div className="text-[11px] sm:text-xs font-mono font-bold text-purple-400 mt-0.5 leading-snug">
                           {heroKpis.bestHitRate.rate.toFixed(0)}% starting pickups
                         </div>
                       </div>
                     </div>
                   </div>
-                  <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
+                  <div className="text-[10px] sm:text-[11px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
                     Highest % of additions that started ≥1 game
                   </div>
                 </div>
@@ -540,35 +540,35 @@ export const Faab: React.FC = () => {
 
               {/* 4. Most Wasted FAAB */}
               {heroKpis.mostWasted && (
-                <div className="glass-card p-4 rounded-xl border border-rose-500/20 flex flex-col justify-between">
+                <div className="glass-card p-3 sm:p-4 rounded-xl border border-rose-500/20 flex flex-col justify-between min-w-0 overflow-hidden">
                   <div>
-                    <div className="text-[11px] font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                    <div className="text-[11px] font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1.5 mb-2 min-w-0">
                       <Flame size={14} className="text-rose-400 shrink-0" />
                       <span className="truncate">Most Wasted FAAB</span>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                       {heroKpis.mostWasted.user?.avatar ? (
                         <img
                           src={`https://sleepercdn.com/avatars/thumbs/${heroKpis.mostWasted.user.avatar}`}
                           alt=""
-                          className="w-10 h-10 rounded-full border border-rose-400/40 object-cover shrink-0"
+                          className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-rose-400/40 object-cover shrink-0"
                         />
                       ) : (
-                        <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
                           N/A
                         </div>
                       )}
-                      <div className="min-w-0">
-                        <div className="font-bold text-white text-sm truncate">
+                      <div className="min-w-0 flex-1">
+                        <div className="font-bold text-white text-xs sm:text-sm truncate">
                           {heroKpis.mostWasted.user?.display_name || `Team ${heroKpis.mostWasted.roster_id}`}
                         </div>
-                        <div className="text-xs font-mono font-bold text-rose-400 mt-0.5 truncate">
+                        <div className="text-[11px] sm:text-xs font-mono font-bold text-rose-400 mt-0.5 leading-snug">
                           ${heroKpis.mostWasted.wastedFaab} burnt on bench
                         </div>
                       </div>
                     </div>
                   </div>
-                  <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
+                  <div className="text-[10px] sm:text-[11px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
                     FAAB spent on 0-start benchwarmers
                   </div>
                 </div>

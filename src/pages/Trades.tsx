@@ -331,38 +331,38 @@ export const Trades: React.FC = () => {
 
       {/* Hero KPI Cards */}
       {heroKpis && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 mb-6 sm:mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 mb-6 sm:mb-8 w-full">
           {/* 1. Top Trade Winner */}
           {heroKpis.topWinner && (
-            <div className="glass-card p-4 rounded-xl border border-emerald-500/20 flex flex-col justify-between">
+            <div className="glass-card p-3 sm:p-4 rounded-xl border border-emerald-500/20 flex flex-col justify-between min-w-0 overflow-hidden">
               <div>
-                <div className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                <div className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5 mb-2 min-w-0">
                   <TrendingUp size={14} className="text-emerald-400 shrink-0" />
                   <span className="truncate">Top Trade Profit</span>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                   {heroKpis.topWinner.user?.avatar ? (
                     <img
                       src={`https://sleepercdn.com/avatars/thumbs/${heroKpis.topWinner.user.avatar}`}
                       alt=""
-                      className="w-10 h-10 rounded-full border border-emerald-400/40 object-cover shrink-0"
+                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-emerald-400/40 object-cover shrink-0"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
                       N/A
                     </div>
                   )}
-                  <div className="min-w-0">
-                    <div className="font-bold text-white text-sm truncate">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-bold text-white text-xs sm:text-sm truncate">
                       {heroKpis.topWinner.user?.display_name || `Team ${heroKpis.topWinner.roster_id}`}
                     </div>
-                    <div className="text-xs font-mono font-bold text-emerald-400 mt-0.5">
+                    <div className="text-[11px] sm:text-xs font-mono font-bold text-emerald-400 mt-0.5 leading-snug">
                       +{heroKpis.topWinner.totalNetPoints.toFixed(1)} net pts
                     </div>
                   </div>
                 </div>
               </div>
-              <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
+              <div className="text-[10px] sm:text-[11px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
                 Highest net margin from completed trades
               </div>
             </div>
@@ -370,35 +370,35 @@ export const Trades: React.FC = () => {
 
           {/* 2. Most Active Trader */}
           {heroKpis.mostActive && (
-            <div className="glass-card p-4 rounded-xl border border-blue-500/20 flex flex-col justify-between">
+            <div className="glass-card p-3 sm:p-4 rounded-xl border border-blue-500/20 flex flex-col justify-between min-w-0 overflow-hidden">
               <div>
-                <div className="text-[11px] font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                <div className="text-[11px] font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1.5 mb-2 min-w-0">
                   <ArrowRightLeft size={14} className="text-blue-400 shrink-0" />
                   <span className="truncate">Most Active Trader</span>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                   {heroKpis.mostActive.user?.avatar ? (
                     <img
                       src={`https://sleepercdn.com/avatars/thumbs/${heroKpis.mostActive.user.avatar}`}
                       alt=""
-                      className="w-10 h-10 rounded-full border border-blue-400/40 object-cover shrink-0"
+                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-blue-400/40 object-cover shrink-0"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
                       N/A
                     </div>
                   )}
-                  <div className="min-w-0">
-                    <div className="font-bold text-white text-sm truncate">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-bold text-white text-xs sm:text-sm truncate">
                       {heroKpis.mostActive.user?.display_name || `Team ${heroKpis.mostActive.roster_id}`}
                     </div>
-                    <div className="text-xs font-mono font-bold text-blue-400 mt-0.5">
+                    <div className="text-[11px] sm:text-xs font-mono font-bold text-blue-400 mt-0.5 leading-snug">
                       {heroKpis.mostActive.totalTrades} trade{heroKpis.mostActive.totalTrades !== 1 ? 's' : ''} • {heroKpis.mostActive.totalAssetsGiven + heroKpis.mostActive.totalAssetsReceived} assets
                     </div>
                   </div>
                 </div>
               </div>
-              <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
+              <div className="text-[10px] sm:text-[11px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
                 Most trade transactions and assets exchanged
               </div>
             </div>
@@ -406,35 +406,35 @@ export const Trades: React.FC = () => {
 
           {/* 3. Matchup Flipper Leader */}
           {heroKpis.bestFlipper && (
-            <div className="glass-card p-4 rounded-xl border border-amber-500/20 flex flex-col justify-between">
+            <div className="glass-card p-3 sm:p-4 rounded-xl border border-amber-500/20 flex flex-col justify-between min-w-0 overflow-hidden">
               <div>
-                <div className="text-[11px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                <div className="text-[11px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5 mb-2 min-w-0">
                   <Trophy size={14} className="text-amber-400 shrink-0" />
                   <span className="truncate">Matchup Flipper</span>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                   {heroKpis.bestFlipper.user?.avatar ? (
                     <img
                       src={`https://sleepercdn.com/avatars/thumbs/${heroKpis.bestFlipper.user.avatar}`}
                       alt=""
-                      className="w-10 h-10 rounded-full border border-amber-400/40 object-cover shrink-0"
+                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-amber-400/40 object-cover shrink-0"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
                       N/A
                     </div>
                   )}
-                  <div className="min-w-0">
-                    <div className="font-bold text-white text-sm truncate">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-bold text-white text-xs sm:text-sm truncate">
                       {heroKpis.bestFlipper.user?.display_name || `Team ${heroKpis.bestFlipper.roster_id}`}
                     </div>
-                    <div className="text-xs font-mono font-bold text-amber-400 mt-0.5">
+                    <div className="text-[11px] sm:text-xs font-mono font-bold text-amber-400 mt-0.5 leading-snug">
                       +{heroKpis.bestFlipper.totalMatchupsFlippedAdded} Wins Added
                     </div>
                   </div>
                 </div>
               </div>
-              <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
+              <div className="text-[10px] sm:text-[11px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
                 Matchup outcomes flipped directly by trade assets
               </div>
             </div>
@@ -442,18 +442,18 @@ export const Trades: React.FC = () => {
 
           {/* 4. Top Trade Breakout */}
           {heroKpis.topBreakout && (
-            <div className="glass-card p-4 rounded-xl border border-purple-500/20 flex flex-col justify-between">
+            <div className="glass-card p-3 sm:p-4 rounded-xl border border-purple-500/20 flex flex-col justify-between min-w-0 overflow-hidden">
               <div>
-                <div className="text-[11px] font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                <div className="text-[11px] font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1.5 mb-2 min-w-0">
                   <Sparkles size={14} className="text-purple-400 shrink-0" />
                   <span className="truncate">Top Trade Breakout</span>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                   <div className="relative shrink-0">
                     <img
                       src={`https://sleepercdn.com/content/nfl/players/thumb/${heroKpis.topBreakout.playerId}.jpg`}
                       alt=""
-                      className="w-10 h-10 rounded-full border border-purple-400/40 object-cover bg-black/40"
+                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-purple-400/40 object-cover bg-black/40"
                       onError={e => {
                         (e.target as HTMLImageElement).src = 'https://sleepercdn.com/images/v2/icons/player_default.webp';
                       }}
@@ -466,17 +466,17 @@ export const Trades: React.FC = () => {
                       />
                     )}
                   </div>
-                  <div className="min-w-0">
-                    <div className="font-bold text-white text-sm truncate">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-bold text-white text-xs sm:text-sm truncate">
                       {heroKpis.topBreakout.name}
                     </div>
-                    <div className="text-xs font-mono font-bold text-purple-400 mt-0.5">
+                    <div className="text-[11px] sm:text-xs font-mono font-bold text-purple-400 mt-0.5 leading-snug">
                       +{heroKpis.topBreakout.delta.toFixed(1)} pts/gm jump
                     </div>
                   </div>
                 </div>
               </div>
-              <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight truncate">
+              <div className="text-[10px] sm:text-[11px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
                 {heroKpis.topBreakout.before > 0
                   ? `${heroKpis.topBreakout.before.toFixed(1)} → ${heroKpis.topBreakout.after.toFixed(1)} pts/gm for ${heroKpis.topBreakout.buyerName}`
                   : `${heroKpis.topBreakout.after.toFixed(1)} pts/gm for ${heroKpis.topBreakout.buyerName}`}

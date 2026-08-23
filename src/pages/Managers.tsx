@@ -504,38 +504,38 @@ export const Managers: React.FC = () => {
 
       {/* Hero KPI Cards */}
       {heroKpis && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 mb-6 sm:mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 mb-6 sm:mb-8 w-full">
           {/* 1. Regular Season Leader */}
           {heroKpis.topSeed && (
-            <div className="glass-card p-4 rounded-xl border border-amber-500/20 flex flex-col justify-between">
+            <div className="glass-card p-3 sm:p-4 rounded-xl border border-amber-500/20 flex flex-col justify-between min-w-0 overflow-hidden">
               <div>
-                <div className="text-[11px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                <div className="text-[11px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5 mb-2 min-w-0">
                   <Crown size={14} className="text-amber-400 shrink-0" />
                   <span className="truncate">Regular Season #1 Seed</span>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                   {heroKpis.topSeed.user?.avatar ? (
                     <img
                       src={`https://sleepercdn.com/avatars/thumbs/${heroKpis.topSeed.user.avatar}`}
                       alt=""
-                      className="w-10 h-10 rounded-full border border-amber-400/40 object-cover shrink-0"
+                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-amber-400/40 object-cover shrink-0"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
                       N/A
                     </div>
                   )}
-                  <div className="min-w-0">
-                    <div className="font-bold text-white text-sm truncate">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-bold text-white text-xs sm:text-sm truncate">
                       {heroKpis.topSeed.user?.display_name || `Team ${heroKpis.topSeed.rosterId}`}
                     </div>
-                    <div className="text-xs font-mono font-bold text-amber-400 mt-0.5">
+                    <div className="text-[11px] sm:text-xs font-mono font-bold text-amber-400 mt-0.5 leading-snug">
                       {heroKpis.topSeed.wins}-{heroKpis.topSeed.losses} ({heroKpis.topSeed.fpts} pts)
                     </div>
                   </div>
                 </div>
               </div>
-              <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
+              <div className="text-[10px] sm:text-[11px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
                 Top regular season record and standings seed
               </div>
             </div>
@@ -543,35 +543,35 @@ export const Managers: React.FC = () => {
 
           {/* 2. Top Composite Score */}
           {heroKpis.topComposite && (
-            <div className="glass-card p-4 rounded-xl border border-blue-500/20 flex flex-col justify-between">
+            <div className="glass-card p-3 sm:p-4 rounded-xl border border-blue-500/20 flex flex-col justify-between min-w-0 overflow-hidden">
               <div>
-                <div className="text-[11px] font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                <div className="text-[11px] font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1.5 mb-2 min-w-0">
                   <Award size={14} className="text-blue-400 shrink-0" />
                   <span className="truncate">Top Composite Index</span>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                   {heroKpis.topComposite.user?.avatar ? (
                     <img
                       src={`https://sleepercdn.com/avatars/thumbs/${heroKpis.topComposite.user.avatar}`}
                       alt=""
-                      className="w-10 h-10 rounded-full border border-blue-400/40 object-cover shrink-0"
+                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-blue-400/40 object-cover shrink-0"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
                       N/A
                     </div>
                   )}
-                  <div className="min-w-0">
-                    <div className="font-bold text-white text-sm truncate">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-bold text-white text-xs sm:text-sm truncate">
                       {heroKpis.topComposite.user?.display_name || `Team ${heroKpis.topComposite.rosterId}`}
                     </div>
-                    <div className="text-xs font-mono font-bold text-blue-400 mt-0.5">
+                    <div className="text-[11px] sm:text-xs font-mono font-bold text-blue-400 mt-0.5 leading-snug">
                       {heroKpis.topComposite.score} / 100 Composite
                     </div>
                   </div>
                 </div>
               </div>
-              <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
+              <div className="text-[10px] sm:text-[11px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
                 Drafting (40%) + Free Agency (40%) + Trades (20%)
               </div>
             </div>
@@ -579,35 +579,35 @@ export const Managers: React.FC = () => {
 
           {/* 3. Top Lineup Accuracy */}
           {heroKpis.topCoach && (
-            <div className="glass-card p-4 rounded-xl border border-emerald-500/20 flex flex-col justify-between">
+            <div className="glass-card p-3 sm:p-4 rounded-xl border border-emerald-500/20 flex flex-col justify-between min-w-0 overflow-hidden">
               <div>
-                <div className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                <div className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5 mb-2 min-w-0">
                   <Target size={14} className="text-emerald-400 shrink-0" />
                   <span className="truncate">Lineup Accuracy Leader</span>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                   {heroKpis.topCoach.user?.avatar ? (
                     <img
                       src={`https://sleepercdn.com/avatars/thumbs/${heroKpis.topCoach.user.avatar}`}
                       alt=""
-                      className="w-10 h-10 rounded-full border border-emerald-400/40 object-cover shrink-0"
+                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-emerald-400/40 object-cover shrink-0"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
                       N/A
                     </div>
                   )}
-                  <div className="min-w-0">
-                    <div className="font-bold text-white text-sm truncate">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-bold text-white text-xs sm:text-sm truncate">
                       {heroKpis.topCoach.user?.display_name || `Team ${heroKpis.topCoach.rosterId}`}
                     </div>
-                    <div className="text-xs font-mono font-bold text-emerald-400 mt-0.5">
+                    <div className="text-[11px] sm:text-xs font-mono font-bold text-emerald-400 mt-0.5 leading-snug">
                       {heroKpis.topCoach.efficiency}% optimal yield
                     </div>
                   </div>
                 </div>
               </div>
-              <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
+              <div className="text-[10px] sm:text-[11px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
                 Points scored vs total potential maximum
               </div>
             </div>
@@ -615,35 +615,35 @@ export const Managers: React.FC = () => {
 
           {/* 4. Top Scoring Offense */}
           {heroKpis.topScorer && (
-            <div className="glass-card p-4 rounded-xl border border-purple-500/20 flex flex-col justify-between">
+            <div className="glass-card p-3 sm:p-4 rounded-xl border border-purple-500/20 flex flex-col justify-between min-w-0 overflow-hidden">
               <div>
-                <div className="text-[11px] font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                <div className="text-[11px] font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1.5 mb-2 min-w-0">
                   <Zap size={14} className="text-purple-400 shrink-0" />
                   <span className="truncate">Top Scoring Offense</span>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                   {heroKpis.topScorer.user?.avatar ? (
                     <img
                       src={`https://sleepercdn.com/avatars/thumbs/${heroKpis.topScorer.user.avatar}`}
                       alt=""
-                      className="w-10 h-10 rounded-full border border-purple-400/40 object-cover shrink-0"
+                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-purple-400/40 object-cover shrink-0"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
                       N/A
                     </div>
                   )}
-                  <div className="min-w-0">
-                    <div className="font-bold text-white text-sm truncate">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-bold text-white text-xs sm:text-sm truncate">
                       {heroKpis.topScorer.user?.display_name || `Team ${heroKpis.topScorer.rosterId}`}
                     </div>
-                    <div className="text-xs font-mono font-bold text-purple-400 mt-0.5">
+                    <div className="text-[11px] sm:text-xs font-mono font-bold text-purple-400 mt-0.5 leading-snug">
                       {heroKpis.topScorer.fpts} total PF
                     </div>
                   </div>
                 </div>
               </div>
-              <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
+              <div className="text-[10px] sm:text-[11px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
                 Highest raw fantasy points scored
               </div>
             </div>
