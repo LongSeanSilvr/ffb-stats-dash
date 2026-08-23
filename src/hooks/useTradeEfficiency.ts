@@ -463,6 +463,38 @@ export function useTradeEfficiency() {
 
             // Calculate post-trade points for GIVEN players on the OTHER roster
             side.gave.forEach(asset => {
+              if (!asset.isPick && asset.position !== 'FAAB') {
+                let ptsBefore = 0;
+                let weeksBefore = week - 1;
+                for (let w = 1; w < week; w++) {
+                  const matchups = weeksData[w - 1]?.[1] || [];
+                  let foundPts = 0;
+                  matchups.forEach((m: any) => {
+                    const playersPoints = m.players_points || {};
+                    if (playersPoints[asset.playerId] !== undefined) {
+                      foundPts = Number(playersPoints[asset.playerId]);
+                    }
+                  });
+                  ptsBefore += foundPts;
+                }
+                asset.avgPointsBeforeTrade = weeksBefore > 0 ? Number((ptsBefore / weeksBefore).toFixed(2)) : 0;
+
+                let ptsAfter = 0;
+                let weeksAfter = lastPlayedWeek >= week ? lastPlayedWeek - week + 1 : 0;
+                for (let w = week; w <= lastPlayedWeek; w++) {
+                  const matchups = weeksData[w - 1]?.[1] || [];
+                  let foundPts = 0;
+                  matchups.forEach((m: any) => {
+                    const playersPoints = m.players_points || {};
+                    if (playersPoints[asset.playerId] !== undefined) {
+                      foundPts = Number(playersPoints[asset.playerId]);
+                    }
+                  });
+                  ptsAfter += foundPts;
+                }
+                asset.avgPointsAfterTrade = weeksAfter > 0 ? Number((ptsAfter / weeksAfter).toFixed(2)) : 0;
+              }
+
               const destRosterId = asset.toRosterId;
               for (let w = week; w <= lastPlayedWeek; w++) {
                 const matchups = weeksData[w - 1]?.[1] || [];

@@ -6,7 +6,7 @@ import { MobileTapHint } from '../components/MobileTapHint';
 import { X, User, ArrowRightLeft, TrendingUp, Sparkles, Trophy, Award, Zap, BarChart3, HelpCircle } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
-  ResponsiveContainer, Legend, ScatterChart, Scatter, Cell, Label
+  ResponsiveContainer, Legend, ScatterChart, Scatter, Cell, Label, ReferenceLine
 } from 'recharts';
 
 const CustomAvatarDot = (props: any) => {
@@ -66,6 +66,31 @@ const CustomPlayerScatterDot = (props: any) => {
   );
 };
 
+const CustomManagerTimingDot = (props: any) => {
+  const { cx, cy, payload } = props;
+  const size = 32;
+  if (!cx || !cy) return null;
+
+  const avatarUrl = payload.avatar ? `https://sleepercdn.com/avatars/thumbs/${payload.avatar}` : null;
+  const uniqueId = `clip-timing-${payload.name ? payload.name.replace(/[^a-zA-Z0-9]/g, '') : Math.random().toString(36).substring(7)}`;
+
+  return (
+    <svg x={cx - size / 2} y={cy - size / 2} width={size} height={size} style={{ overflow: 'visible' }}>
+      <defs>
+        <clipPath id={uniqueId}>
+          <circle cx={size / 2} cy={size / 2} r={size / 2 - 2} />
+        </clipPath>
+      </defs>
+      <circle cx={size / 2} cy={size / 2} r={size / 2} fill="#0f172a" stroke={payload.ringColor || '#64748b'} strokeWidth={2.5} />
+      {avatarUrl ? (
+        <image href={avatarUrl} x={2} y={2} width={size - 4} height={size - 4} clipPath={`url(#${uniqueId})`} />
+      ) : (
+        <circle cx={size / 2} cy={size / 2} r={size / 2 - 2} fill="#334155" />
+      )}
+    </svg>
+  );
+};
+
 const CustomScatterTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
@@ -84,6 +109,66 @@ const CustomScatterTooltip = ({ active, payload }: any) => {
         {data.received !== undefined && <div className="text-xs text-muted">Assets Received: <span className="text-white font-bold ml-1">{data.received}</span></div>}
         {data.before !== undefined && <div className="text-xs text-muted">Avg Pts Before: <span className="text-white font-bold ml-1">{data.before.toFixed(1)}</span></div>}
         {data.after !== undefined && <div className="text-xs text-muted">Avg Pts After: <span className="text-white font-bold ml-1">{data.after.toFixed(1)}</span></div>}
+      </div>
+    );
+  }
+  return null;
+};
+
+const CustomManagerTimingTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    const isNetPos = data.netTiming > 0;
+    const isNetZero = data.netTiming === 0;
+
+    return (
+      <div style={{ background: 'rgba(15,17,21,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '1rem', boxShadow: '0 8px 32px rgba(0,0,0,0.5)', minWidth: '230px' }}>
+        <div className="flex items-center gap-3 mb-2.5 pb-2 border-b border-white/10">
+          {data.avatar ? (
+            <img src={`https://sleepercdn.com/avatars/thumbs/${data.avatar}`} alt="avatar" className="w-8 h-8 rounded-full border border-white/20 object-cover shrink-0" />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">N/A</div>
+          )}
+          <div className="min-w-0">
+            <div className="font-bold text-sm text-white truncate">{data.name}</div>
+            <div className="text-[10px] flex items-center gap-1 font-semibold text-muted mt-0.5">
+              <span>{data.archetypeEmoji}</span>
+              <span>{data.archetype}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-1.5 text-xs">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-muted">Net Timing Edge:</span>
+            <span className={`font-mono font-bold ${isNetPos ? 'text-emerald-400' : isNetZero ? 'text-muted' : 'text-rose-400'}`}>
+              {isNetPos ? '+' : ''}{data.netTiming} PPG
+            </span>
+          </div>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-muted">Buy-Low Timing (Acquired):</span>
+            <span className={`font-mono font-bold ${data.buyDelta > 0 ? 'text-emerald-400' : data.buyDelta < 0 ? 'text-rose-400' : 'text-muted'}`}>
+              {data.buyDelta > 0 ? '+' : ''}{data.buyDelta} PPG
+            </span>
+          </div>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-muted">Sell-High Timing (Surrendered):</span>
+            <span className={`font-mono font-bold ${data.sellDelta > 0 ? 'text-emerald-400' : data.sellDelta < 0 ? 'text-rose-400' : 'text-muted'}`}>
+              {data.sellDelta > 0 ? '+' : ''}{data.sellDelta} PPG
+            </span>
+          </div>
+        </div>
+
+        {data.bestBuy && data.bestBuy.delta > 0 && (
+          <div className="mt-2.5 pt-2 border-t border-white/5 text-[11px] text-muted">
+            <span className="text-emerald-400 font-semibold">Top Buy:</span> {data.bestBuy.name} (+{data.bestBuy.delta} PPG)
+          </div>
+        )}
+        {data.bestSell && data.bestSell.delta > 0 && (
+          <div className="mt-1 text-[11px] text-muted">
+            <span className="text-blue-400 font-semibold">Top Sell:</span> {data.bestSell.name} (avoided {Math.abs(data.bestSell.delta)} PPG dip)
+          </div>
+        )}
       </div>
     );
   }
@@ -153,9 +238,124 @@ export const Trades: React.FC = () => {
   const maxFleecingVal = useMemo(() => {
     return Math.max(
       ...fleecingData.flatMap(d => [d.before, d.after]),
-      10
-    ) * 1.1;
+      20
+    );
   }, [fleecingData]);
+
+interface ManagerTimingRecord {
+  rosterId: number;
+  name: string;
+  avatar?: string | null;
+  buyDelta: number;
+  sellDelta: number;
+  netTiming: number;
+  buyCount: number;
+  sellCount: number;
+  archetype: string;
+  archetypeColor: string;
+  archetypeEmoji: string;
+  ringColor: string;
+  bestBuy: { name: string; delta: number; before: number; after: number } | null;
+  bestSell: { name: string; delta: number; before: number; after: number } | null;
+  tradesCount: number;
+}
+
+  // 4. Manager Market Timing Matrix & Archetypes
+  const managerTimingData = useMemo<ManagerTimingRecord[]>(() => {
+    return tradeData
+      .filter(d => d.totalTrades > 0)
+      .map(d => {
+        let buyDeltaTotal = 0;
+        let buyCount = 0;
+        let sellDeltaTotal = 0;
+        let sellCount = 0;
+
+        let bestBuy: { name: string; delta: number; before: number; after: number } | null = null;
+        let bestSell: { name: string; delta: number; before: number; after: number } | null = null;
+
+        d.trades.forEach(t => {
+          const side = t.sides.find(s => s.rosterId === d.roster_id);
+          if (!side) return;
+
+          // Received assets (Buys): Delta = after - before
+          side.received.forEach(a => {
+            if (!a.isPick && a.position !== 'FAAB' && a.avgPointsBeforeTrade !== undefined && a.avgPointsAfterTrade !== undefined) {
+              const delta = Number((a.avgPointsAfterTrade - a.avgPointsBeforeTrade).toFixed(2));
+              buyDeltaTotal += delta;
+              buyCount++;
+              if (!bestBuy || delta > bestBuy.delta) {
+                bestBuy = { name: a.playerName, delta, before: a.avgPointsBeforeTrade, after: a.avgPointsAfterTrade };
+              }
+            }
+          });
+
+          // Surrendered assets (Sells): Delta = before - after (positive means avoided a crash)
+          side.gave.forEach(a => {
+            if (!a.isPick && a.position !== 'FAAB' && a.avgPointsBeforeTrade !== undefined && a.avgPointsAfterTrade !== undefined) {
+              const delta = Number((a.avgPointsBeforeTrade - a.avgPointsAfterTrade).toFixed(2));
+              sellDeltaTotal += delta;
+              sellCount++;
+              if (!bestSell || delta > bestSell.delta) {
+                bestSell = { name: a.playerName, delta, before: a.avgPointsBeforeTrade, after: a.avgPointsAfterTrade };
+              }
+            }
+          });
+        });
+
+        const netTiming = Number((buyDeltaTotal + sellDeltaTotal).toFixed(2));
+
+        let archetype = 'Balanced Exchanger';
+        let archetypeColor = 'text-gray-300 bg-white/5 border-white/10';
+        let archetypeEmoji = '⚖️';
+        let ringColor = '#64748b';
+
+        if (buyDeltaTotal > 0 && sellDeltaTotal > 0) {
+          archetype = 'Wall Street Wizard';
+          archetypeColor = 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30';
+          archetypeEmoji = '🧠';
+          ringColor = '#10b981';
+        } else if (buyDeltaTotal > 0 && sellDeltaTotal <= 0) {
+          archetype = 'Breakout Hunter';
+          archetypeColor = 'text-teal-400 bg-teal-500/10 border-teal-500/30';
+          archetypeEmoji = '📈';
+          ringColor = '#14b8a6';
+        } else if (buyDeltaTotal <= 0 && sellDeltaTotal > 0) {
+          archetype = 'Sell-High Master';
+          archetypeColor = 'text-blue-400 bg-blue-500/10 border-blue-500/30';
+          archetypeEmoji = '📉';
+          ringColor = '#3b82f6';
+        } else if (buyDeltaTotal < 0 && sellDeltaTotal < 0) {
+          archetype = 'FOMO Trader';
+          archetypeColor = 'text-rose-400 bg-rose-500/10 border-rose-500/30';
+          archetypeEmoji = '⚠️';
+          ringColor = '#f43f5e';
+        }
+
+        return {
+          rosterId: d.roster_id,
+          name: d.user?.display_name || `Team ${d.roster_id}`,
+          avatar: d.user?.avatar,
+          buyDelta: Number(buyDeltaTotal.toFixed(2)),
+          sellDelta: Number(sellDeltaTotal.toFixed(2)),
+          netTiming,
+          buyCount,
+          sellCount,
+          archetype,
+          archetypeColor,
+          archetypeEmoji,
+          ringColor,
+          bestBuy,
+          bestSell,
+          tradesCount: d.totalTrades
+        };
+      });
+  }, [tradeData]);
+
+  const maxTimingDomain = useMemo(() => {
+    const vals = managerTimingData.flatMap(d => [Math.abs(d.buyDelta), Math.abs(d.sellDelta)]);
+    const maxVal = Math.max(...vals, 5);
+    return Math.ceil(maxVal * 1.25);
+  }, [managerTimingData]);
 
   // 4. Trade Ledger: Flattened list of all trades
   const allTradesSorted = useMemo(() => {
@@ -780,6 +980,152 @@ export const Trades: React.FC = () => {
                     <Scatter name="Players" data={fleecingData} shape={<CustomPlayerScatterDot />} isAnimationActive={false} />
                   </ScatterChart>
                 </ResponsiveContainer>
+              </div>
+            </Card>
+          </div>
+
+          {/* Row 2: Manager Market Timing Matrix & Behavioral Archetypes */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            {/* Left: Manager Market Timing Quadrant Scatter */}
+            <Card title="Manager Market Timing Matrix">
+              <div className="chart-header mb-4">
+                <div className="chart-description">
+                  Quadrant mapping of manager trading savvy: Buy Timing Edge (X-axis) vs Sell Timing Edge (Y-axis).
+                </div>
+                <div className="chart-legend-grid pt-3 mt-3 border-t border-white/5">
+                  <div className="legend-item">
+                    <div className="legend-item-header">🧠 <strong className="text-emerald-400">Wall Street Wizards</strong> (Top-Right)</div>
+                    <div className="legend-item-desc">Positive timing on both acquired and surrendered players.</div>
+                  </div>
+                  <div className="legend-item">
+                    <div className="legend-item-header">📉 <strong className="text-blue-400">Sell-High Masters</strong> (Top-Left)</div>
+                    <div className="legend-item-desc">Excels at selling players before post-trade dropoffs.</div>
+                  </div>
+                  <div className="legend-item">
+                    <div className="legend-item-header">📈 <strong className="text-teal-400">Breakout Hunters</strong> (Bottom-Right)</div>
+                    <div className="legend-item-desc">Acquired rising talent right before scoring surges.</div>
+                  </div>
+                  <div className="legend-item">
+                    <div className="legend-item-header">⚠️ <strong className="text-rose-400">FOMO Traders</strong> (Bottom-Left)</div>
+                    <div className="legend-item-desc">Bought at peak prices or sold before breakouts.</div>
+                  </div>
+                </div>
+              </div>
+              <MobileTapHint />
+              <div style={{ height: 380 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <ScatterChart margin={{ top: 20, right: 30, bottom: 30, left: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                    <XAxis
+                      type="number"
+                      dataKey="buyDelta"
+                      name="Buy Timing Delta"
+                      stroke="#94a3b8"
+                      tick={{ fontSize: 12 }}
+                      domain={[-maxTimingDomain, maxTimingDomain]}
+                    >
+                      <Label value="Buy Timing (PPG Surge on Acquired Assets)" position="insideBottom" offset={-15} fill="#64748b" style={{ fontSize: '0.75rem', fontWeight: 500 }} />
+                    </XAxis>
+                    <YAxis
+                      type="number"
+                      dataKey="sellDelta"
+                      name="Sell Timing Delta"
+                      stroke="#94a3b8"
+                      tick={{ fontSize: 12 }}
+                      domain={[-maxTimingDomain, maxTimingDomain]}
+                    >
+                      <Label value="Sell Timing (PPG Dip Avoided on Surrendered)" angle={-90} position="insideLeft" offset={10} style={{ textAnchor: 'middle', fill: '#64748b', fontSize: '0.75rem', fontWeight: 500 }} />
+                    </YAxis>
+                    <ReferenceLine x={0} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" />
+                    <ReferenceLine y={0} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4" />
+                    <RechartsTooltip content={<CustomManagerTimingTooltip />} cursor={{ strokeDasharray: '3 3', stroke: 'rgba(255,255,255,0.1)' }} />
+                    <Scatter name="Managers" data={managerTimingData} shape={<CustomManagerTimingDot />} isAnimationActive={false} />
+                  </ScatterChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
+
+            {/* Right: Manager Market Timing Index Leaderboard */}
+            <Card title="Market Timing Index Leaderboard">
+              <div className="chart-header mb-4">
+                <div className="chart-description">
+                  Ranked by cumulative PPG delta captured across all buy-low and sell-high transactions.
+                </div>
+              </div>
+              <div className="space-y-3 overflow-y-auto pr-1.5 custom-scrollbar" style={{ maxHeight: '480px' }}>
+                {[...managerTimingData]
+                  .sort((a, b) => b.netTiming - a.netTiming)
+                  .map((mgr, idx) => {
+                    const isPositive = mgr.netTiming > 0;
+                    const isZero = mgr.netTiming === 0;
+                    return (
+                      <div
+                        key={mgr.rosterId}
+                        className={`flex items-center justify-between p-3.5 rounded-xl border transition-all hover:bg-white/[0.04] ${
+                          idx === 0
+                            ? 'border-emerald-500/30 bg-black/40'
+                            : 'border-white/5 bg-black/25'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-6 text-center font-mono font-bold text-xs text-muted">
+                            #{idx + 1}
+                          </div>
+                          {mgr.avatar ? (
+                            <img
+                              src={`https://sleepercdn.com/avatars/thumbs/${mgr.avatar}`}
+                              alt=""
+                              className="w-10 h-10 rounded-full border border-white/10 object-cover shrink-0"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
+                              N/A
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-bold text-white text-sm truncate">
+                                {mgr.name}
+                              </span>
+                              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border shrink-0 flex items-center gap-1 ${mgr.archetypeColor}`}>
+                                <span>{mgr.archetypeEmoji}</span>
+                                <span>{mgr.archetype}</span>
+                              </span>
+                            </div>
+                            <div className="text-[11px] text-muted flex items-center gap-2 mt-1 flex-wrap font-mono">
+                              <span className={mgr.buyDelta >= 0 ? 'text-emerald-400 font-semibold' : 'text-rose-400 font-semibold'}>
+                                {mgr.buyDelta >= 0 ? '+' : ''}{mgr.buyDelta} buy
+                              </span>
+                              <span>•</span>
+                              <span className={mgr.sellDelta >= 0 ? 'text-blue-400 font-semibold' : 'text-rose-400 font-semibold'}>
+                                {mgr.sellDelta >= 0 ? '+' : ''}{mgr.sellDelta} sell
+                              </span>
+                              {mgr.bestBuy && mgr.bestBuy.delta > 0 && (
+                                <>
+                                  <span className="font-sans text-white/20">•</span>
+                                  <span className="text-white/60 font-sans truncate text-[11px]">
+                                    Top: {mgr.bestBuy.name} (+{mgr.bestBuy.delta} PPG)
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="text-right shrink-0 ml-3">
+                          <div className={`text-base font-mono font-bold ${
+                            isPositive ? 'text-emerald-400' : isZero ? 'text-muted' : 'text-rose-400'
+                          }`}>
+                            {isPositive ? '+' : ''}{mgr.netTiming}
+                            <span className="text-xs text-muted font-normal ml-1">PPG</span>
+                          </div>
+                          <div className="text-[10px] font-mono text-muted">
+                            {mgr.tradesCount} trade{mgr.tradesCount !== 1 ? 's' : ''}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
               </div>
             </Card>
           </div>
