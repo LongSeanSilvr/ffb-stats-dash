@@ -487,16 +487,19 @@ export function useTradeEfficiency() {
               rosterId,
               gave: side.gave,
               received: side.received,
-              netPoints: Number((receivedPts - gavePts).toFixed(2)),
+              netPoints: 0, // will be computed from counterfactual lineup delta below
               matchupsFlippedAdded: 0,
               matchupsFlippedLost: 0,
               flippedMatchups: []
             });
           });
 
-          // Calculate Matchups Flipped
+          // Calculate Matchups Flipped & True Counterfactual Lineup Impact
           Object.entries(rosterSides).forEach(([rosterIdStr, side]) => {
             const rosterId = Number(rosterIdStr);
+            const s = record.sides.find(s => s.rosterId === rosterId);
+            let totalLineupDelta = 0;
+
             for (let w = week; w <= 18; w++) {
               const matchups = weeksData[w - 1]?.[1] || [];
               const myMatchup = matchups.find((m: any) => m.roster_id === rosterId);
@@ -540,8 +543,6 @@ export function useTradeEfficiency() {
               });
               
               // 3. Compute ERV Score (Hypothetical Score) with Position-Cascading Replacement
-              // Retain manager's actual start/sit decisions (prevent hindsight bench bias), but allow
-              // surrendered assets (gaveIds) to compete equally with retained starters on points
               const candidateStarters = [...new Set([...retainedStarters, ...gaveIds])];
 
               const optimalRes = getOptimalLineupPoints(
@@ -554,10 +555,13 @@ export function useTradeEfficiency() {
               );
               const hypotheticalScore = optimalRes.totalPoints;
               
+              // Accumulate true weekly lineup delta (Actual Points - Counterfactual Points)
+              const weeklyDelta = myMatchup.points - hypotheticalScore;
+              totalLineupDelta += weeklyDelta;
+
               const actualMargin = myMatchup.points - oppMatchup.points;
               const hypotheticalMargin = hypotheticalScore - oppMatchup.points;
               
-              const s = record.sides.find(s => s.rosterId === rosterId);
               if (s) {
                 // If we won reality, but would have lost hypothetically -> Trade Added a Win
                 if (actualMargin > 0 && hypotheticalMargin <= 0 || (actualMargin <= 0 && hypotheticalMargin > 0)) {
@@ -660,6 +664,10 @@ export function useTradeEfficiency() {
                   s.flippedMatchups.push(payload);
                 }
               }
+            }
+
+            if (s) {
+              s.netPoints = Number(totalLineupDelta.toFixed(2));
             }
           });
           tradeRecords.push(record);

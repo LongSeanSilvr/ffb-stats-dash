@@ -484,10 +484,10 @@ export const Trades: React.FC = () => {
             <Card title="Trade Net Impact Leaderboard">
               <div className="chart-header mb-4">
                 <div className="chart-description">
-                  Cumulative starter fantasy points gained vs surrendered across all completed trades.
+                  Net starting fantasy points added to lineups vs counterfactual lineups without completed trades.
                 </div>
               </div>
-              <div className="space-y-3 overflow-y-auto pr-1.5 custom-scrollbar" style={{ maxHeight: '430px' }}>
+              <div className="space-y-3 overflow-y-auto pr-1.5 custom-scrollbar" style={{ maxHeight: '480px' }}>
                 {[...tradeData]
                   .filter(d => d.totalTrades > 0)
                   .sort((a, b) => b.totalNetPoints - a.totalNetPoints)
@@ -525,9 +525,7 @@ export const Trades: React.FC = () => {
                             <div className="text-xs text-muted flex items-center gap-1.5 mt-0.5 flex-wrap">
                               <span>{d.totalTrades} trade{d.totalTrades !== 1 ? 's' : ''}</span>
                               <span>•</span>
-                              <span className="text-emerald-400">+{d.totalPointsReceived.toFixed(1)} rec</span>
-                              <span>•</span>
-                              <span className="text-rose-400">-{d.totalPointsGiven.toFixed(1)} gave</span>
+                              <span className="text-white/60">{d.totalAssetsReceived + d.totalAssetsGiven} assets</span>
                             </div>
                           </div>
                         </div>
@@ -539,8 +537,14 @@ export const Trades: React.FC = () => {
                             {isPositive ? '+' : ''}{d.totalNetPoints.toFixed(1)}
                             <span className="text-xs text-muted font-normal ml-1">pts</span>
                           </div>
-                          <div className="text-[10px] font-mono text-muted">
-                            {d.totalMatchupsFlippedAdded > 0 ? `+${d.totalMatchupsFlippedAdded} win flip` : `${d.totalMatchupsFlippedLost > 0 ? `-${d.totalMatchupsFlippedLost} win loss` : '0 flips'}`}
+                          <div className="text-[10px] font-mono font-bold">
+                            {d.totalMatchupsFlippedAdded > 0 ? (
+                              <span className="text-emerald-400">+{d.totalMatchupsFlippedAdded} wins added</span>
+                            ) : d.totalMatchupsFlippedLost > 0 ? (
+                              <span className="text-rose-400">-{d.totalMatchupsFlippedLost} wins lost</span>
+                            ) : (
+                              <span className="text-muted">0 flips</span>
+                            )}
                           </div>
                         </div>
                       </div>
