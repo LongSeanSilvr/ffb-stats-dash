@@ -172,16 +172,24 @@ export const FreeAgency: React.FC = () => {
 
   const [radarMgrs, setRadarMgrs]       = useState<number[]>([]);
 
-  // Body scroll locking when modals are open
+  // Body scroll locking and Escape key dismiss when modals are open
   useEffect(() => {
     if (selectedPlayer || selectedManager) {
       document.body.style.overflow = 'hidden';
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          setSelectedPlayer(null);
+          setSelectedManager(null);
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => {
+        document.body.style.overflow = '';
+        window.removeEventListener('keydown', handleKeyDown);
+      };
     } else {
       document.body.style.overflow = '';
     }
-    return () => {
-      document.body.style.overflow = '';
-    };
   }, [selectedPlayer, selectedManager]);
 
   // Initialize Radar select to top performers
