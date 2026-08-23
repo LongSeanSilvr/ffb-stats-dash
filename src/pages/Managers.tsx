@@ -794,7 +794,7 @@ export const Managers: React.FC = () => {
 
             {/* Desktop View: Traditional Table */}
             <div className="hidden md:block table-container mt-4">
-              <div className="overflow-hidden rounded-xl border border-white/10">
+              <div className="rounded-xl border border-white/10">
                 <table className="standings-table">
                   <thead className="bg-white/[0.02]">
                     <tr>
@@ -806,7 +806,7 @@ export const Managers: React.FC = () => {
                             <span>Vs League</span>
                             <div className="tooltip-container">
                               <Info size={12} className="text-muted opacity-50" />
-                              <div className="tooltip-text">
+                              <div className="tooltip-text tooltip-bottom">
                                 Standard All-Play Record: Wins and losses aggregated as if you played every league member every week.
                               </div>
                             </div>
@@ -822,7 +822,7 @@ export const Managers: React.FC = () => {
                             <span>Composite Score</span>
                             <div className="tooltip-container">
                               <Info size={12} className="text-muted opacity-50" />
-                              <div className="tooltip-text align-right">
+                              <div className="tooltip-text tooltip-bottom align-right">
                                 Composite Impact: Blended weighting across Drafting (40%), Free Agency/Waivers (40%), and Trading (20%).
                               </div>
                             </div>
