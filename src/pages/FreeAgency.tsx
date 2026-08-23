@@ -644,7 +644,7 @@ export const FreeAgency: React.FC = () => {
                 <div className="text-muted text-[10px] mt-0.5">Top-Right • High Volume, Long Hold Duration</div>
               </div>
               <div className="p-2 rounded-lg bg-slate-500/10 border border-slate-500/20">
-                <div className="font-semibold text-slate-300">🛡️ Set & Forget</div>
+                <div className="font-semibold text-slate-300">🩹 Emergency Fill-Ins</div>
                 <div className="text-muted text-[10px] mt-0.5">Bottom-Left • Low Volume, Short Hold Duration</div>
               </div>
               <div className="p-2 rounded-lg bg-purple-500/10 border border-purple-500/20">
