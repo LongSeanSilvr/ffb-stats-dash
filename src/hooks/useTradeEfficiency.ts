@@ -575,17 +575,44 @@ export function useTradeEfficiency() {
                      };
                   }).filter(Boolean) as any[];
 
-                  const hypotheticalStartersList = optimalRes.optimalStarters.map((sItem: any) => {
-                     const sp = playersData[sItem.id];
-                     const isReplacement = sItem.id.startsWith('REP_');
-                     return {
-                       id: sItem.id,
-                       pts: sItem.pts,
-                       name: isReplacement ? sItem.id.replace('REP_', '') : (sp ? `${sp.first_name} ${sp.last_name}` : sItem.id),
-                       avatar: isReplacement ? '' : `https://sleepercdn.com/content/nfl/players/thumb/${sItem.id}.jpg`,
-                       rosterSlot: sItem.rosterSlot || 'BN'
-                     };
+                  // Align hypothetical starters to exact actual slot positions to eliminate shuffling
+                  const unassignedOptimal = [...optimalRes.optimalStarters];
+                  const alignedHypothetical: any[] = new Array(actualStartersList.length).fill(null);
+
+                  // 1. Keep all unchanged actual starters in their exact same slot position
+                  actualStartersList.forEach((act, idx) => {
+                    const optIdx = unassignedOptimal.findIndex(o => o.id === act.id);
+                    if (optIdx > -1) {
+                      const opt = unassignedOptimal[optIdx];
+                      alignedHypothetical[idx] = {
+                        id: opt.id,
+                        pts: opt.pts,
+                        name: act.name,
+                        avatar: act.avatar,
+                        rosterSlot: act.rosterSlot
+                      };
+                      unassignedOptimal.splice(optIdx, 1);
+                    }
                   });
+
+                  // 2. Fill vacant slots with the remaining replacement/promoted players
+                  alignedHypothetical.forEach((slotVal, idx) => {
+                    if (!slotVal && unassignedOptimal.length > 0) {
+                      const opt = unassignedOptimal.shift()!;
+                      const sp = playersData[opt.id];
+                      const isReplacement = opt.id.startsWith('REP_');
+                      const slotName = actualStartersList[idx]?.rosterSlot || opt.rosterSlot || 'BN';
+                      alignedHypothetical[idx] = {
+                        id: opt.id,
+                        pts: opt.pts,
+                        name: isReplacement ? opt.id.replace('REP_', '') : (sp ? `${sp.first_name} ${sp.last_name}` : opt.id),
+                        avatar: isReplacement ? '' : `https://sleepercdn.com/content/nfl/players/thumb/${opt.id}.jpg`,
+                        rosterSlot: slotName
+                      };
+                    }
+                  });
+
+                  const hypotheticalStartersList = alignedHypothetical.filter(Boolean);
 
                   let primaryPlayerId = s.received.find(a => !a.isPick && a.position !== 'FAAB')?.playerId;
                   let primaryPlayerName = 'Multiple Assets';
@@ -607,6 +634,8 @@ export function useTradeEfficiency() {
                     tradedBy: s.received.length > 0 ? (selectedSeason.rosterToUser[s.received[0].fromRosterId]?.display_name || 'Another Team') : 'Another Team',
                     gaveUp: s.gave.map(a => a.isPick ? a.playerName.replace(' Pick', '') + ' Pick' : (a.position === 'FAAB' ? a.playerName : `${a.playerName} (${a.position})`)),
                     received: s.received.map(a => a.isPick ? a.playerName.replace(' Pick', '') + ' Pick' : (a.position === 'FAAB' ? a.playerName : `${a.playerName} (${a.position})`)),
+                    gaveAssetIds: s.gave.map(a => a.playerId),
+                    receivedAssetIds: s.received.map(a => a.playerId),
                     bid: 0
                   };
 
