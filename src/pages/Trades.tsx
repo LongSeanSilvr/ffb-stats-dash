@@ -992,22 +992,34 @@ interface ManagerTimingRecord {
                 <div className="chart-description">
                   Quadrant mapping of manager trading savvy: Buy Timing Edge (X-axis) vs Sell Timing Edge (Y-axis).
                 </div>
-                <div className="chart-legend-grid pt-3 mt-3 border-t border-white/5">
-                  <div className="legend-item">
-                    <div className="legend-item-header">📉 <strong className="text-blue-400">Peak Sellers</strong> (Top-Left: -Buy, +Sell)</div>
-                    <div className="legend-item-desc">Excels at selling players before post-trade dropoffs.</div>
+                <div className="grid grid-cols-2 gap-2 pt-3 mt-3 border-t border-white/5">
+                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-blue-500/5 border border-blue-500/20 text-xs">
+                    <span className="text-sm shrink-0">📉</span>
+                    <div className="min-w-0">
+                      <span className="font-bold text-blue-400">Peak Sellers</span>
+                      <div className="text-[10px] text-muted truncate">Top-Left • Sold before post-trade dropoffs</div>
+                    </div>
                   </div>
-                  <div className="legend-item">
-                    <div className="legend-item-header">💎 <strong className="text-emerald-400">Value Arbitrageurs</strong> (Top-Right: +Buy, +Sell)</div>
-                    <div className="legend-item-desc">Positive timing on both acquired and surrendered players.</div>
+                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-xs">
+                    <span className="text-sm shrink-0">💎</span>
+                    <div className="min-w-0">
+                      <span className="font-bold text-emerald-400">Value Arbitrageurs</span>
+                      <div className="text-[10px] text-muted truncate">Top-Right • Positive timing on buys & sells</div>
+                    </div>
                   </div>
-                  <div className="legend-item">
-                    <div className="legend-item-header">⚠️ <strong className="text-rose-400">Adverse Timers</strong> (Bottom-Left: -Buy, -Sell)</div>
-                    <div className="legend-item-desc">Bought at peak prices or sold before breakouts.</div>
+                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-rose-500/5 border border-rose-500/20 text-xs">
+                    <span className="text-sm shrink-0">⚠️</span>
+                    <div className="min-w-0">
+                      <span className="font-bold text-rose-400">Adverse Timers</span>
+                      <div className="text-[10px] text-muted truncate">Bottom-Left • Bought peaks or sold surges</div>
+                    </div>
                   </div>
-                  <div className="legend-item">
-                    <div className="legend-item-header">📈 <strong className="text-teal-400">Breakout Hunters</strong> (Bottom-Right: +Buy, -Sell)</div>
-                    <div className="legend-item-desc">Acquired rising talent right before scoring surges.</div>
+                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-teal-500/5 border border-teal-500/20 text-xs">
+                    <span className="text-sm shrink-0">📈</span>
+                    <div className="min-w-0">
+                      <span className="font-bold text-teal-400">Breakout Hunters</span>
+                      <div className="text-[10px] text-muted truncate">Bottom-Right • Acquired talent before surges</div>
+                    </div>
                   </div>
                 </div>
               </div>
