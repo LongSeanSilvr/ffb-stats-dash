@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Info } from 'lucide-react';
+import { Info, Trophy, Crown, Target, Zap, LayoutGrid, Radar as RadarIcon, BarChart3, TrendingUp, Award, User } from 'lucide-react';
 import { Card } from '../components/Card';
 import { MobileTapHint } from '../components/MobileTapHint';
 import { useLeagueContext } from '../context/LeagueContext';
@@ -83,6 +83,7 @@ export const Managers: React.FC = () => {
   const { loading: ctxLoading, error, selectedSeason } = useLeagueContext();
   const { profiles, loading: analyticsLoading } = useManagerAnalytics();
   
+  const [activeTab, setActiveTab] = useState<'standings' | 'matrices' | 'radars'>('standings');
   const [radarMgrs, setRadarMgrs] = useState<number[]>([]);
   const [dnaMgrs, setDnaMgrs] = useState<number[]>([]);
   const [posMgrs, setPosMgrs] = useState<number[]>([]);
@@ -143,17 +144,6 @@ export const Managers: React.FC = () => {
       </div>
     );
   };
-
-  if (loading && !selectedSeason) {
-    return (
-      <div className="flex flex-col justify-center items-center h-full min-h-[60vh]">
-        <div className="loading-spinner"></div>
-        <div className="text-muted mt-4">Building manager profiles across all data sources...</div>
-      </div>
-    );
-  }
-
-  if (error || !selectedSeason) return null;
 
   const showAnalytics = profiles.length > 0 && !analyticsLoading;
 
@@ -343,150 +333,260 @@ export const Managers: React.FC = () => {
     });
   }
 
+  // --- Hero KPIs ---
+  const heroKpis = React.useMemo(() => {
+    if (!selectedSeason || !profiles.length) return null;
+    const sortedByStandings = [...selectedSeason.rosters].sort((a, b) => b.settings.wins - a.settings.wins || b.settings.fpts - a.settings.fpts);
+    const topSeed = sortedByStandings[0];
+    const topSeedUser = topSeed ? selectedSeason.rosterToUser[topSeed.roster_id] : null;
+
+    const topComposite = [...profiles].sort((a, b) => b.compositeScore - a.compositeScore)[0];
+    const topCoach = [...profiles].sort((a, b) => b.coachingEfficiency - a.coachingEfficiency)[0];
+    
+    const sortedByPoints = [...selectedSeason.rosters].sort((a, b) => (b.settings.fpts + b.settings.fpts_decimal/100) - (a.settings.fpts + a.settings.fpts_decimal/100));
+    const topScorer = sortedByPoints[0];
+    const topScorerUser = topScorer ? selectedSeason.rosterToUser[topScorer.roster_id] : null;
+
+    return {
+      topSeed: topSeed ? {
+        rosterId: topSeed.roster_id,
+        user: topSeedUser,
+        wins: topSeed.settings.wins,
+        losses: topSeed.settings.losses,
+        fpts: (topSeed.settings.fpts + topSeed.settings.fpts_decimal/100).toFixed(1)
+      } : null,
+      topComposite: topComposite ? {
+        user: topComposite.user,
+        score: topComposite.compositeScore.toFixed(1),
+        rosterId: topComposite.roster_id
+      } : null,
+      topCoach: topCoach ? {
+        user: topCoach.user,
+        efficiency: topCoach.coachingEfficiency.toFixed(1),
+        rosterId: topCoach.roster_id
+      } : null,
+      topScorer: topScorer ? {
+        user: topScorerUser,
+        fpts: (topScorer.settings.fpts + topScorer.settings.fpts_decimal/100).toFixed(1),
+        rosterId: topScorer.roster_id
+      } : null
+    };
+  }, [selectedSeason, profiles]);
+
+  if (loading && !selectedSeason) {
+    return (
+      <div className="flex flex-col justify-center items-center h-full min-h-[60vh]">
+        <div className="loading-spinner"></div>
+        <div className="text-muted mt-4">Building manager profiles across all data sources...</div>
+      </div>
+    );
+  }
+
+  if (error || !selectedSeason) return null;
+
   return (
     <div className="animate-fade-in">
-      <h1 className="text-3xl text-gradient mt-4 mb-2">League Managers ({selectedSeason.league.season})</h1>
-      <p className="text-muted mb-10">Comprehensive overview of all managers in the league.</p>
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-2xl md:text-3xl font-bold text-gradient">League Managers ({selectedSeason.league.season})</h1>
+        <p className="text-muted text-sm mt-1">
+          Season standings, sourcing efficiency matrices, composite scores, and comparative multi-discipline radars.
+        </p>
+      </div>
 
-      {/* Row 0: Standings Table */}
-      <Card title="Team Standings" className="stagger-1 mb-12">
-        <MobileTapHint text="Hover/Tap rows for league data" />
-        {/* Mobile View: Card Stack */}
-        <div className="md:hidden flex flex-col gap-4 mt-6">
-          {[...selectedSeason.rosters].sort((a,b) => b.settings.wins - a.settings.wins || b.settings.fpts - a.settings.fpts).map((r, i) => {
-            const profile = profiles.find(p => p.roster_id === r.roster_id);
-            const user = selectedSeason.rosterToUser[r.roster_id];
-            const pf = (r.settings.fpts + (r.settings.fpts_decimal/100)).toFixed(1);
-            const pa = (r.settings.fpts_against + (r.settings.fpts_against_decimal/100)).toFixed(1);
-            
-            return (
-              <div key={r.roster_id} className="flex flex-col p-5 relative overflow-hidden" style={{ background: i < 3 ? 'linear-gradient(145deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%)' : 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.15)', position: 'relative', overflow: 'hidden' }}>
-                <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4 relative" style={{ zIndex: 10 }}>
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center justify-center" style={{ width: '28px', height: '28px', borderRadius: '50%', background: i === 0 ? 'rgba(251, 191, 36, 0.2)' : i === 1 ? 'rgba(148, 163, 184, 0.2)' : i === 2 ? 'rgba(205, 127, 50, 0.2)' : 'rgba(255,255,255,0.05)', color: i === 0 ? '#fbbf24' : i === 1 ? '#94a3b8' : i === 2 ? '#cd7f32' : 'var(--text-secondary)', border: `1px solid ${i === 0 ? 'rgba(251, 191, 36, 0.3)' : i === 1 ? 'rgba(148, 163, 184, 0.3)' : i === 2 ? 'rgba(205, 127, 50, 0.3)' : 'transparent'}` }}>
-                      <span className="text-sm font-bold">{i + 1}</span>
-                    </div>
-                    {user?.avatar ? (
-                      <img src={`https://sleepercdn.com/avatars/thumbs/${user.avatar}`} alt="avatar" className="shadow-lg" style={{ width: 44, height: 44, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.1)' }} />
-                    ) : (
-                      <div className="bg-slate-700 shadow-lg flex items-center justify-center" style={{ width: 44, height: 44, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.1)' }}>
-                        <span className="text-white/50 text-xs">N/A</span>
-                      </div>
-                    )}
-                    <div>
-                      <div className="font-bold leading-tight truncate text-white" style={{ fontSize: '1.05rem', maxWidth: '140px' }}>{user?.display_name || `Team ${r.roster_id}`}</div>
-                      <div className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.6)' }}>{r.settings.wins}-{r.settings.losses}{r.settings.ties > 0 ? `-${r.settings.ties}` : ''}</div>
-                    </div>
-                  </div>
-                  {showAnalytics && (
-                    <div className="flex flex-col items-end justify-center" style={{ background: 'rgba(255,255,255,0.03)', padding: '6px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                      <div className="text-muted uppercase" style={{ fontSize: '0.6rem', letterSpacing: '0.1em', marginBottom: '2px' }}>Composite</div>
-                      <div className="font-black tracking-tight" style={{ color: 'var(--accent-color)', fontSize: '1.25rem', lineHeight: 1 }}>{profile?.compositeScore.toFixed(1)}</div>
-                    </div>
-                  )}
+      {/* Hero KPI Cards */}
+      {heroKpis && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {/* 1. Regular Season Leader */}
+          {heroKpis.topSeed && (
+            <div className="glass-card p-4 rounded-xl border border-amber-500/20 flex flex-col justify-between">
+              <div>
+                <div className="text-[11px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                  <Crown size={14} className="text-amber-400 shrink-0" />
+                  <span className="truncate">Regular Season #1 Seed</span>
                 </div>
-                
-                <div className="flex justify-between items-center w-full relative" style={{ zIndex: 10 }}>
-                  <div className="flex flex-col" style={{ background: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: '8px', width: '31%', border: '1px solid rgba(255,255,255,0.03)' }}>
-                    <span className="text-muted uppercase" style={{ fontSize: '0.65rem', letterSpacing: '0.05em', marginBottom: '2px' }}>PF</span>
-                    <span className="font-mono font-bold text-accent-color truncate" style={{ fontSize: '0.875rem' }}>{pf}</span>
-                  </div>
-                  <div className="flex flex-col" style={{ background: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: '8px', width: '31%', border: '1px solid rgba(255,255,255,0.03)' }}>
-                    <span className="text-muted uppercase" style={{ fontSize: '0.65rem', letterSpacing: '0.05em', marginBottom: '2px' }}>PA</span>
-                    <span className="font-mono font-medium text-gray-300 truncate" style={{ fontSize: '0.875rem' }}>{pa}</span>
-                  </div>
-                  {showAnalytics ? (
-                    <div className="flex flex-col text-right" style={{ background: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: '8px', width: '31%', border: '1px solid rgba(255,255,255,0.03)' }}>
-                      <span className="text-muted uppercase" style={{ fontSize: '0.65rem', letterSpacing: '0.05em', marginBottom: '2px' }}>Vs League</span>
-                      <span className="font-mono text-success-color font-bold truncate" style={{ fontSize: '0.875rem' }}>{profile?.allPlayWins}-{profile?.allPlayLosses}</span>
-                    </div>
+                <div className="flex items-center gap-3">
+                  {heroKpis.topSeed.user?.avatar ? (
+                    <img
+                      src={`https://sleepercdn.com/avatars/thumbs/${heroKpis.topSeed.user.avatar}`}
+                      alt=""
+                      className="w-10 h-10 rounded-full border border-amber-400/40 object-cover shrink-0"
+                    />
                   ) : (
-                    <div style={{ width: '31%' }}></div>
+                    <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
+                      N/A
+                    </div>
                   )}
+                  <div className="min-w-0">
+                    <div className="font-bold text-white text-sm truncate">
+                      {heroKpis.topSeed.user?.display_name || `Team ${heroKpis.topSeed.rosterId}`}
+                    </div>
+                    <div className="text-xs font-mono font-bold text-amber-400 mt-0.5">
+                      {heroKpis.topSeed.wins}-{heroKpis.topSeed.losses} ({heroKpis.topSeed.fpts} pts)
+                    </div>
+                  </div>
                 </div>
               </div>
-            );
-          })}
-        </div>
+              <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
+                Top regular season record and standings seed
+              </div>
+            </div>
+          )}
 
-        {/* Desktop View: Traditional Table */}
-        <div className="hidden md:block table-container mt-6">
-          <div className="overflow-hidden rounded-lg" style={{ border: '1px solid var(--card-border)' }}>
-            <table className="standings-table">
-            <thead style={{ background: 'rgba(255,255,255,0.02)' }}>
-              <tr>
-                <th>Team</th>
-                <th className="text-center">Record</th>
-                {showAnalytics && (
-                  <th className="text-center">
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <span>Vs League</span>
-                      <div className="tooltip-container" style={{ marginLeft: '6px' }}>
-                        <Info size={12} className="text-muted opacity-50" />
-                        <div className="tooltip-text">
-                          Standard All-Play Record: Wins and losses aggregated as if you played every league member every week.
-                        </div>
-                      </div>
+          {/* 2. Top Composite Score */}
+          {heroKpis.topComposite && (
+            <div className="glass-card p-4 rounded-xl border border-blue-500/20 flex flex-col justify-between">
+              <div>
+                <div className="text-[11px] font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                  <Award size={14} className="text-blue-400 shrink-0" />
+                  <span className="truncate">Top Composite Index</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  {heroKpis.topComposite.user?.avatar ? (
+                    <img
+                      src={`https://sleepercdn.com/avatars/thumbs/${heroKpis.topComposite.user.avatar}`}
+                      alt=""
+                      className="w-10 h-10 rounded-full border border-blue-400/40 object-cover shrink-0"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
+                      N/A
                     </div>
-                  </th>
-                )}
-                <th className="text-center">PF</th>
-                <th className="text-center">PA</th>
-                {showAnalytics && <th className="text-center">Lineup Acc</th>}
-                {showAnalytics && (
-                  <th className="text-center">
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <span>Composite Score</span>
-                      <div className="tooltip-container" style={{ marginLeft: '6px' }}>
-                        <Info size={12} className="text-muted opacity-50" />
-                        <div className="tooltip-text align-right">
-                          Composite Impact: Blended weighting across Drafting (40%), Free Agency/Waivers (40%), and Trading (20%).
-                        </div>
-                      </div>
+                  )}
+                  <div className="min-w-0">
+                    <div className="font-bold text-white text-sm truncate">
+                      {heroKpis.topComposite.user?.display_name || `Team ${heroKpis.topComposite.rosterId}`}
                     </div>
-                  </th>
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {[...selectedSeason.rosters].sort((a,b) => b.settings.wins - a.settings.wins || b.settings.fpts - a.settings.fpts).map((r, i) => {
-                const profile = profiles.find(p => p.roster_id === r.roster_id);
-                return (
-                  <tr 
-                    key={r.roster_id} 
-                    className="standings-row"
-                    style={{ 
-                      background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)',
-                      cursor: 'default'
-                    }}
-                  >
-                    <td className="team-cell">
-                      <span className="team-rank">{i + 1}.</span>
-                      {selectedSeason.rosterToUser[r.roster_id]?.avatar ? (
-                        <img src={`https://sleepercdn.com/avatars/thumbs/${selectedSeason.rosterToUser[r.roster_id].avatar}`} alt="avatar" className="team-avatar" />
-                      ) : (
-                        <div className="team-avatar-placeholder"></div>
-                      )}
-                      {selectedSeason.rosterToUser[r.roster_id]?.display_name || `Team ${r.roster_id}`}
-                    </td>
-                    <td className="text-center text-lg">{r.settings.wins}-{r.settings.losses}{r.settings.ties > 0 ? `-${r.settings.ties}` : ''}</td>
-                    {showAnalytics && <td className="text-center font-mono text-success-color font-bold">{profile?.allPlayWins}-{profile?.allPlayLosses}</td>}
-                    <td className="text-center font-mono text-accent-color">{(r.settings.fpts + (r.settings.fpts_decimal/100)).toFixed(1)}</td>
-                    <td className="text-center font-mono text-muted">{(r.settings.fpts_against + (r.settings.fpts_against_decimal/100)).toFixed(1)}</td>
-                    {showAnalytics && <td className="text-center font-mono text-white font-bold">{profile?.coachingEfficiency}%</td>}
-                    {showAnalytics && (
-                      <td className="text-center font-mono font-bold" style={{ color: 'var(--accent-color)' }}>
-                        {profile?.compositeScore.toFixed(1)}
-                      </td>
-                    )}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          </div>
+                    <div className="text-xs font-mono font-bold text-blue-400 mt-0.5">
+                      {heroKpis.topComposite.score} / 100 Composite
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
+                Drafting (40%) + Free Agency (40%) + Trades (20%)
+              </div>
+            </div>
+          )}
+
+          {/* 3. Top Lineup Accuracy */}
+          {heroKpis.topCoach && (
+            <div className="glass-card p-4 rounded-xl border border-emerald-500/20 flex flex-col justify-between">
+              <div>
+                <div className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                  <Target size={14} className="text-emerald-400 shrink-0" />
+                  <span className="truncate">Lineup Accuracy Leader</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  {heroKpis.topCoach.user?.avatar ? (
+                    <img
+                      src={`https://sleepercdn.com/avatars/thumbs/${heroKpis.topCoach.user.avatar}`}
+                      alt=""
+                      className="w-10 h-10 rounded-full border border-emerald-400/40 object-cover shrink-0"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
+                      N/A
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <div className="font-bold text-white text-sm truncate">
+                      {heroKpis.topCoach.user?.display_name || `Team ${heroKpis.topCoach.rosterId}`}
+                    </div>
+                    <div className="text-xs font-mono font-bold text-emerald-400 mt-0.5">
+                      {heroKpis.topCoach.efficiency}% optimal yield
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
+                Points scored vs total potential maximum
+              </div>
+            </div>
+          )}
+
+          {/* 4. Top Scoring Offense */}
+          {heroKpis.topScorer && (
+            <div className="glass-card p-4 rounded-xl border border-purple-500/20 flex flex-col justify-between">
+              <div>
+                <div className="text-[11px] font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                  <Zap size={14} className="text-purple-400 shrink-0" />
+                  <span className="truncate">Top Scoring Offense</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  {heroKpis.topScorer.user?.avatar ? (
+                    <img
+                      src={`https://sleepercdn.com/avatars/thumbs/${heroKpis.topScorer.user.avatar}`}
+                      alt=""
+                      className="w-10 h-10 rounded-full border border-purple-400/40 object-cover shrink-0"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
+                      N/A
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <div className="font-bold text-white text-sm truncate">
+                      {heroKpis.topScorer.user?.display_name || `Team ${heroKpis.topScorer.rosterId}`}
+                    </div>
+                    <div className="text-xs font-mono font-bold text-purple-400 mt-0.5">
+                      {heroKpis.topScorer.fpts} total PF
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
+                Highest raw fantasy points scored
+              </div>
+            </div>
+          )}
         </div>
-      </Card>
+      )}
+
+      {/* 3-Hub Tab Command Bar */}
+      <div className="bg-black/40 backdrop-blur-md p-1.5 rounded-2xl border border-white/10 shadow-xl grid grid-cols-1 md:grid-cols-3 gap-2 mb-8 w-full">
+        <button
+          onClick={() => setActiveTab('standings')}
+          className={`flex items-center justify-center gap-2.5 py-3 px-4 rounded-xl font-bold text-sm transition-all cursor-pointer ${
+            activeTab === 'standings'
+              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25 border border-blue-400/30'
+              : 'text-muted hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <div className={`p-1.5 rounded-lg ${activeTab === 'standings' ? 'bg-white/20' : 'bg-white/5'}`}>
+            <Trophy size={16} />
+          </div>
+          <span>Standings & Composite Index</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('matrices')}
+          className={`flex items-center justify-center gap-2.5 py-3 px-4 rounded-xl font-bold text-sm transition-all cursor-pointer ${
+            activeTab === 'matrices'
+              ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/25 border border-emerald-400/30'
+              : 'text-muted hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <div className={`p-1.5 rounded-lg ${activeTab === 'matrices' ? 'bg-white/20' : 'bg-white/5'}`}>
+            <LayoutGrid size={16} />
+          </div>
+          <span>Acquisition & Accuracy Matrices</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('radars')}
+          className={`flex items-center justify-center gap-2.5 py-3 px-4 rounded-xl font-bold text-sm transition-all cursor-pointer ${
+            activeTab === 'radars'
+              ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/25 border border-purple-400/30'
+              : 'text-muted hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <div className={`p-1.5 rounded-lg ${activeTab === 'radars' ? 'bg-white/20' : 'bg-white/5'}`}>
+            <RadarIcon size={16} />
+          </div>
+          <span>Comparative Radars & DNA</span>
+        </button>
+      </div>
 
       {/* Loading state for analytics */}
       {analyticsLoading && (
@@ -498,33 +598,265 @@ export const Managers: React.FC = () => {
         </Card>
       )}
 
-      {showAnalytics && (
-        <>
-          {/* 1. Global League Analysis section */}
-          <div className="flex items-center gap-4 mb-6 mt-12 stagger-3">
-            <h2 className="text-2xl text-white">Global League Analysis</h2>
-            <div className="h-[1px] bg-white/10 flex-1 ml-4"></div>
-          </div>
+      {/* Tab 1: Standings & Composite Index */}
+      {activeTab === 'standings' && (
+        <div className="space-y-8 animate-fade-in">
+          {/* Team Standings Card */}
+          <Card title="Team Standings" className="stagger-1">
+            <MobileTapHint text="Swipe/Scroll for full metrics" />
+            
+            {/* Mobile View: Card Stack (Fixed Collision Layout) */}
+            <div className="md:hidden flex flex-col gap-3 mt-4">
+              {[...selectedSeason.rosters].sort((a,b) => b.settings.wins - a.settings.wins || b.settings.fpts - a.settings.fpts).map((r, i) => {
+                const profile = profiles.find(p => p.roster_id === r.roster_id);
+                const user = selectedSeason.rosterToUser[r.roster_id];
+                const pf = (r.settings.fpts + (r.settings.fpts_decimal/100)).toFixed(1);
+                const pa = (r.settings.fpts_against + (r.settings.fpts_against_decimal/100)).toFixed(1);
+                
+                return (
+                  <div 
+                    key={r.roster_id} 
+                    className={`p-4 rounded-xl border transition-all ${
+                      i === 0 
+                        ? 'bg-amber-500/5 border-amber-500/25 shadow-lg shadow-amber-500/5' 
+                        : i === 1 
+                        ? 'bg-slate-400/5 border-slate-400/25' 
+                        : i === 2 
+                        ? 'bg-amber-700/5 border-amber-700/25' 
+                        : 'bg-black/30 border-white/5'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-3 border-b border-white/5 pb-3 mb-3">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className={`flex items-center justify-center shrink-0 w-7 h-7 rounded-full text-xs font-bold ${
+                          i === 0 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' :
+                          i === 1 ? 'bg-slate-400/20 text-slate-300 border border-slate-400/40' :
+                          i === 2 ? 'bg-amber-700/20 text-amber-500 border border-amber-700/40' :
+                          'bg-white/5 text-muted border border-white/10'
+                        }`}>
+                          {i + 1}
+                        </div>
+                        {user?.avatar ? (
+                          <img src={`https://sleepercdn.com/avatars/thumbs/${user.avatar}`} alt="" className="w-10 h-10 rounded-full border border-white/15 object-cover shrink-0" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/50 shrink-0">N/A</div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <div className="font-bold text-sm text-white truncate">{user?.display_name || `Team ${r.roster_id}`}</div>
+                          <div className="text-xs text-muted font-medium mt-0.5">{r.settings.wins}-{r.settings.losses}{r.settings.ties > 0 ? `-${r.settings.ties}` : ''}</div>
+                        </div>
+                      </div>
+                      {showAnalytics && profile && (
+                        <div className="flex flex-col items-end justify-center shrink-0 px-2.5 py-1.5 rounded-xl bg-white/[0.03] border border-white/5">
+                          <div className="text-[10px] text-muted uppercase tracking-wider font-semibold">Composite</div>
+                          <div className="font-mono font-bold text-base text-accent-color">{profile.compositeScore.toFixed(1)}</div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                      <div className="p-2 rounded-lg bg-white/[0.02] border border-white/5">
+                        <span className="text-[10px] text-muted uppercase tracking-wider block mb-0.5">PF</span>
+                        <span className="font-mono font-bold text-accent-color">{pf}</span>
+                      </div>
+                      <div className="p-2 rounded-lg bg-white/[0.02] border border-white/5">
+                        <span className="text-[10px] text-muted uppercase tracking-wider block mb-0.5">PA</span>
+                        <span className="font-mono font-medium text-gray-300">{pa}</span>
+                      </div>
+                      <div className="p-2 rounded-lg bg-white/[0.02] border border-white/5">
+                        <span className="text-[10px] text-muted uppercase tracking-wider block mb-0.5">Vs League</span>
+                        <span className="font-mono font-bold text-success-color">{profile?.allPlayWins}-{profile?.allPlayLosses}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 mt-8">
-            <Card title="Acquisition Production Matrix" className="stagger-3">
-              <div className="chart-header">
+            {/* Desktop View: Traditional Table */}
+            <div className="hidden md:block table-container mt-4">
+              <div className="overflow-hidden rounded-xl border border-white/10">
+                <table className="standings-table">
+                  <thead className="bg-white/[0.02]">
+                    <tr>
+                      <th>Team</th>
+                      <th className="text-center">Record</th>
+                      {showAnalytics && (
+                        <th className="text-center">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <span>Vs League</span>
+                            <div className="tooltip-container">
+                              <Info size={12} className="text-muted opacity-50" />
+                              <div className="tooltip-text">
+                                Standard All-Play Record: Wins and losses aggregated as if you played every league member every week.
+                              </div>
+                            </div>
+                          </div>
+                        </th>
+                      )}
+                      <th className="text-center">PF</th>
+                      <th className="text-center">PA</th>
+                      {showAnalytics && <th className="text-center">Lineup Acc</th>}
+                      {showAnalytics && (
+                        <th className="text-center">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <span>Composite Score</span>
+                            <div className="tooltip-container">
+                              <Info size={12} className="text-muted opacity-50" />
+                              <div className="tooltip-text align-right">
+                                Composite Impact: Blended weighting across Drafting (40%), Free Agency/Waivers (40%), and Trading (20%).
+                              </div>
+                            </div>
+                          </div>
+                        </th>
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...selectedSeason.rosters].sort((a,b) => b.settings.wins - a.settings.wins || b.settings.fpts - a.settings.fpts).map((r, i) => {
+                      const profile = profiles.find(p => p.roster_id === r.roster_id);
+                      return (
+                        <tr 
+                          key={r.roster_id} 
+                          className="standings-row"
+                          style={{ 
+                            background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)',
+                            cursor: 'default'
+                          }}
+                        >
+                          <td className="team-cell">
+                            <span className={`font-mono text-xs font-bold mr-2 ${
+                              i === 0 ? 'text-amber-400' : i === 1 ? 'text-slate-300' : i === 2 ? 'text-amber-600' : 'text-muted'
+                            }`}>
+                              {i + 1}.
+                            </span>
+                            {selectedSeason.rosterToUser[r.roster_id]?.avatar ? (
+                              <img src={`https://sleepercdn.com/avatars/thumbs/${selectedSeason.rosterToUser[r.roster_id].avatar}`} alt="avatar" className="team-avatar" />
+                            ) : (
+                              <div className="team-avatar-placeholder"></div>
+                            )}
+                            <span className="font-semibold text-white">
+                              {selectedSeason.rosterToUser[r.roster_id]?.display_name || `Team ${r.roster_id}`}
+                            </span>
+                          </td>
+                          <td className="text-center text-base font-bold font-mono text-white">{r.settings.wins}-{r.settings.losses}{r.settings.ties > 0 ? `-${r.settings.ties}` : ''}</td>
+                          {showAnalytics && <td className="text-center font-mono text-success-color font-bold">{profile?.allPlayWins}-{profile?.allPlayLosses}</td>}
+                          <td className="text-center font-mono text-accent-color font-semibold">{(r.settings.fpts + (r.settings.fpts_decimal/100)).toFixed(1)}</td>
+                          <td className="text-center font-mono text-muted">{(r.settings.fpts_against + (r.settings.fpts_against_decimal/100)).toFixed(1)}</td>
+                          {showAnalytics && <td className="text-center font-mono text-white font-bold">{profile?.coachingEfficiency}%</td>}
+                          {showAnalytics && (
+                            <td className="text-center font-mono font-bold text-accent-color">
+                              {profile?.compositeScore.toFixed(1)}
+                            </td>
+                          )}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </Card>
+
+          {/* Manager Composite Strength Card */}
+          {showAnalytics && (
+            <Card title="Manager Composite Strength Ranking" className="stagger-2">
+              <div className="text-sm text-muted mb-4">
+                Weighted percentile ranking evaluating sourcing dominance across 
+                <span className="text-white font-medium mx-1">Drafting (40%)</span>, 
+                <span className="text-white font-medium mx-1">FAAB + Waivers (40%)</span>, and 
+                <span className="text-white font-medium mx-1">Trades (20%)</span>.
+              </div>
+              <div style={{ height: 420 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={compositeData} layout="vertical" margin={{ left: 10, right: 30, top: 10, bottom: 10 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.05)" />
+                    <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 12 }} domain={[0, 100]} />
+                    <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 12 }} width={120} />
+                    <RechartsTooltip 
+                      cursor={{ fill: 'rgba(255,255,255,0.05)' }} 
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const data = payload[0].payload;
+                          const profile = profiles.find(p => (p.user?.display_name || `Team ${p.roster_id}`) === data.name);
+                          return (
+                            <div className="bg-[#0f1115]/95 border border-white/10 rounded-xl p-3.5 shadow-2xl min-w-[220px]">
+                              <div className="font-bold text-sm text-white mb-1.5 pb-1 border-b border-white/10 flex items-center justify-between">
+                                <span>{data.name}</span>
+                                <span className="font-mono text-accent-color font-bold">{data.Score.toFixed(1)}</span>
+                              </div>
+                              {profile && (
+                                <div className="space-y-1 text-xs text-muted">
+                                  <div className="flex justify-between">
+                                    <span>Draft Points:</span>
+                                    <span className="font-mono text-white">{(profile.draftPoints + profile.keeperPoints).toFixed(1)} pts</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Free Agency Points:</span>
+                                    <span className="font-mono text-white">{(profile.faabPoints + profile.waiverPoints).toFixed(1)} pts</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Trade Net Points:</span>
+                                    <span className="font-mono text-white">{profile.tradeNetPoints > 0 ? '+' : ''}{profile.tradeNetPoints.toFixed(1)} pts</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Lineup Accuracy:</span>
+                                    <span className="font-mono text-white">{profile.coachingEfficiency}%</span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Bar dataKey="Score" fill="var(--accent-color)" radius={[0, 6, 6, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {/* Tab 2: Acquisition & Accuracy Matrices */}
+      {activeTab === 'matrices' && showAnalytics && (
+        <div className="animate-fade-in space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* 1. Acquisition Production Matrix */}
+            <Card title="Acquisition Production Matrix" className="stagger-1">
+              <div className="chart-header mb-4">
                 <div className="chart-description">
                   Draft & Keeper total pts vs Combined FAAB & Waiver pts generated.
                 </div>
-                <div className="matrix-legend-wrapper">
-                  <div className="matrix-legend-grid">
-                    <div className="matrix-quadrant top-left">
-                      🛒 <strong style={{ color: '#fff', fontWeight: 500 }}>FAAB Heavy</strong>
+                <div className="grid grid-cols-2 gap-2 pt-3 mt-3 border-t border-white/5">
+                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-blue-500/5 border border-blue-500/20 text-xs">
+                    <span className="text-sm shrink-0">🛒</span>
+                    <div className="min-w-0">
+                      <span className="font-bold text-blue-400">FAAB Heavy</span>
+                      <div className="text-[10px] text-muted truncate">Top-Left • High FAAB/Waivers, Lower Draft</div>
                     </div>
-                    <div className="matrix-quadrant top-right">
-                      👑 <strong style={{ color: '#fff', fontWeight: 500 }}>Double Threat</strong>
+                  </div>
+                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-xs">
+                    <span className="text-sm shrink-0">👑</span>
+                    <div className="min-w-0">
+                      <span className="font-bold text-emerald-400">Double Threat</span>
+                      <div className="text-[10px] text-muted truncate">Top-Right • Elite Draft + Elite Waivers</div>
                     </div>
-                    <div className="matrix-quadrant bottom-left">
-                      📉 <strong style={{ color: '#fff', fontWeight: 500 }}>Struggling Roster</strong>
+                  </div>
+                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-rose-500/5 border border-rose-500/20 text-xs">
+                    <span className="text-sm shrink-0">📉</span>
+                    <div className="min-w-0">
+                      <span className="font-bold text-rose-400">Struggling Roster</span>
+                      <div className="text-[10px] text-muted truncate">Bottom-Left • Below average on both</div>
                     </div>
-                    <div className="matrix-quadrant bottom-right">
-                      🛡️ <strong style={{ color: '#fff', fontWeight: 500 }}>Draft Heavy</strong>
+                  </div>
+                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-teal-500/5 border border-teal-500/20 text-xs">
+                    <span className="text-sm shrink-0">🛡️</span>
+                    <div className="min-w-0">
+                      <span className="font-bold text-teal-400">Draft Heavy</span>
+                      <div className="text-[10px] text-muted truncate">Bottom-Right • High Draft, Lower Waivers</div>
                     </div>
                   </div>
                 </div>
@@ -543,28 +875,45 @@ export const Managers: React.FC = () => {
                     <ReferenceLine x={avgDraftPts} stroke="rgba(255,255,255,0.2)" strokeDasharray="5 5" />
                     <ReferenceLine y={avgFaabPts} stroke="rgba(255,255,255,0.2)" strokeDasharray="5 5" />
                     <RechartsTooltip content={<CustomScatterTooltip />} cursor={{ strokeDasharray: '3 3', stroke: 'rgba(255,255,255,0.1)' }} />
-                    <Scatter name="Teams" data={matrixData} shape={<CustomAvatarDot />} />
+                    <Scatter name="Teams" data={matrixData} shape={<CustomAvatarDot />} isAnimationActive={false} />
                   </ScatterChart>
                 </ResponsiveContainer>
               </div>
             </Card>
 
-            <Card title="Acquisition Accuracy Matrix" className="stagger-3">
-              <div className="text-sm text-muted mb-4">
-                Draft Hit Rate vs Combined FAAB & Waiver Hit Rate.
-                <div style={{ display: 'flex', justifyContent: 'center', margin: '16px 0 8px 0', fontSize: '11px', color: 'rgba(255,255,255,0.7)', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '12px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', width: '320px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', padding: '0 16px 8px 0', borderRight: '2px solid rgba(255,255,255,0.15)', borderBottom: '2px solid rgba(255,255,255,0.15)' }}>
-                      🧪 <strong style={{ color: '#fff', fontWeight: 500 }}>FAAB Specialist</strong>
+            {/* 2. Acquisition Accuracy Matrix */}
+            <Card title="Acquisition Accuracy Matrix" className="stagger-1">
+              <div className="chart-header mb-4">
+                <div className="chart-description">
+                  Draft Hit Rate vs Combined FAAB & Waiver Hit Rate.
+                </div>
+                <div className="grid grid-cols-2 gap-2 pt-3 mt-3 border-t border-white/5">
+                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-blue-500/5 border border-blue-500/20 text-xs">
+                    <span className="text-sm shrink-0">🧪</span>
+                    <div className="min-w-0">
+                      <span className="font-bold text-blue-400">FAAB Specialists</span>
+                      <div className="text-[10px] text-muted truncate">Top-Left • High FAAB %, Low Draft %</div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', padding: '0 0 8px 16px', borderBottom: '2px solid rgba(255,255,255,0.15)' }}>
-                      🎯 <strong style={{ color: '#fff', fontWeight: 500 }}>Surgical Snipers</strong>
+                  </div>
+                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-xs">
+                    <span className="text-sm shrink-0">🎯</span>
+                    <div className="min-w-0">
+                      <span className="font-bold text-emerald-400">Surgical Snipers</span>
+                      <div className="text-[10px] text-muted truncate">Top-Right • Elite accuracy on both channels</div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', padding: '8px 16px 0 0', borderRight: '2px solid rgba(255,255,255,0.15)' }}>
-                      🎰 <strong style={{ color: '#fff', fontWeight: 500 }}>Lottery Tickets</strong>
+                  </div>
+                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-rose-500/5 border border-rose-500/20 text-xs">
+                    <span className="text-sm shrink-0">🎰</span>
+                    <div className="min-w-0">
+                      <span className="font-bold text-rose-400">Lottery Pickers</span>
+                      <div className="text-[10px] text-muted truncate">Bottom-Left • Below average hit rates</div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '8px', padding: '8px 0 0 16px' }}>
-                      🛡️ <strong style={{ color: '#fff', fontWeight: 500 }}>Draft Specialist</strong>
+                  </div>
+                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-teal-500/5 border border-teal-500/20 text-xs">
+                    <span className="text-sm shrink-0">🛡️</span>
+                    <div className="min-w-0">
+                      <span className="font-bold text-teal-400">Draft Specialists</span>
+                      <div className="text-[10px] text-muted truncate">Bottom-Right • High Draft %, Low FAAB %</div>
                     </div>
                   </div>
                 </div>
@@ -583,45 +932,22 @@ export const Managers: React.FC = () => {
                     <ReferenceLine x={avgDraftHitRate} stroke="rgba(255,255,255,0.2)" strokeDasharray="5 5" />
                     <ReferenceLine y={avgFaabHitRate} stroke="rgba(255,255,255,0.2)" strokeDasharray="5 5" />
                     <RechartsTooltip content={<CustomHitRateTooltip />} cursor={{ strokeDasharray: '3 3', stroke: 'rgba(255,255,255,0.1)' }} />
-                    <Scatter name="Teams" data={hitRateComparison} shape={<CustomAvatarDot />} />
+                    <Scatter name="Teams" data={hitRateComparison} shape={<CustomAvatarDot />} isAnimationActive={false} />
                   </ScatterChart>
                 </ResponsiveContainer>
               </div>
             </Card>
           </div>
+        </div>
+      )}
 
-          <div className="grid grid-cols-1 gap-8 mb-12">
-            <Card title="Manager Composite Strength" className="stagger-3">
-              <div className="text-sm text-muted mb-4">
-                Weighted percentile ranking evaluating sourcing dominance across 
-                <span className="text-white font-medium mx-1">Drafting (40%)</span>, 
-                <span className="text-white font-medium mx-1">FAAB + Waivers (40%)</span>, and 
-                <span className="text-white font-medium mx-1">Trades (20%)</span>.
-              </div>
-              <div style={{ height: 380 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={compositeData} layout="vertical" margin={{ left: 40, right: 20 }}>
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.05)" />
-                    <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 12 }} />
-                    <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11 }} width={80} />
-                    <RechartsTooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ backgroundColor: 'rgba(15,17,21,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
-                    <Bar dataKey="Score" fill="var(--accent-color)" radius={[0, 4, 4, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </Card>
-          </div>
-
-          {/* 2. Comparative Analytics section */}
-          <div className="flex items-center gap-4 mb-6 mt-12 stagger-2">
-            <h2 className="text-2xl text-white">Comparative Analytics</h2>
-            <div className="h-[1px] bg-white/10 flex-1 ml-4"></div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+      {/* Tab 3: Comparative Radars & DNA */}
+      {activeTab === 'radars' && showAnalytics && (
+        <div className="animate-fade-in space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Comparative Radar Chart 1 */}
-            <Card title="Manager Skill (League Percentiles)" className="col-span-1 stagger-2">
-              <div className="text-sm text-muted mb-2 text-center">How you rank against the league in each discipline.</div>
+            <Card title="Manager Skill (League Percentiles)" className="col-span-1 stagger-1">
+              <div className="text-sm text-muted mb-2 text-center">How managers rank against the league in each discipline.</div>
               <MobileTapHint />
               <div style={{ width: '100%', height: 320 }}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -631,7 +957,7 @@ export const Managers: React.FC = () => {
                     <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
                     <RechartsTooltip contentStyle={{ backgroundColor: 'rgba(15,17,21,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
                     {radarProfiles.map((p, i) => (
-                      <Radar key={p.roster_id} name={p.user.display_name} dataKey={`manager_${i}`} stroke={CHART_COLORS[i]} fill={CHART_COLORS[i]} fillOpacity={0.3} />
+                      <Radar key={p.roster_id} name={p.user?.display_name || `Team ${p.roster_id}`} dataKey={`manager_${i}`} stroke={CHART_COLORS[i]} fill={CHART_COLORS[i]} fillOpacity={0.25} />
                     ))}
                   </RadarChart>
                 </ResponsiveContainer>
@@ -640,8 +966,8 @@ export const Managers: React.FC = () => {
             </Card>
 
             {/* Comparative Radar Chart 2: Roster DNA */}
-            <Card title="Roster Composition (% of Total Yield)" className="col-span-1 stagger-2">
-              <div className="text-sm text-muted mb-2 text-center">Relative points contribution by channel.</div>
+            <Card title="Roster Composition (% of Total Yield)" className="col-span-1 stagger-1">
+              <div className="text-sm text-muted mb-2 text-center">Relative points contribution by acquisition channel.</div>
               <MobileTapHint />
               <div style={{ width: '100%', height: 320 }}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -651,7 +977,6 @@ export const Managers: React.FC = () => {
                     <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
                     <RechartsTooltip 
                       formatter={(_value: any, name: any, entry: any) => {
-                        // Dynamically swap manager_ index for raw_ index stored in data record
                         const rawKey = entry.dataKey?.replace('manager_', 'raw_');
                         const displayVal = entry.payload[rawKey] !== undefined ? entry.payload[rawKey] : _value;
                         return [`${displayVal}%`, name];
@@ -659,7 +984,7 @@ export const Managers: React.FC = () => {
                       contentStyle={{ backgroundColor: 'rgba(15,17,21,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} 
                     />
                     {dnaProfiles.map((p, i) => (
-                      <Radar key={p.roster_id} name={p.user.display_name} dataKey={`manager_${i}`} stroke={CHART_COLORS[i]} fill={CHART_COLORS[i]} fillOpacity={0.3} />
+                      <Radar key={p.roster_id} name={p.user?.display_name || `Team ${p.roster_id}`} dataKey={`manager_${i}`} stroke={CHART_COLORS[i]} fill={CHART_COLORS[i]} fillOpacity={0.25} />
                     ))}
                   </RadarChart>
                 </ResponsiveContainer>
@@ -668,35 +993,33 @@ export const Managers: React.FC = () => {
             </Card>
           </div>
 
-          <div className="mb-12">
-            {/* Comparative Positional */}
-            <Card title="Positional Scoring Output" className="stagger-3">
-              <div className="text-sm text-muted mb-2 text-center">Total points scored by lineup position (scaled to max).</div>
-              <MobileTapHint />
-              <div style={{ width: '100%', height: 320 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart cx="50%" cy="50%" outerRadius="70%" data={comparativePosData}>
-                    <PolarGrid stroke="rgba(255,255,255,0.1)" />
-                    <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                    <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                    <RechartsTooltip 
-                      formatter={(_value: any, name: any, entry: any) => {
-                        const rawKey = entry.dataKey?.replace('manager_', 'raw_');
-                        const displayVal = entry.payload[rawKey] !== undefined ? entry.payload[rawKey] : _value;
-                        return [`${displayVal} pts`, name];
-                      }}
-                      contentStyle={{ backgroundColor: 'rgba(15,17,21,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} 
-                    />
-                    {posProfiles.map((p, i) => (
-                      <Radar key={p.roster_id} name={p.user.display_name} dataKey={`manager_${i}`} stroke={CHART_COLORS[i]} fill={CHART_COLORS[i]} fillOpacity={0.3} />
-                    ))}
-                  </RadarChart>
-                </ResponsiveContainer>
-              </div>
-              {renderSelector(posMgrs, setPosMgrs)}
-            </Card>
-          </div>
-        </>
+          {/* Positional Scoring Output */}
+          <Card title="Positional Scoring Output" className="stagger-2">
+            <div className="text-sm text-muted mb-2 text-center">Total fantasy points scored by lineup position (normalized to peak).</div>
+            <MobileTapHint />
+            <div style={{ width: '100%', height: 340 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart cx="50%" cy="50%" outerRadius="70%" data={comparativePosData}>
+                  <PolarGrid stroke="rgba(255,255,255,0.1)" />
+                  <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                  <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                  <RechartsTooltip 
+                    formatter={(_value: any, name: any, entry: any) => {
+                      const rawKey = entry.dataKey?.replace('manager_', 'raw_');
+                      const displayVal = entry.payload[rawKey] !== undefined ? entry.payload[rawKey] : _value;
+                      return [`${displayVal} pts`, name];
+                    }}
+                    contentStyle={{ backgroundColor: 'rgba(15,17,21,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} 
+                  />
+                  {posProfiles.map((p, i) => (
+                    <Radar key={p.roster_id} name={p.user?.display_name || `Team ${p.roster_id}`} dataKey={`manager_${i}`} stroke={CHART_COLORS[i]} fill={CHART_COLORS[i]} fillOpacity={0.25} />
+                  ))}
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
+            {renderSelector(posMgrs, setPosMgrs)}
+          </Card>
+        </div>
       )}
     </div>
   );
