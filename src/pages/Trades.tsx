@@ -310,9 +310,9 @@ interface ManagerTimingRecord {
         let ringColor = '#64748b';
 
         if (buyDeltaTotal > 0 && sellDeltaTotal > 0) {
-          archetype = 'Wall Street Wizard';
+          archetype = 'Value Arbitrageur';
           archetypeColor = 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30';
-          archetypeEmoji = '🧠';
+          archetypeEmoji = '💎';
           ringColor = '#10b981';
         } else if (buyDeltaTotal > 0 && sellDeltaTotal <= 0) {
           archetype = 'Breakout Hunter';
@@ -320,12 +320,12 @@ interface ManagerTimingRecord {
           archetypeEmoji = '📈';
           ringColor = '#14b8a6';
         } else if (buyDeltaTotal <= 0 && sellDeltaTotal > 0) {
-          archetype = 'Sell-High Master';
+          archetype = 'Peak Seller';
           archetypeColor = 'text-blue-400 bg-blue-500/10 border-blue-500/30';
           archetypeEmoji = '📉';
           ringColor = '#3b82f6';
         } else if (buyDeltaTotal < 0 && sellDeltaTotal < 0) {
-          archetype = 'FOMO Trader';
+          archetype = 'Adverse Timer';
           archetypeColor = 'text-rose-400 bg-rose-500/10 border-rose-500/30';
           archetypeEmoji = '⚠️';
           ringColor = '#f43f5e';
@@ -994,20 +994,20 @@ interface ManagerTimingRecord {
                 </div>
                 <div className="chart-legend-grid pt-3 mt-3 border-t border-white/5">
                   <div className="legend-item">
-                    <div className="legend-item-header">🧠 <strong className="text-emerald-400">Wall Street Wizards</strong> (Top-Right)</div>
-                    <div className="legend-item-desc">Positive timing on both acquired and surrendered players.</div>
-                  </div>
-                  <div className="legend-item">
-                    <div className="legend-item-header">📉 <strong className="text-blue-400">Sell-High Masters</strong> (Top-Left)</div>
+                    <div className="legend-item-header">📉 <strong className="text-blue-400">Peak Sellers</strong> (Top-Left: -Buy, +Sell)</div>
                     <div className="legend-item-desc">Excels at selling players before post-trade dropoffs.</div>
                   </div>
                   <div className="legend-item">
-                    <div className="legend-item-header">📈 <strong className="text-teal-400">Breakout Hunters</strong> (Bottom-Right)</div>
-                    <div className="legend-item-desc">Acquired rising talent right before scoring surges.</div>
+                    <div className="legend-item-header">💎 <strong className="text-emerald-400">Value Arbitrageurs</strong> (Top-Right: +Buy, +Sell)</div>
+                    <div className="legend-item-desc">Positive timing on both acquired and surrendered players.</div>
                   </div>
                   <div className="legend-item">
-                    <div className="legend-item-header">⚠️ <strong className="text-rose-400">FOMO Traders</strong> (Bottom-Left)</div>
+                    <div className="legend-item-header">⚠️ <strong className="text-rose-400">Adverse Timers</strong> (Bottom-Left: -Buy, -Sell)</div>
                     <div className="legend-item-desc">Bought at peak prices or sold before breakouts.</div>
+                  </div>
+                  <div className="legend-item">
+                    <div className="legend-item-header">📈 <strong className="text-teal-400">Breakout Hunters</strong> (Bottom-Right: +Buy, -Sell)</div>
+                    <div className="legend-item-desc">Acquired rising talent right before scoring surges.</div>
                   </div>
                 </div>
               </div>
