@@ -375,7 +375,7 @@ export const Draft: React.FC = () => {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {topDrafter && (
-          <div className="glass-card p-4 rounded-xl border border-white/10 flex flex-col justify-between">
+          <div className="glass-card p-3 sm:p-4 rounded-xl border border-white/10 flex flex-col justify-between min-w-0 overflow-hidden">
             <div>
               <div className="text-[11px] font-bold text-muted uppercase tracking-wider flex items-center gap-1.5 mb-2"><Trophy size={14} className="text-yellow-400" /><span>Top Draft Class</span></div>
               <div className="flex items-center gap-3">
@@ -391,18 +391,18 @@ export const Draft: React.FC = () => {
         )}
 
         {biggestSteal && (
-          <div className="glass-card p-4 rounded-xl border border-emerald-500/20 flex flex-col justify-between">
+          <div className="glass-card p-3 sm:p-4 rounded-xl border border-emerald-500/20 flex flex-col justify-between min-w-0 overflow-hidden">
             <div>
               <div className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
-                <Sparkles size={14} className="text-emerald-400" />
-                <span>Biggest Steal</span>
+                <Sparkles size={14} className="text-emerald-400 shrink-0" />
+                <span className="truncate">Biggest Steal</span>
               </div>
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
                 <div className="relative shrink-0">
                   <img
                     src={`https://sleepercdn.com/content/nfl/players/thumb/${biggestSteal.playerId}.jpg`}
                     alt=""
-                    className="w-10 h-10 rounded-full border border-emerald-500/40 object-cover bg-black/40"
+                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-emerald-500/40 object-cover bg-black/40"
                     onError={e => {
                       (e.target as HTMLImageElement).src =
                         'https://sleepercdn.com/images/v2/icons/player_default.webp';
@@ -421,7 +421,7 @@ export const Draft: React.FC = () => {
                     <span className="truncate">{biggestSteal.playerName}</span>
                     <DraftPositionBadge position={biggestSteal.position} />
                   </div>
-                  <div className="text-[11px] text-muted truncate mt-0.5 flex items-center gap-1 font-mono">
+                  <div className="text-[10px] sm:text-[11px] text-muted truncate mt-0.5 flex items-center gap-1 font-mono">
                     <span className="text-emerald-400 font-bold">Rd {biggestSteal.round}</span>
                     <span>•</span>
                     <span className="text-gray-200 font-sans truncate">{biggestSteal.managerName}</span>
@@ -432,41 +432,47 @@ export const Draft: React.FC = () => {
                 </div>
               </div>
             </div>
-            <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
+            <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight truncate">
               Highest fantasy value over positional baseline (Round 7+)
             </div>
           </div>
         )}
 
         {bestRoiTeam && (
-          <div className="glass-card p-4 rounded-xl border border-blue-500/20 flex flex-col justify-between">
+          <div className="glass-card p-3 sm:p-4 rounded-xl border border-blue-500/20 flex flex-col justify-between min-w-0 overflow-hidden">
             <div>
-              <div className="text-[11px] font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1.5 mb-2"><Target size={14} className="text-blue-400" /><span>Highest Draft ROI</span></div>
-              <div className="flex items-center gap-3">
-                {bestRoiTeam.avatar ? <img src={`https://sleepercdn.com/avatars/thumbs/${bestRoiTeam.avatar}`} alt="" className="w-10 h-10 rounded-full border border-blue-400/40 object-cover shrink-0" /> : <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">N/A</div>}
-                <div className="min-w-0">
-                  <div className="font-bold text-white text-sm truncate">{bestRoiTeam.name}</div>
-                  <div className="text-xs font-mono font-bold text-blue-400 mt-0.5">+{bestRoiTeam.roi}% vs expected</div>
+              <div className="text-[11px] font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                <Target size={14} className="text-blue-400 shrink-0" />
+                <span className="truncate">Highest Draft ROI</span>
+              </div>
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                {bestRoiTeam.avatar ? <img src={`https://sleepercdn.com/avatars/thumbs/${bestRoiTeam.avatar}`} alt="" className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-blue-400/40 object-cover shrink-0" /> : <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">N/A</div>}
+                <div className="min-w-0 flex-1">
+                  <div className="font-bold text-white text-xs sm:text-sm truncate">{bestRoiTeam.name}</div>
+                  <div className="text-[11px] sm:text-xs font-mono font-bold text-blue-400 mt-0.5 truncate">+{bestRoiTeam.roi}% vs expected</div>
                 </div>
               </div>
             </div>
-            <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">Outperformed draft slot capital expectation</div>
+            <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight truncate">Outperformed draft slot capital expectation</div>
           </div>
         )}
 
         {bestHitRate && (
-          <div className="glass-card p-4 rounded-xl border border-purple-500/20 flex flex-col justify-between">
+          <div className="glass-card p-3 sm:p-4 rounded-xl border border-purple-500/20 flex flex-col justify-between min-w-0 overflow-hidden">
             <div>
-              <div className="text-[11px] font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1.5 mb-2"><Target size={14} className="text-purple-400" /><span>Hit Rate Leader</span></div>
-              <div className="flex items-center gap-3">
-                {bestHitRate.avatar ? <img src={`https://sleepercdn.com/avatars/thumbs/${bestHitRate.avatar}`} alt="" className="w-10 h-10 rounded-full border border-purple-400/40 object-cover shrink-0" /> : <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">N/A</div>}
-                <div className="min-w-0">
-                  <div className="font-bold text-white text-sm truncate">{bestHitRate.name}</div>
-                  <div className="text-xs font-mono font-bold text-purple-400 mt-0.5">{bestHitRate.pct.toFixed(0)}% starting picks</div>
+              <div className="text-[11px] font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                <Target size={14} className="text-purple-400 shrink-0" />
+                <span className="truncate">Hit Rate Leader</span>
+              </div>
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                {bestHitRate.avatar ? <img src={`https://sleepercdn.com/avatars/thumbs/${bestHitRate.avatar}`} alt="" className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-purple-400/40 object-cover shrink-0" /> : <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">N/A</div>}
+                <div className="min-w-0 flex-1">
+                  <div className="font-bold text-white text-xs sm:text-sm truncate">{bestHitRate.name}</div>
+                  <div className="text-[11px] sm:text-xs font-mono font-bold text-purple-400 mt-0.5 truncate">{bestHitRate.pct.toFixed(0)}% starting picks</div>
                 </div>
               </div>
             </div>
-            <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">Highest % of draft picks that started ≥1 game</div>
+            <div className="text-[10px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight truncate">Highest % of draft picks that started ≥1 game</div>
           </div>
         )}
       </div>

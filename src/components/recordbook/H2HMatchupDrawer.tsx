@@ -112,34 +112,38 @@ export const H2HMatchupDrawer: React.FC<H2HMatchupDrawerProps> = ({
               return (
                 <div
                   key={`${game.season}-${game.week}-${i}`}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-white/[0.03] border border-white/5 hover:border-white/15 transition-all"
+                  className="p-3.5 sm:p-4 rounded-xl bg-white/[0.03] border border-white/5 hover:border-white/15 transition-all space-y-2.5 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-4"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-white/5 text-gray-300 border border-white/5">
-                      <Calendar size={13} />
-                      {game.season} Week {game.week}
-                    </span>
-                    {game.isPlayoffs && (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                        <Trophy size={11} /> Playoffs
+                  <div className="flex items-center justify-between sm:justify-start gap-2">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                      <span className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-white/5 text-gray-300 border border-white/5 shrink-0">
+                        <Calendar size={13} />
+                        {game.season} Wk {game.week}
                       </span>
-                    )}
+                      {game.isPlayoffs && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
+                          <Trophy size={11} /> Playoffs
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="sm:hidden text-xs font-mono text-purple-400 font-semibold px-2 py-0.5 rounded bg-purple-500/10 border border-purple-500/20">
+                      +{game.margin.toFixed(1)}
+                    </div>
                   </div>
 
-                  <div className="flex items-center justify-between sm:justify-end gap-6 flex-1">
-                    <div className={`text-sm ${m1Won ? 'font-bold text-success-color' : 'text-gray-300'}`}>
-                      <span className="text-xs text-muted mr-2">{manager1.name}:</span>
-                      {game.manager1Pts.toFixed(1)}
+                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/5 sm:border-t-0 sm:pt-0 sm:flex sm:items-center sm:justify-end sm:gap-5 flex-1 min-w-0">
+                    <div className={`flex items-center justify-between sm:justify-start gap-2 p-2 sm:p-0 rounded-lg bg-white/[0.02] sm:bg-transparent min-w-0 ${m1Won ? 'font-bold text-success-color' : 'text-gray-300'}`}>
+                      <span className="text-xs text-muted truncate">{manager1.name}:</span>
+                      <span className="font-mono text-xs sm:text-sm font-bold shrink-0">{game.manager1Pts.toFixed(1)}</span>
                     </div>
 
-                    <div className="text-xs font-bold text-muted">vs</div>
-
-                    <div className={`text-sm ${m2Won ? 'font-bold text-success-color' : 'text-gray-300'}`}>
-                      <span className="text-xs text-muted mr-2">{manager2.name}:</span>
-                      {game.manager2Pts.toFixed(1)}
+                    <div className={`flex items-center justify-between sm:justify-start gap-2 p-2 sm:p-0 rounded-lg bg-white/[0.02] sm:bg-transparent min-w-0 ${m2Won ? 'font-bold text-success-color' : 'text-gray-300'}`}>
+                      <span className="text-xs text-muted truncate">{manager2.name}:</span>
+                      <span className="font-mono text-xs sm:text-sm font-bold shrink-0">{game.manager2Pts.toFixed(1)}</span>
                     </div>
 
-                    <div className="text-xs font-mono text-purple-400 pl-3 border-l border-white/10 shrink-0 font-semibold">
+                    <div className="hidden sm:block text-xs font-mono text-purple-400 pl-3 border-l border-white/10 shrink-0 font-semibold">
                       +{game.margin.toFixed(1)}
                     </div>
                   </div>

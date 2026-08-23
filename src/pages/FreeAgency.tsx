@@ -353,28 +353,28 @@ export const FreeAgency: React.FC = () => {
         {/* KPI 1: Waiver Wire MVP */}
         <div 
           onClick={() => waiverMvp && setSelectedPlayer(waiverMvp)}
-          className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-amber-500/40 hover:bg-white/[0.04] transition-all cursor-pointer group"
+          className="p-3 sm:p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-amber-500/40 hover:bg-white/[0.04] transition-all cursor-pointer group min-w-0 overflow-hidden"
         >
-          <div className="flex items-center gap-2 text-xs font-semibold text-amber-400 uppercase tracking-wider mb-2">
-            <Crown size={15} />
-            <span>Waiver Wire MVP</span>
+          <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs font-semibold text-amber-400 uppercase tracking-tight sm:tracking-wider mb-2 min-w-0">
+            <Crown size={14} className="shrink-0" />
+            <span className="truncate">Waiver Wire MVP</span>
           </div>
           {waiverMvp ? (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               {waiverMvp.managerAvatar ? (
                 <img 
                   src={`https://sleepercdn.com/avatars/thumbs/${waiverMvp.managerAvatar}`} 
                   alt="" 
-                  className="w-10 h-10 rounded-full border border-amber-400/30 object-cover shrink-0" 
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-amber-400/30 object-cover shrink-0" 
                 />
               ) : (
-                <div className="w-10 h-10 rounded-full bg-slate-700 shrink-0" />
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-700 shrink-0" />
               )}
-              <div className="min-w-0">
-                <div className="font-bold text-base text-white truncate group-hover:text-amber-300 transition-colors">
+              <div className="min-w-0 flex-1">
+                <div className="font-bold text-sm sm:text-base text-white truncate group-hover:text-amber-300 transition-colors">
                   {waiverMvp.playerName}
                 </div>
-                <div className="text-xs text-amber-300 font-mono font-semibold">
+                <div className="text-[11px] sm:text-xs text-amber-300 font-mono font-semibold truncate">
                   +{waiverMvp.starterPoints.toFixed(1)} pts <span className="text-muted font-normal">· {waiverMvp.managerName}</span>
                 </div>
               </div>
@@ -382,37 +382,37 @@ export const FreeAgency: React.FC = () => {
           ) : (
             <div className="text-xs text-muted">No data available</div>
           )}
-          <div className="text-[11px] text-muted mt-3 pt-2 border-t border-white/5 truncate flex items-center justify-between">
-            <span>Top starter contribution</span>
-            <span className="text-amber-400/80 text-[10px]">Inspect ↗</span>
+          <div className="text-[10px] sm:text-[11px] text-muted mt-3 pt-2 border-t border-white/5 truncate flex items-center justify-between">
+            <span className="truncate">Top starter contribution</span>
+            <span className="text-amber-400/80 text-[10px] shrink-0 ml-1">Inspect ↗</span>
           </div>
         </div>
 
         {/* KPI 2: Highest Roster Reliance */}
         <div 
           onClick={() => highestReliance && setSelectedManager(highestReliance)}
-          className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-emerald-500/40 hover:bg-white/[0.04] transition-all cursor-pointer group"
+          className="p-3 sm:p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-emerald-500/40 hover:bg-white/[0.04] transition-all cursor-pointer group min-w-0 overflow-hidden"
         >
-          <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400 uppercase tracking-wider mb-2">
-            <Shield size={15} />
-            <span>Top Roster Reliance</span>
+          <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs font-semibold text-emerald-400 uppercase tracking-tight sm:tracking-wider mb-2 min-w-0">
+            <Shield size={14} className="shrink-0" />
+            <span className="truncate">Top Roster Reliance</span>
           </div>
           {highestReliance ? (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               {highestReliance.user?.avatar ? (
                 <img 
                   src={`https://sleepercdn.com/avatars/thumbs/${highestReliance.user.avatar}`} 
                   alt="" 
-                  className="w-10 h-10 rounded-full border border-emerald-400/30 object-cover shrink-0" 
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-emerald-400/30 object-cover shrink-0" 
                 />
               ) : (
-                <div className="w-10 h-10 rounded-full bg-slate-700 shrink-0" />
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-700 shrink-0" />
               )}
-              <div className="min-w-0">
-                <div className="font-bold text-base text-white truncate group-hover:text-emerald-300 transition-colors">
+              <div className="min-w-0 flex-1">
+                <div className="font-bold text-sm sm:text-base text-white truncate group-hover:text-emerald-300 transition-colors">
                   {highestReliance.user?.display_name || `Team ${highestReliance.roster_id}`}
                 </div>
-                <div className="text-xs text-emerald-300 font-mono font-semibold">
+                <div className="text-[11px] sm:text-xs text-emerald-300 font-mono font-semibold truncate">
                   {((highestReliance.pointsGenerated / Math.max(1, highestReliance.totalRosterPoints)) * 100).toFixed(1)}% of PF
                 </div>
               </div>
@@ -420,37 +420,37 @@ export const FreeAgency: React.FC = () => {
           ) : (
             <div className="text-xs text-muted">No data available</div>
           )}
-          <div className="text-[11px] text-muted mt-3 pt-2 border-t border-white/5 truncate flex items-center justify-between">
-            <span>{highestReliance ? `${highestReliance.pointsGenerated.toFixed(1)} waiver pts` : 'Waiver dependency'}</span>
-            <span className="text-emerald-400/80 text-[10px]">Inspect ↗</span>
+          <div className="text-[10px] sm:text-[11px] text-muted mt-3 pt-2 border-t border-white/5 truncate flex items-center justify-between">
+            <span className="truncate">{highestReliance ? `${highestReliance.pointsGenerated.toFixed(1)} waiver pts` : 'Waiver dependency'}</span>
+            <span className="text-emerald-400/80 text-[10px] shrink-0 ml-1">Inspect ↗</span>
           </div>
         </div>
 
         {/* KPI 3: Top Hit Rate Specialist */}
         <div 
           onClick={() => topHitRate && setSelectedManager(topHitRate)}
-          className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-cyan-500/40 hover:bg-white/[0.04] transition-all cursor-pointer group"
+          className="p-3 sm:p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-cyan-500/40 hover:bg-white/[0.04] transition-all cursor-pointer group min-w-0 overflow-hidden"
         >
-          <div className="flex items-center gap-2 text-xs font-semibold text-cyan-400 uppercase tracking-wider mb-2">
-            <Target size={15} />
-            <span>Hit Rate Leader</span>
+          <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs font-semibold text-cyan-400 uppercase tracking-tight sm:tracking-wider mb-2 min-w-0">
+            <Target size={14} className="shrink-0" />
+            <span className="truncate">Hit Rate Leader</span>
           </div>
           {topHitRate ? (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               {topHitRate.user?.avatar ? (
                 <img 
                   src={`https://sleepercdn.com/avatars/thumbs/${topHitRate.user.avatar}`} 
                   alt="" 
-                  className="w-10 h-10 rounded-full border border-cyan-400/30 object-cover shrink-0" 
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-cyan-400/30 object-cover shrink-0" 
                 />
               ) : (
-                <div className="w-10 h-10 rounded-full bg-slate-700 shrink-0" />
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-700 shrink-0" />
               )}
-              <div className="min-w-0">
-                <div className="font-bold text-base text-white truncate group-hover:text-cyan-300 transition-colors">
+              <div className="min-w-0 flex-1">
+                <div className="font-bold text-sm sm:text-base text-white truncate group-hover:text-cyan-300 transition-colors">
                   {topHitRate.user?.display_name || `Team ${topHitRate.roster_id}`}
                 </div>
-                <div className="text-xs text-cyan-300 font-mono font-semibold">
+                <div className="text-[11px] sm:text-xs text-cyan-300 font-mono font-semibold truncate">
                   {topHitRate.hitRate}% Hit Rate
                 </div>
               </div>
@@ -458,37 +458,37 @@ export const FreeAgency: React.FC = () => {
           ) : (
             <div className="text-xs text-muted">No data available</div>
           )}
-          <div className="text-[11px] text-muted mt-3 pt-2 border-t border-white/5 truncate flex items-center justify-between">
-            <span>{topHitRate ? `${topHitRate.hits}/${topHitRate.totalPickups} hits` : 'Pickup accuracy'}</span>
-            <span className="text-cyan-400/80 text-[10px]">Inspect ↗</span>
+          <div className="text-[10px] sm:text-[11px] text-muted mt-3 pt-2 border-t border-white/5 truncate flex items-center justify-between">
+            <span className="truncate">{topHitRate ? `${topHitRate.hits}/${topHitRate.totalPickups} hits` : 'Pickup accuracy'}</span>
+            <span className="text-cyan-400/80 text-[10px] shrink-0 ml-1">Inspect ↗</span>
           </div>
         </div>
 
         {/* KPI 4: Waiver Matchup Decider */}
         <div 
           onClick={() => topWinsCreated && setSelectedManager(topWinsCreated)}
-          className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-purple-500/40 hover:bg-white/[0.04] transition-all cursor-pointer group"
+          className="p-3 sm:p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-purple-500/40 hover:bg-white/[0.04] transition-all cursor-pointer group min-w-0 overflow-hidden"
         >
-          <div className="flex items-center gap-2 text-xs font-semibold text-purple-400 uppercase tracking-wider mb-2">
-            <Zap size={15} />
-            <span>Matchups Decided</span>
+          <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs font-semibold text-purple-400 uppercase tracking-tight sm:tracking-wider mb-2 min-w-0">
+            <Zap size={14} className="shrink-0" />
+            <span className="truncate">Matchups Decided</span>
           </div>
           {topWinsCreated ? (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               {topWinsCreated.user?.avatar ? (
                 <img 
                   src={`https://sleepercdn.com/avatars/thumbs/${topWinsCreated.user.avatar}`} 
                   alt="" 
-                  className="w-10 h-10 rounded-full border border-purple-400/30 object-cover shrink-0" 
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-purple-400/30 object-cover shrink-0" 
                 />
               ) : (
-                <div className="w-10 h-10 rounded-full bg-slate-700 shrink-0" />
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-700 shrink-0" />
               )}
-              <div className="min-w-0">
-                <div className="font-bold text-base text-white truncate group-hover:text-purple-300 transition-colors">
+              <div className="min-w-0 flex-1">
+                <div className="font-bold text-sm sm:text-base text-white truncate group-hover:text-purple-300 transition-colors">
                   {topWinsCreated.user?.display_name || `Team ${topWinsCreated.roster_id}`}
                 </div>
-                <div className="text-xs text-purple-300 font-mono font-semibold">
+                <div className="text-[11px] sm:text-xs text-purple-300 font-mono font-semibold truncate">
                   {topWinsCreated.waiverWins} Matchup Wins
                 </div>
               </div>
@@ -496,9 +496,9 @@ export const FreeAgency: React.FC = () => {
           ) : (
             <div className="text-xs text-muted">No data available</div>
           )}
-          <div className="text-[11px] text-muted mt-3 pt-2 border-t border-white/5 truncate flex items-center justify-between">
-            <span>Decided by waiver points</span>
-            <span className="text-purple-400/80 text-[10px]">Inspect ↗</span>
+          <div className="text-[10px] sm:text-[11px] text-muted mt-3 pt-2 border-t border-white/5 truncate flex items-center justify-between">
+            <span className="truncate">Decided by waiver points</span>
+            <span className="text-purple-400/80 text-[10px] shrink-0 ml-1">Inspect ↗</span>
           </div>
         </div>
       </div>
