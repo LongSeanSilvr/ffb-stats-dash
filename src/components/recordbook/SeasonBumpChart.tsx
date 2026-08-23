@@ -8,6 +8,7 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from 'recharts';
+import { Check, RotateCcw, Users } from 'lucide-react';
 import type { ManagerScore } from '../../types/recordBook';
 import { Card } from '../Card';
 
@@ -23,7 +24,8 @@ const LINE_COLORS = [
 
 export const SeasonBumpChart: React.FC<SeasonBumpChartProps> = ({ managers, seasons }) => {
   const [metric, setMetric] = useState<'finish' | 'fpts' | 'winPct'>('finish');
-  const [focusedManager, setFocusedManager] = useState<string | null>(null);
+  const [selectedManagers, setSelectedManagers] = useState<string[]>([]);
+  const [hoveredManager, setHoveredManager] = useState<string | null>(null);
 
   // Sort seasons chronologically
   const sortedSeasons = [...seasons].sort(
@@ -41,6 +43,22 @@ export const SeasonBumpChart: React.FC<SeasonBumpChartProps> = ({ managers, seas
     });
     return row;
   });
+
+  const toggleManager = (name: string) => {
+    setSelectedManagers(prev =>
+      prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name]
+    );
+  };
+
+  const selectAll = () => {
+    setSelectedManagers(managers.map(m => m.managerName));
+  };
+
+  const clearSelection = () => {
+    setSelectedManagers([]);
+  };
+
+  const hasSelection = selectedManagers.length > 0;
 
   return (
     <Card
@@ -100,20 +118,55 @@ export const SeasonBumpChart: React.FC<SeasonBumpChartProps> = ({ managers, seas
               }}
             />
             {managers.map((m, i) => {
-              const isDimmed = focusedManager !== null && focusedManager !== m.managerName;
-              const isHighlight = focusedManager === m.managerName;
+              const isSelected = selectedManagers.includes(m.managerName);
+              const isHovered = hoveredManager === m.managerName;
+              const color = LINE_COLORS[i % LINE_COLORS.length];
+
+              let opacity = 1;
+              let strokeWidth = 2.5;
+              let dotRadius = 3.5;
+
+              if (hasSelection) {
+                if (isSelected) {
+                  opacity = 1;
+                  strokeWidth = 3.5;
+                  dotRadius = 5;
+                } else {
+                  opacity = 0.12;
+                  strokeWidth = 1.5;
+                  dotRadius = 2;
+                }
+              } else if (hoveredManager !== null) {
+                if (isHovered) {
+                  opacity = 1;
+                  strokeWidth = 4;
+                  dotRadius = 6;
+                } else {
+                  opacity = 0.2;
+                  strokeWidth = 1.5;
+                  dotRadius = 2;
+                }
+              }
+
+              if (isHovered) {
+                opacity = 1;
+                strokeWidth = 4.5;
+                dotRadius = 7;
+              }
+
               return (
                 <Line
                   key={m.ownerId}
                   type="monotone"
                   dataKey={m.managerName}
-                  stroke={LINE_COLORS[i % LINE_COLORS.length]}
-                  strokeWidth={isHighlight ? 4 : 2.5}
-                  strokeOpacity={isDimmed ? 0.15 : 1}
-                  dot={{ r: isHighlight ? 6 : 3.5, strokeWidth: 1 }}
-                  activeDot={{ r: 8 }}
-                  onMouseEnter={() => setFocusedManager(m.managerName)}
-                  onMouseLeave={() => setFocusedManager(null)}
+                  stroke={color}
+                  strokeWidth={strokeWidth}
+                  strokeOpacity={opacity}
+                  dot={{ r: dotRadius, strokeWidth: 1, fill: color }}
+                  activeDot={{ r: 8, stroke: '#ffffff', strokeWidth: 2 }}
+                  onMouseEnter={() => setHoveredManager(m.managerName)}
+                  onMouseLeave={() => setHoveredManager(null)}
+                  isAnimationActive={false}
                 />
               );
             })}
@@ -121,29 +174,80 @@ export const SeasonBumpChart: React.FC<SeasonBumpChartProps> = ({ managers, seas
         </ResponsiveContainer>
       </div>
 
-      {/* Legend Badges */}
-      <div className="flex flex-wrap gap-2 mt-6 pt-5 border-t border-white/10">
-        {managers.map((m, i) => (
-          <button
-            key={m.ownerId}
-            onClick={() =>
-              setFocusedManager(focusedManager === m.managerName ? null : m.managerName)
-            }
-            onMouseEnter={() => setFocusedManager(m.managerName)}
-            onMouseLeave={() => setFocusedManager(null)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs transition-all cursor-pointer ${
-              focusedManager === m.managerName
-                ? 'bg-white/20 text-white font-bold ring-1 ring-white/40'
-                : 'bg-white/5 text-muted hover:text-white hover:bg-white/10'
-            }`}
-          >
-            <span
-              className="w-2.5 h-2.5 rounded-full shrink-0"
-              style={{ backgroundColor: LINE_COLORS[i % LINE_COLORS.length] }}
-            />
-            <span className="truncate max-w-[120px]">{m.managerName}</span>
-          </button>
-        ))}
+      {/* Legend & Multi-Select Filter Bar */}
+      <div className="mt-6 pt-5 border-t border-white/10">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+          <div className="flex items-center gap-2 text-xs text-muted">
+            <Users size={14} className="text-blue-400" />
+            <span>Click manager badges to pin & compare multiple trajectories:</span>
+            {hasSelection && (
+              <span className="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-bold text-[11px] border border-blue-500/30">
+                {selectedManagers.length} active
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            {hasSelection ? (
+              <button
+                onClick={clearSelection}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-muted hover:text-white text-xs font-semibold transition-all cursor-pointer border border-white/10"
+              >
+                <RotateCcw size={12} />
+                <span>Reset View</span>
+              </button>
+            ) : null}
+            <button
+              onClick={selectAll}
+              className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-muted hover:text-white text-xs font-semibold transition-all cursor-pointer border border-white/10"
+            >
+              Select All
+            </button>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {managers.map((m, i) => {
+            const isSelected = selectedManagers.includes(m.managerName);
+            const isHovered = hoveredManager === m.managerName;
+            const color = LINE_COLORS[i % LINE_COLORS.length];
+
+            return (
+              <button
+                key={m.ownerId}
+                onClick={() => toggleManager(m.managerName)}
+                onMouseEnter={() => setHoveredManager(m.managerName)}
+                onMouseLeave={() => setHoveredManager(null)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
+                  isSelected
+                    ? 'text-white font-bold shadow-md'
+                    : isHovered
+                    ? 'bg-white/15 text-white ring-1 ring-white/30'
+                    : hasSelection
+                    ? 'bg-white/[0.03] text-muted/60 hover:text-white hover:bg-white/10'
+                    : 'bg-white/5 text-muted hover:text-white hover:bg-white/10'
+                }`}
+                style={
+                  isSelected
+                    ? {
+                        backgroundColor: `${color}25`,
+                        border: `1.5px solid ${color}`,
+                        boxShadow: `0 0 12px ${color}30`,
+                      }
+                    : {
+                        border: '1.5px solid transparent',
+                      }
+                }
+              >
+                <span
+                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: color }}
+                />
+                <span className="truncate max-w-[120px]">{m.managerName}</span>
+                {isSelected && <Check size={12} className="text-white shrink-0 ml-0.5" />}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </Card>
   );

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, Flame, Swords, ArrowRightLeft } from 'lucide-react';
+import { Users, Flame, Swords } from 'lucide-react';
 import type { ManagerScore } from '../../types/recordBook';
 import type { AllTimeMatchupData } from '../../hooks/useAllTimeMatchups';
 import { Card } from '../Card';
@@ -12,9 +12,6 @@ interface RivalryHubProps {
 }
 
 export const RivalryHub: React.FC<RivalryHubProps> = ({ managers, matchups }) => {
-  const [selectedM1, setSelectedM1] = useState<string>(managers[0]?.ownerId || '');
-  const [selectedM2, setSelectedM2] = useState<string>(managers[1]?.ownerId || '');
-
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeDrawerManagers, setActiveDrawerManagers] = useState<{
     m1: { id: string; name: string; avatar: string | null };
@@ -58,10 +55,6 @@ export const RivalryHub: React.FC<RivalryHubProps> = ({ managers, matchups }) =>
     if (diff < 0) return 'negative-1';
     return 'neutral';
   };
-
-  // Quick Matchup Record
-  const quickRecord = matchups.h2hMatrix[selectedM1]?.[selectedM2] || { wins: 0, losses: 0 };
-  const quickLogs = getMatchupHistoryBetween(allMatchupRecords, selectedM1, selectedM2);
 
   return (
     <div className="space-y-12 animate-fade-in">
@@ -155,76 +148,6 @@ export const RivalryHub: React.FC<RivalryHubProps> = ({ managers, matchups }) =>
               </div>
             </div>
           )}
-        </div>
-      </div>
-
-      {/* Direct Matchup Explorer Picker */}
-      <div
-        className="glass-card p-6 md:p-8"
-        style={{ background: 'linear-gradient(145deg, rgba(255, 255, 255, 0.04) 0%, rgba(15, 17, 21, 0.85) 100%)' }}
-      >
-        <div className="flex items-center gap-3 mb-6">
-          <ArrowRightLeft className="text-blue-400" size={22} />
-          <div>
-            <h3 className="text-lg font-bold text-white">Direct Matchup Lookup</h3>
-            <p className="text-xs text-muted">Select any two managers to view their historical head-to-head records</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label className="text-xs font-bold text-muted uppercase tracking-wider block mb-2">
-              Manager 1
-            </label>
-            <select
-              value={selectedM1}
-              onChange={e => setSelectedM1(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-black/60 border border-white/10 text-white font-semibold text-sm focus:outline-none focus:border-blue-500 min-h-[44px]"
-            >
-              {managers.map(m => (
-                <option key={m.ownerId} value={m.ownerId} disabled={m.ownerId === selectedM2}>
-                  {m.managerName}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="text-xs font-bold text-muted uppercase tracking-wider block mb-2">
-              Manager 2
-            </label>
-            <select
-              value={selectedM2}
-              onChange={e => setSelectedM2(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-black/60 border border-white/10 text-white font-semibold text-sm focus:outline-none focus:border-blue-500 min-h-[44px]"
-            >
-              {managers.map(m => (
-                <option key={m.ownerId} value={m.ownerId} disabled={m.ownerId === selectedM1}>
-                  {m.managerName}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-black/40 border border-white/10 mt-6">
-          <div>
-            <span className="text-xs text-muted uppercase tracking-wider font-bold">
-              Lifetime Series Record
-            </span>
-            <div className="text-2xl font-black text-white mt-1">
-              {managers.find(m => m.ownerId === selectedM1)?.managerName}:{' '}
-              <span className="text-success-color font-black">{quickRecord.wins}</span> -{' '}
-              <span className="text-danger-color font-black">{quickRecord.losses}</span>
-            </div>
-          </div>
-
-          <button
-            onClick={() => openDrawerFor(selectedM1, selectedM2)}
-            className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-sm tracking-wide shadow-lg transition-all min-h-[44px] cursor-pointer"
-          >
-            View Complete Game Logs ({quickLogs.length})
-          </button>
         </div>
       </div>
 
