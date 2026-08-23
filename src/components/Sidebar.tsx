@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { UserCircle, Target, DollarSign, Repeat, Zap, Trophy, BookOpen } from 'lucide-react';
+import { UserCircle, Target, DollarSign, Repeat, Zap, Trophy, BookOpen, MessageSquarePlus } from 'lucide-react';
 import { useLeagueContext } from '../context/LeagueContext';
+import { FeedbackModal } from './FeedbackModal';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -10,6 +11,8 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const { seasons, selectedSeasonId, setSelectedSeasonId, loading } = useLeagueContext();
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+
   return (
     <>
       <div className={`sidebar-overlay ${isOpen ? 'open' : ''}`} onClick={onClose} />
@@ -19,8 +22,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           <span>Morty Stats</span>
         </div>
 
-        <nav className="sidebar-nav mb-8">
-
+        <nav className="sidebar-nav mb-6">
           <NavLink to="/" end onClick={onClose} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
             <BookOpen size={20} />
             Record Book
@@ -49,18 +51,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             <UserCircle size={20} />
             League Managers
           </NavLink>
-
         </nav>
 
-        <div className="seasons-panel flex flex-col min-h-0">
+        <div className="seasons-panel flex flex-col min-h-0 mb-4">
           <h4 className="text-sm text-muted text-uppercase mb-3">Seasons</h4>
-          <div className="flex flex-col gap-1 overflow-y-auto" style={{ maxHeight: '35vh' }}>
+          <div className="flex flex-col gap-1 overflow-y-auto" style={{ maxHeight: '28vh' }}>
             {seasons.map((season) => (
               <button
                 key={season.league.league_id}
                 onClick={() => { setSelectedSeasonId(season.league.league_id); onClose(); }}
-                className={`season-btn ${selectedSeasonId === season.league.league_id ? 'active' : ''
-                  }`}
+                className={`season-btn ${selectedSeasonId === season.league.league_id ? 'active' : ''}`}
               >
                 {season.league.season}
               </button>
@@ -68,7 +68,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             {loading && <div className="text-sm text-muted py-2">Loading...</div>}
           </div>
         </div>
+
+        {/* Feedback & Feature Requests Action */}
+        <div className="mt-auto pt-3 border-t border-white/10">
+          <button
+            onClick={() => {
+              setIsFeedbackOpen(true);
+              onClose();
+            }}
+            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-white/[0.03] hover:bg-cyan-500/10 border border-white/10 hover:border-cyan-500/30 text-xs font-semibold text-muted hover:text-white transition-all cursor-pointer group shadow-sm"
+          >
+            <MessageSquarePlus size={15} className="text-cyan-400 group-hover:scale-110 transition-transform" />
+            <span>Feedback & Requests</span>
+          </button>
+        </div>
       </aside>
+
+      {/* Portaled Feedback Modal */}
+      <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
     </>
   );
 };
