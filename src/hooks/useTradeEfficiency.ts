@@ -539,13 +539,17 @@ export function useTradeEfficiency() {
                 hypotheticalPoints[id] = pts;
               });
               
-              // 3. Compute ERV Score (Hypothetical Score) by forcing Retained Starters
+              // 3. Compute ERV Score (Hypothetical Score) with Position-Cascading Replacement
+              // Retain manager's actual start/sit decisions (prevent hindsight bench bias), but allow
+              // surrendered assets (gaveIds) to compete equally with retained starters on points
+              const candidateStarters = [...new Set([...retainedStarters, ...gaveIds])];
+
               const optimalRes = getOptimalLineupPoints(
                 hypotheticalPlayers, 
                 hypotheticalPoints, 
                 selectedSeason.league.roster_positions || [], 
                 playersData,
-                retainedStarters,
+                candidateStarters,
                 replacementBaselines
               );
               const hypotheticalScore = optimalRes.totalPoints;
