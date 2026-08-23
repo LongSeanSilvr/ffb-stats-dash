@@ -901,19 +901,15 @@ export const Trades: React.FC = () => {
                             <div className="flex flex-wrap items-center justify-center gap-4 py-2 px-3 bg-black/30 rounded-xl border border-white/5 text-[11px] font-medium text-muted mb-4">
                               <div className="flex items-center gap-1.5">
                                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0"></span>
-                                <span className="text-emerald-300 font-bold">Acquired via Trade</span>
-                              </div>
-                              <div className="flex items-center gap-1.5">
-                                <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0"></span>
-                                <span className="text-amber-300 font-bold">Trade-Promoted Starter</span>
-                              </div>
-                              <div className="flex items-center gap-1.5">
-                                <span className="w-2.5 h-2.5 rounded-full bg-blue-400 shrink-0"></span>
-                                <span className="text-blue-300 font-bold">Surrendered Asset</span>
+                                <span className="text-emerald-300 font-bold">Acquired Player</span>
                               </div>
                               <div className="flex items-center gap-1.5">
                                 <span className="w-2.5 h-2.5 rounded-full bg-rose-400 shrink-0"></span>
-                                <span className="text-rose-300 font-bold">Replacement Level (ERV)</span>
+                                <span className="text-rose-300 font-bold">Surrendered Player</span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="w-2.5 h-2.5 rounded-full bg-white/60 shrink-0"></span>
+                                <span className="text-white/80 font-bold">Other Lineup Adjustment</span>
                               </div>
                             </div>
 
@@ -943,8 +939,8 @@ export const Trades: React.FC = () => {
                                           isAcquired
                                             ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 shadow-sm shadow-emerald-500/10'
                                             : isBenchedWithoutTrade
-                                            ? 'bg-amber-500/10 border-amber-500/30 text-amber-200 shadow-sm shadow-amber-500/5'
-                                            : 'bg-white/[0.02] border-white/5 opacity-60 hover:opacity-100'
+                                            ? 'bg-white/10 border-white/20 text-white shadow-sm shadow-white/5'
+                                            : 'bg-white/[0.02] border-white/5 opacity-50 hover:opacity-100'
                                         }`}
                                       >
                                         <div className="flex items-center gap-2 md:gap-3 overflow-hidden">
@@ -952,10 +948,10 @@ export const Trades: React.FC = () => {
                                           <img
                                             src={s.avatar}
                                             alt=""
-                                            className={`w-7 h-7 md:w-8 md:h-8 rounded-full shrink-0 bg-black/40 ${isAcquired ? 'ring-2 ring-emerald-400/60' : isBenchedWithoutTrade ? 'ring-2 ring-amber-400/50' : ''}`}
+                                            className={`w-7 h-7 md:w-8 md:h-8 rounded-full shrink-0 bg-black/40 ${isAcquired ? 'ring-2 ring-emerald-400/60' : isBenchedWithoutTrade ? 'ring-2 ring-white/30' : ''}`}
                                             onError={(e) => { (e.target as HTMLImageElement).src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }}
                                           />
-                                          <span className={`text-xs md:text-sm font-medium truncate ${isAcquired ? 'text-emerald-300 font-bold' : isBenchedWithoutTrade ? 'text-amber-200 font-bold' : 'text-white'}`}>
+                                          <span className={`text-xs md:text-sm font-medium truncate ${isAcquired ? 'text-emerald-300 font-bold' : isBenchedWithoutTrade ? 'text-white font-bold' : 'text-white'}`}>
                                             {s.name}
                                           </span>
                                         </div>
@@ -966,11 +962,11 @@ export const Trades: React.FC = () => {
                                             </span>
                                           )}
                                           {isBenchedWithoutTrade && !isAcquired && (
-                                            <span className="text-[10px] uppercase font-bold tracking-wider text-amber-300 bg-amber-500/20 border border-amber-500/30 px-2 py-0.5 rounded-md hidden sm:inline">
-                                              Trade-Promoted
+                                            <span className="text-[10px] uppercase font-bold tracking-wider text-white/80 bg-white/10 border border-white/20 px-2 py-0.5 rounded-md hidden sm:inline">
+                                              Promoted
                                             </span>
                                           )}
-                                          <span className={`font-mono text-xs font-bold ${isAcquired ? 'text-emerald-400' : isBenchedWithoutTrade ? 'text-amber-400' : 'text-muted'}`}>
+                                          <span className={`font-mono text-xs font-bold ${isAcquired ? 'text-emerald-400' : isBenchedWithoutTrade ? 'text-white' : 'text-muted'}`}>
                                             {s.pts.toFixed(1)}
                                           </span>
                                         </div>
@@ -1004,12 +1000,10 @@ export const Trades: React.FC = () => {
                                         key={sIdx}
                                         className={`flex items-center justify-between p-2.5 md:p-3 rounded-xl border transition-all ${
                                           isSurrendered
-                                            ? 'bg-blue-500/15 border-blue-500/40 text-blue-300 shadow-sm shadow-blue-500/10'
-                                            : isReplacement
                                             ? 'bg-rose-500/15 border-rose-500/40 text-rose-300 shadow-sm shadow-rose-500/10'
-                                            : isNew
-                                            ? 'bg-purple-500/15 border-purple-500/40 text-purple-300 shadow-sm shadow-purple-500/10'
-                                            : 'bg-white/[0.02] border-white/5 opacity-60 hover:opacity-100'
+                                            : (isReplacement || isNew)
+                                            ? 'bg-white/10 border-white/20 text-white shadow-sm shadow-white/5'
+                                            : 'bg-white/[0.02] border-white/5 opacity-50 hover:opacity-100'
                                         }`}
                                       >
                                         <div className="flex items-center gap-2 md:gap-3 overflow-hidden">
@@ -1018,35 +1012,35 @@ export const Trades: React.FC = () => {
                                             <img
                                               src={s.avatar}
                                               alt=""
-                                              className={`w-7 h-7 md:w-8 md:h-8 rounded-full shrink-0 bg-black/40 ${isSurrendered ? 'ring-2 ring-blue-400/60' : isNew ? 'ring-2 ring-purple-400/50' : ''}`}
+                                              className={`w-7 h-7 md:w-8 md:h-8 rounded-full shrink-0 bg-black/40 ${isSurrendered ? 'ring-2 ring-rose-400/60' : isNew ? 'ring-2 ring-white/30' : ''}`}
                                               onError={(e) => { (e.target as HTMLImageElement).src = 'https://sleepercdn.com/images/v2/icons/player_default.webp'; }}
                                             />
                                           ) : (
-                                            <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-rose-500/20 border border-rose-500/30 flex items-center justify-center shrink-0">
-                                              <User size={12} className="text-rose-400" />
+                                            <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center shrink-0">
+                                              <User size={12} className="text-white/60" />
                                             </div>
                                           )}
-                                          <span className={`text-xs md:text-sm font-medium truncate ${isSurrendered ? 'text-blue-300 font-bold' : isReplacement ? 'text-rose-300 font-bold' : isNew ? 'text-purple-300 font-bold' : 'text-white'}`}>
+                                          <span className={`text-xs md:text-sm font-medium truncate ${isSurrendered ? 'text-rose-300 font-bold' : (isReplacement || isNew) ? 'text-white font-bold' : 'text-white'}`}>
                                             {isReplacement ? `ERV: ${s.name}` : s.name}
                                           </span>
                                         </div>
                                         <div className="flex items-center gap-2 shrink-0 ml-2">
                                           {isSurrendered && (
-                                            <span className="text-[10px] uppercase font-bold tracking-wider text-blue-300 bg-blue-500/20 border border-blue-500/30 px-2 py-0.5 rounded-md hidden sm:inline">
+                                            <span className="text-[10px] uppercase font-bold tracking-wider text-rose-300 bg-rose-500/20 border border-rose-500/30 px-2 py-0.5 rounded-md hidden sm:inline">
                                               Surrendered
                                             </span>
                                           )}
                                           {isReplacement && (
-                                            <span className="text-[10px] uppercase font-bold tracking-wider text-rose-300 bg-rose-500/20 border border-rose-500/30 px-2 py-0.5 rounded-md hidden sm:inline">
+                                            <span className="text-[10px] uppercase font-bold tracking-wider text-white/80 bg-white/10 border border-white/20 px-2 py-0.5 rounded-md hidden sm:inline">
                                               Replacement
                                             </span>
                                           )}
                                           {isNew && !isReplacement && !isSurrendered && (
-                                            <span className="text-[10px] uppercase font-bold tracking-wider text-purple-300 bg-purple-500/20 border border-purple-500/30 px-2 py-0.5 rounded-md hidden sm:inline">
+                                            <span className="text-[10px] uppercase font-bold tracking-wider text-white/80 bg-white/10 border border-white/20 px-2 py-0.5 rounded-md hidden sm:inline">
                                               Promoted
                                             </span>
                                           )}
-                                          <span className={`font-mono text-xs font-bold ${isSurrendered ? 'text-blue-400' : isReplacement ? 'text-rose-400' : isNew ? 'text-purple-400' : 'text-muted'}`}>
+                                          <span className={`font-mono text-xs font-bold ${isSurrendered ? 'text-rose-400' : (isReplacement || isNew) ? 'text-white' : 'text-muted'}`}>
                                             {s.pts.toFixed(1)}
                                           </span>
                                         </div>
