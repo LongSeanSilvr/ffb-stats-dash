@@ -780,25 +780,26 @@ export const Trades: React.FC = () => {
           {/* Tab 2: Market Dynamics & Timing */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             {/* Left: Trade Typology Matrix */}
-            <Card title="Trade Typology Matrix">
-              <div className="chart-header mb-4">
-                <div className="chart-description">
-                  Categorizes managers by trade volume orientation: Assets Given vs Assets Received.
-                </div>
-                <div className="grid grid-cols-2 gap-2 pt-3 mt-3 border-t border-white/5">
-                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-amber-500/5 border border-amber-500/20 text-xs">
-                    <span className="text-sm shrink-0">📦</span>
-                    <div className="min-w-0">
-                      <span className="font-bold text-amber-400">Depth Builders</span>
-                      <div className="text-[10px] text-muted truncate">Above Line • Acquired more total assets</div>
-                    </div>
+            <Card className="stagger-1">
+              <div className="flex justify-between items-center mb-2">
+                <h2 className="text-base font-semibold text-white">Trade Typology Matrix</h2>
+              </div>
+              <p className="text-xs text-muted mb-4">
+                Categorizes managers by trade volume orientation: Assets Given vs. Assets Received.
+              </p>
+              <div className="grid grid-cols-2 gap-2 mb-4 p-2.5 rounded-xl bg-white/[0.02] border border-white/5 text-[11px]">
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                  <span className="text-sm shrink-0">📦</span>
+                  <div className="min-w-0">
+                    <div className="font-semibold text-amber-400">Depth Builders</div>
+                    <div className="text-[10px] text-muted truncate">Above Line • Acquired more total assets</div>
                   </div>
-                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-blue-500/5 border border-blue-500/20 text-xs">
-                    <span className="text-sm shrink-0">💎</span>
-                    <div className="min-w-0">
-                      <span className="font-bold text-blue-400">Consolidators</span>
-                      <div className="text-[10px] text-muted truncate">Below Line • Traded depth for studs</div>
-                    </div>
+                </div>
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                  <span className="text-sm shrink-0">💎</span>
+                  <div className="min-w-0">
+                    <div className="font-semibold text-blue-400">Consolidators</div>
+                    <div className="text-[10px] text-muted truncate">Below Line • Traded depth for studs</div>
                   </div>
                 </div>
               </div>
@@ -830,76 +831,50 @@ export const Trades: React.FC = () => {
             </Card>
 
             {/* Right: The Market Timing Matrix */}
-            <Card title="The Market Timing Matrix">
-              <div className="chart-header mb-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
-                  <div className="chart-description">
-                    Compares each traded player's fantasy PPG before trade vs after trade.
-                  </div>
-                  {/* Toggle: Acquiring vs Surrendering Manager */}
-                  <div className="flex items-center gap-1 p-1 bg-black/50 border border-white/10 rounded-xl shrink-0 self-start sm:self-auto">
-                    <button
-                      onClick={() => setTimingView('buyer')}
-                      className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                        timingView === 'buyer'
-                          ? 'bg-emerald-500 text-black shadow-md shadow-emerald-500/20'
-                          : 'text-muted hover:text-white'
-                      }`}
-                    >
-                      <span>📥</span>
-                      <span>Acquiring Manager</span>
-                    </button>
-                    <button
-                      onClick={() => setTimingView('seller')}
-                      className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                        timingView === 'seller'
-                          ? 'bg-blue-500 text-black shadow-md shadow-blue-500/20'
-                          : 'text-muted hover:text-white'
-                      }`}
-                    >
-                      <span>📤</span>
-                      <span>Surrendering Manager</span>
-                    </button>
-                  </div>
-                </div>
+            <Card className="stagger-1">
+              <div className="flex justify-between items-center mb-2">
+                <h2 className="text-base font-semibold text-white">The Market Timing Matrix</h2>
+              </div>
+              <p className="text-xs text-muted mb-4">
+                Compares each traded player's fantasy PPG before trade vs. after trade.
+              </p>
 
-                <div className="grid grid-cols-2 gap-2 pt-3 mt-1 border-t border-white/5">
-                  {timingView === 'buyer' ? (
-                    <>
-                      <div className="flex items-center gap-2 p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-xs">
-                        <span className="text-sm shrink-0">📈</span>
-                        <div className="min-w-0">
-                          <span className="font-bold text-emerald-400">Breakouts</span>
-                          <div className="text-[10px] text-muted truncate">Above Line • Buyer Win (+PPG surge)</div>
-                        </div>
+              <div className="grid grid-cols-2 gap-2 mb-4 p-2.5 rounded-xl bg-white/[0.02] border border-white/5 text-[11px]">
+                {timingView === 'buyer' ? (
+                  <>
+                    <div className="flex items-center gap-2 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                      <span className="text-sm shrink-0">📈</span>
+                      <div className="min-w-0">
+                        <div className="font-semibold text-emerald-400">Breakouts</div>
+                        <div className="text-[10px] text-muted truncate">Above Line • Buyer Win (+PPG surge)</div>
                       </div>
-                      <div className="flex items-center gap-2 p-2.5 rounded-xl bg-rose-500/5 border border-rose-500/20 text-xs">
-                        <span className="text-sm shrink-0">📉</span>
-                        <div className="min-w-0">
-                          <span className="font-bold text-rose-400">Regressions</span>
-                          <div className="text-[10px] text-muted truncate">Below Line • Buyer Loss (-PPG dip)</div>
-                        </div>
+                    </div>
+                    <div className="flex items-center gap-2 p-2 rounded-lg bg-rose-500/10 border border-rose-500/20">
+                      <span className="text-sm shrink-0">📉</span>
+                      <div className="min-w-0">
+                        <div className="font-semibold text-rose-400">Regressions</div>
+                        <div className="text-[10px] text-muted truncate">Below Line • Buyer Loss (-PPG dip)</div>
                       </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="flex items-center gap-2 p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-xs">
-                        <span className="text-sm shrink-0">📉</span>
-                        <div className="min-w-0">
-                          <span className="font-bold text-emerald-400">Dips Avoided</span>
-                          <div className="text-[10px] text-muted truncate">Below Line • Seller Win (Sold before dip)</div>
-                        </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                      <span className="text-sm shrink-0">📉</span>
+                      <div className="min-w-0">
+                        <div className="font-semibold text-emerald-400">Dips Avoided</div>
+                        <div className="text-[10px] text-muted truncate">Below Line • Seller Win (Sold before dip)</div>
                       </div>
-                      <div className="flex items-center gap-2 p-2.5 rounded-xl bg-rose-500/5 border border-rose-500/20 text-xs">
-                        <span className="text-sm shrink-0">📈</span>
-                        <div className="min-w-0">
-                          <span className="font-bold text-rose-400">Surges Missed</span>
-                          <div className="text-[10px] text-muted truncate">Above Line • Seller Loss (Surged after sale)</div>
-                        </div>
+                    </div>
+                    <div className="flex items-center gap-2 p-2 rounded-lg bg-rose-500/10 border border-rose-500/20">
+                      <span className="text-sm shrink-0">📈</span>
+                      <div className="min-w-0">
+                        <div className="font-semibold text-rose-400">Surges Missed</div>
+                        <div className="text-[10px] text-muted truncate">Above Line • Seller Loss (Surged after sale)</div>
                       </div>
-                    </>
-                  )}
-                </div>
+                    </div>
+                  </>
+                )}
               </div>
               <MobileTapHint />
               <div style={{ height: 380 }}>
@@ -925,6 +900,35 @@ export const Trades: React.FC = () => {
                     <Scatter name="Players" data={fleecingData} shape={<CustomTimingDot />} isAnimationActive={false} />
                   </ScatterChart>
                 </ResponsiveContainer>
+              </div>
+
+              {/* Bottom Toggle: Acquiring vs Surrendering Manager */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 mt-2 border-t border-white/5 text-xs">
+                <span className="text-muted text-[11px] font-medium">Display Manager Avatars for:</span>
+                <div className="flex items-center gap-1 p-1 bg-black/40 border border-white/10 rounded-xl shrink-0">
+                  <button
+                    onClick={() => setTimingView('buyer')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                      timingView === 'buyer'
+                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                        : 'text-muted hover:text-white'
+                    }`}
+                  >
+                    <span>👤</span>
+                    <span>Acquiring Manager</span>
+                  </button>
+                  <button
+                    onClick={() => setTimingView('seller')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                      timingView === 'seller'
+                        ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/20'
+                        : 'text-muted hover:text-white'
+                    }`}
+                  >
+                    <span>🎽</span>
+                    <span>Surrendering Manager</span>
+                  </button>
+                </div>
               </div>
             </Card>
           </div>
