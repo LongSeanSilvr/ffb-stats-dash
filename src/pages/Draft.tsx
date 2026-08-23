@@ -521,10 +521,10 @@ export const Draft: React.FC = () => {
               <MobileTapHint />
               <div style={{ height: 360 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={draftPointsData} layout="vertical" margin={{ left: 110, right: 20, top: 10, bottom: 10 }}>
+                  <BarChart data={draftPointsData} layout="vertical" margin={{ left: 15, right: 15, top: 10, bottom: 10 }}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.05)" />
-                    <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 12 }} />
-                    <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11, fill: '#fff' }} width={105} tickMargin={4} />
+                    <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 11 }} />
+                    <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 10, fill: '#fff' }} width={95} tickMargin={4} />
                     <RechartsTooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ backgroundColor: 'rgba(15,17,21,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px' }} />
                     <Bar dataKey="Starter Pts" stackId="a" fill="var(--accent-color)" isAnimationActive={false} />
                     <Bar dataKey="Bench Pts" stackId="a" fill="rgba(59, 130, 246, 0.3)" radius={[0, 4, 4, 0]} isAnimationActive={false} />
@@ -537,10 +537,10 @@ export const Draft: React.FC = () => {
               <MobileTapHint />
               <div style={{ height: 360 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={draftHitRateData} layout="vertical" margin={{ left: 110, right: 20, top: 10, bottom: 10 }}>
+                  <BarChart data={draftHitRateData} layout="vertical" margin={{ left: 15, right: 15, top: 10, bottom: 10 }}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.05)" />
-                    <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 12 }} domain={[0, 100]} unit="%" />
-                    <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11, fill: '#fff' }} width={105} tickMargin={4} />
+                    <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 11 }} domain={[0, 100]} unit="%" />
+                    <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 10, fill: '#fff' }} width={95} tickMargin={4} />
                     <RechartsTooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ backgroundColor: 'rgba(15,17,21,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px' }} />
                     <Bar dataKey="Hit %" stackId="a" fill="#10b981" isAnimationActive={false} />
                     <Bar dataKey="Bust %" stackId="a" fill="#ef4444" radius={[0, 4, 4, 0]} isAnimationActive={false} />
@@ -556,10 +556,10 @@ export const Draft: React.FC = () => {
                 <MobileTapHint />
                 <div style={{ height: 350 }}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={keeperPointsData} layout="vertical" margin={{ left: 110, right: 20, top: 10, bottom: 10 }}>
+                    <BarChart data={keeperPointsData} layout="vertical" margin={{ left: 15, right: 15, top: 10, bottom: 10 }}>
                       <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.05)" />
-                      <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 12 }} />
-                      <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11, fill: '#fff' }} width={105} tickMargin={4} />
+                      <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 11 }} />
+                      <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 10, fill: '#fff' }} width={95} tickMargin={4} />
                       <RechartsTooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ backgroundColor: 'rgba(15,17,21,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px' }} />
                       <Bar dataKey="Starter Pts" stackId="a" fill="#10b981" isAnimationActive={false} />
                       <Bar dataKey="Bench Pts" stackId="a" fill="rgba(16, 185, 129, 0.3)" radius={[0, 4, 4, 0]} isAnimationActive={false} />

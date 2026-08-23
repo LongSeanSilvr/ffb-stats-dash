@@ -37,11 +37,11 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose })
 
   return createPortal(
     <div 
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in"
+      className="fixed inset-0 z-[2000] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in overflow-y-auto"
       onClick={onClose}
     >
       <div 
-        className="relative w-full max-w-lg bg-[#0f1115] border border-white/15 rounded-2xl shadow-2xl p-6 overflow-hidden text-left"
+        className="relative w-full max-w-lg bg-[#0f1115] border border-white/15 rounded-2xl shadow-2xl p-5 sm:p-6 my-auto overflow-hidden text-left max-h-[90dvh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Glow Accent */}

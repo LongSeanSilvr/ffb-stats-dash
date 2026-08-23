@@ -504,7 +504,7 @@ export const Managers: React.FC = () => {
 
       {/* Hero KPI Cards */}
       {heroKpis && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 mb-6 sm:mb-8">
           {/* 1. Regular Season Leader */}
           {heroKpis.topSeed && (
             <div className="glass-card p-4 rounded-xl border border-amber-500/20 flex flex-col justify-between">
@@ -1044,32 +1044,32 @@ export const Managers: React.FC = () => {
                   Draft & Keeper total pts vs Combined FAAB & Waiver pts generated.
                 </div>
                 <div className="grid grid-cols-2 gap-2 pt-3 mt-3 border-t border-white/5">
-                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-blue-500/5 border border-blue-500/20 text-xs">
+                  <div className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-2.5 rounded-xl bg-blue-500/5 border border-blue-500/20 text-xs min-w-0">
                     <span className="text-sm shrink-0">🛒</span>
-                    <div className="min-w-0">
-                      <span className="font-bold text-blue-400">FAAB Heavy</span>
-                      <div className="text-[10px] text-muted truncate">Top-Left • High FAAB/Waivers, Lower Draft</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold text-blue-400 truncate">FAAB Heavy</div>
+                      <div className="text-[10px] text-muted truncate">Top-Left • High FAAB/Waivers</div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-xs">
+                  <div className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-xs min-w-0">
                     <span className="text-sm shrink-0">👑</span>
-                    <div className="min-w-0">
-                      <span className="font-bold text-emerald-400">Double Threat</span>
-                      <div className="text-[10px] text-muted truncate">Top-Right • Elite Draft + Elite Waivers</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold text-emerald-400 truncate">Double Threat</div>
+                      <div className="text-[10px] text-muted truncate">Top-Right • Elite Draft + Waivers</div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-rose-500/5 border border-rose-500/20 text-xs">
+                  <div className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-2.5 rounded-xl bg-rose-500/5 border border-rose-500/20 text-xs min-w-0">
                     <span className="text-sm shrink-0">📉</span>
-                    <div className="min-w-0">
-                      <span className="font-bold text-rose-400">Struggling Roster</span>
-                      <div className="text-[10px] text-muted truncate">Bottom-Left • Below average on both</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold text-rose-400 truncate">Struggling Roster</div>
+                      <div className="text-[10px] text-muted truncate">Bottom-Left • Below average</div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-teal-500/5 border border-teal-500/20 text-xs">
+                  <div className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-2.5 rounded-xl bg-teal-500/5 border border-teal-500/20 text-xs min-w-0">
                     <span className="text-sm shrink-0">🛡️</span>
-                    <div className="min-w-0">
-                      <span className="font-bold text-teal-400">Draft Heavy</span>
-                      <div className="text-[10px] text-muted truncate">Bottom-Right • High Draft, Lower Waivers</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold text-teal-400 truncate">Draft Heavy</div>
+                      <div className="text-[10px] text-muted truncate">Bottom-Right • High Draft</div>
                     </div>
                   </div>
                 </div>
@@ -1104,38 +1104,38 @@ export const Managers: React.FC = () => {
             </Card>
 
             {/* 2. Acquisition Accuracy Matrix */}
-            <Card title="Acquisition Accuracy Matrix" className="stagger-1">
+            <Card title="Acquisition Accuracy Matrix" className="stagger-2">
               <div className="chart-header mb-4">
                 <div className="chart-description">
                   Draft Hit Rate vs Combined FAAB & Waiver Hit Rate.
                 </div>
                 <div className="grid grid-cols-2 gap-2 pt-3 mt-3 border-t border-white/5">
-                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-blue-500/5 border border-blue-500/20 text-xs">
+                  <div className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-2.5 rounded-xl bg-blue-500/5 border border-blue-500/20 text-xs min-w-0">
                     <span className="text-sm shrink-0">🛟</span>
-                    <div className="min-w-0">
-                      <span className="font-bold text-blue-400">Wire Snipers</span>
-                      <div className="text-[10px] text-muted truncate">Top-Left • High Wire %, Low Draft %</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold text-blue-400 truncate">Wire Snipers</div>
+                      <div className="text-[10px] text-muted truncate">Top-Left • High Wire %</div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-xs">
+                  <div className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-xs min-w-0">
                     <span className="text-sm shrink-0">👑</span>
-                    <div className="min-w-0">
-                      <span className="font-bold text-emerald-400">Master Evaluators</span>
-                      <div className="text-[10px] text-muted truncate">Top-Right • Elite Across Both Channels</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold text-emerald-400 truncate">Master Evaluators</div>
+                      <div className="text-[10px] text-muted truncate">Top-Right • Elite Across Both</div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-rose-500/5 border border-rose-500/20 text-xs">
+                  <div className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-2.5 rounded-xl bg-rose-500/5 border border-rose-500/20 text-xs min-w-0">
                     <span className="text-sm shrink-0">🎲</span>
-                    <div className="min-w-0">
-                      <span className="font-bold text-rose-400">Speculative Gamblers</span>
-                      <div className="text-[10px] text-muted truncate">Bottom-Left • Below Average Hit Rates</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold text-rose-400 truncate">Speculative Gamblers</div>
+                      <div className="text-[10px] text-muted truncate">Bottom-Left • Below Average</div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-teal-500/5 border border-teal-500/20 text-xs">
+                  <div className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-2.5 rounded-xl bg-teal-500/5 border border-teal-500/20 text-xs min-w-0">
                     <span className="text-sm shrink-0">📋</span>
-                    <div className="min-w-0">
-                      <span className="font-bold text-teal-400">Draft Anchored</span>
-                      <div className="text-[10px] text-muted truncate">Bottom-Right • High Draft %, Low Wire %</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold text-teal-400 truncate">Draft Anchored</div>
+                      <div className="text-[10px] text-muted truncate">Bottom-Right • High Draft %</div>
                     </div>
                   </div>
                 </div>
@@ -1256,7 +1256,7 @@ export const Managers: React.FC = () => {
       {/* Manager Executive Dossier Modal */}
       {selectedManagerProfile && createPortal(
         <div 
-          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-fade-in overflow-y-auto"
+          className="fixed inset-0 z-[2000] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in overflow-y-auto"
           onClick={() => setSelectedManagerProfile(null)}
         >
           <div 

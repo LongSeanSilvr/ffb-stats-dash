@@ -737,13 +737,13 @@ export const Playoffs = () => {
               <BarChart
                 data={mvps.slice(0, 15)}
                 layout="vertical"
-                margin={{ left: 140, right: 30, top: 10, bottom: 10 }}
+                margin={{ left: 15, right: 25, top: 10, bottom: 10 }}
               >
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.06)" />
                 <XAxis
                   type="number"
                   stroke="var(--text-secondary)"
-                  tick={{ fontSize: 12, fill: 'var(--text-secondary)' }}
+                  tick={{ fontSize: 11, fill: 'var(--text-secondary)' }}
                   axisLine={false}
                   tickLine={false}
                 />
@@ -751,10 +751,11 @@ export const Playoffs = () => {
                   type="category"
                   dataKey="playerName"
                   stroke="var(--text-secondary)"
-                  tick={{ fontSize: 12, fill: 'var(--text-primary)', fontWeight: 600 }}
-                  width={130}
+                  tick={{ fontSize: 11, fill: 'var(--text-primary)', fontWeight: 600 }}
+                  width={115}
                   axisLine={false}
                   tickLine={false}
+                  tickMargin={4}
                 />
                 <RechartsTooltip
                   content={<CustomBarTooltip />}

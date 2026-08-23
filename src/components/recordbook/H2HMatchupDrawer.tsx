@@ -40,11 +40,11 @@ export const H2HMatchupDrawer: React.FC<H2HMatchupDrawerProps> = ({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in"
+      className="fixed inset-0 z-[2000] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in overflow-y-auto"
       onClick={onClose}
     >
       <div
-        className="glass-card border border-white/10 rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl"
+        className="glass-card border border-white/10 rounded-2xl w-full max-w-3xl max-h-[88dvh] flex flex-col overflow-hidden shadow-2xl my-auto"
         style={{ padding: 0, background: 'rgba(15, 17, 21, 0.95)' }}
         onClick={e => e.stopPropagation()}
       >

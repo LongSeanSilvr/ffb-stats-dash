@@ -42,8 +42,8 @@ export const FlippedMatchupModal: React.FC<Props> = ({ matchup, onClose }) => {
   const hypotheticalBench = matchup.hypotheticalBench || [];
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-      <div className="bg-[#0f1115] border border-white/10 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
+    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in overflow-y-auto" onClick={onClose}>
+      <div className="bg-[#0f1115] border border-white/10 rounded-2xl w-full max-w-4xl max-h-[90dvh] overflow-hidden shadow-2xl flex flex-col my-auto" onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="p-4 md:p-6 border-b border-white/10 flex items-center justify-between bg-gradient-to-r from-accent-color/10 to-transparent">
           <div className="flex items-center gap-3 md:gap-4">

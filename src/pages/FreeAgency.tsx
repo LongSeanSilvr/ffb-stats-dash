@@ -349,7 +349,7 @@ export const FreeAgency: React.FC = () => {
       </header>
 
       {/* ─── Hero KPI Cards ─── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 mb-6 sm:mb-8">
         {/* KPI 1: Waiver Wire MVP */}
         <div 
           onClick={() => waiverMvp && setSelectedPlayer(waiverMvp)}
@@ -934,11 +934,11 @@ export const FreeAgency: React.FC = () => {
       {/* ─── MODAL 1: PLAYER ACQUISITION DOSSIER ─── */}
       {selectedPlayer && typeof document !== 'undefined' && createPortal(
         <div 
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in"
+          className="fixed inset-0 z-[2000] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in overflow-y-auto"
           onClick={() => setSelectedPlayer(null)}
         >
           <div 
-            className="relative w-full max-w-md bg-[#0f1115] border border-white/15 rounded-2xl shadow-2xl p-6 overflow-hidden max-h-[90vh] flex flex-col"
+            className="relative w-full max-w-md bg-[#0f1115] border border-white/15 rounded-2xl shadow-2xl p-5 sm:p-6 overflow-hidden max-h-[90dvh] flex flex-col my-auto"
             onClick={e => e.stopPropagation()}
           >
             {/* Modal Header */}
@@ -1027,11 +1027,11 @@ export const FreeAgency: React.FC = () => {
       {/* ─── MODAL 2: MANAGER WAIVER DOSSIER ─── */}
       {selectedManager && typeof document !== 'undefined' && createPortal(
         <div 
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in"
+          className="fixed inset-0 z-[2000] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in overflow-y-auto"
           onClick={() => setSelectedManager(null)}
         >
           <div 
-            className="relative w-full max-w-lg bg-[#0f1115] border border-white/15 rounded-2xl shadow-2xl p-6 overflow-hidden max-h-[90vh] flex flex-col"
+            className="relative w-full max-w-lg bg-[#0f1115] border border-white/15 rounded-2xl shadow-2xl p-5 sm:p-6 overflow-hidden max-h-[90dvh] flex flex-col my-auto"
             onClick={e => e.stopPropagation()}
           >
             {/* Modal Header */}

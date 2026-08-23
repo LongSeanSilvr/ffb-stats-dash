@@ -21,11 +21,11 @@ export const BenchwarmerModal: React.FC<Props> = ({ matchup, onClose }) => {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in"
+      className="fixed inset-0 z-[2000] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in overflow-y-auto"
       onClick={onClose}
     >
       <div
-        className="bg-[#0f1115] border border-white/10 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl animate-fade-in"
+        className="bg-[#0f1115] border border-white/10 rounded-2xl w-full max-w-4xl max-h-[90dvh] flex flex-col overflow-hidden shadow-2xl animate-fade-in my-auto"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}

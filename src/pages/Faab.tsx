@@ -418,7 +418,7 @@ export const Faab: React.FC = () => {
 
       {/* 4 Hero KPI Cards */}
       {heroKpis && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 w-full">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 mb-6 sm:mb-8 w-full">
           {heroKpis.isFaab ? (
             <>
               {/* 1. Top Value Steal */}
@@ -817,10 +817,10 @@ export const Faab: React.FC = () => {
                   <MobileTapHint />
                   <div style={{ height: 350 }}>
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={hitRateData} layout="vertical" margin={{ left: 110, right: 30, top: 10, bottom: 10 }}>
+                      <BarChart data={hitRateData} layout="vertical" margin={{ left: 15, right: 15, top: 10, bottom: 10 }}>
                         <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.05)" />
-                        <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 12 }} domain={[0, 100]} unit="%" />
-                        <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11 }} width={100} tickMargin={8} />
+                        <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 11 }} domain={[0, 100]} unit="%" />
+                        <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 10 }} width={95} tickMargin={4} />
                         <RechartsTooltip
                           cursor={{ fill: 'rgba(255,255,255,0.05)' }}
                           contentStyle={{ backgroundColor: 'rgba(15,17,21,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}
@@ -851,21 +851,22 @@ export const Faab: React.FC = () => {
                       return (
                         <div
                           key={d.roster_id}
-                          className="relative flex items-center justify-between p-3 rounded-xl border border-white/5 bg-black/30 hover:border-rose-500/30 transition-all overflow-hidden"
+                          className="flex items-center justify-between p-3.5 rounded-xl border border-white/5 bg-black/30 hover:border-rose-500/30 hover:bg-black/40 transition-all relative overflow-hidden group"
                         >
                           <div
-                            className="absolute top-0 left-0 bottom-0 bg-rose-500/10 pointer-events-none transition-all duration-500"
+                            className="absolute left-0 top-0 bottom-0 bg-rose-500/5 group-hover:bg-rose-500/10 transition-colors pointer-events-none"
                             style={{ width: `${pct}%` }}
                           />
+
                           <div className="flex items-center gap-3 min-w-0 relative z-10">
-                            <div className="text-xs font-mono font-bold text-rose-400 w-5 text-right shrink-0">
+                            <div className="text-xs font-mono font-bold text-muted w-5 text-right shrink-0">
                               #{i + 1}
                             </div>
                             {d.user?.avatar ? (
                               <img
                                 src={`https://sleepercdn.com/avatars/thumbs/${d.user.avatar}`}
                                 alt=""
-                                className="w-9 h-9 rounded-full object-cover border border-rose-500/30 bg-black/40 shrink-0"
+                                className="w-9 h-9 rounded-full border border-rose-500/30 object-cover shrink-0"
                               />
                             ) : (
                               <div className="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
@@ -873,10 +874,10 @@ export const Faab: React.FC = () => {
                               </div>
                             )}
                             <div className="min-w-0">
-                              <span className="font-bold text-white text-sm truncate block">
+                              <div className="font-bold text-white text-sm truncate group-hover:text-rose-300 transition-colors">
                                 {d.user?.display_name || `Team ${d.roster_id}`}
-                              </span>
-                              <div className="text-[11px] text-muted truncate">
+                              </div>
+                              <div className="text-xs text-muted truncate mt-0.5">
                                 {d.busts} bust{d.busts !== 1 ? 's' : ''} on bench
                               </div>
                             </div>
@@ -935,10 +936,10 @@ export const Faab: React.FC = () => {
                     <h3 className="text-xs font-bold text-muted uppercase tracking-wider mb-3">Total Points Generated</h3>
                     <div style={{ height: 320 }}>
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={pointsData} layout="vertical" margin={{ left: 110, right: 30, top: 10, bottom: 10 }}>
+                        <BarChart data={pointsData} layout="vertical" margin={{ left: 15, right: 15, top: 10, bottom: 10 }}>
                           <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.05)" />
                           <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 11 }} />
-                          <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11 }} width={100} tickMargin={8} />
+                          <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 10 }} width={95} tickMargin={4} />
                           <RechartsTooltip
                             cursor={{ fill: 'rgba(255,255,255,0.05)' }}
                             contentStyle={{ backgroundColor: 'rgba(15,17,21,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
@@ -955,10 +956,10 @@ export const Faab: React.FC = () => {
                     <h3 className="text-xs font-bold text-muted uppercase tracking-wider mb-3">Points Per FAAB Dollar (VOC)</h3>
                     <div style={{ height: 320 }}>
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={ppdData} layout="vertical" margin={{ left: 110, right: 30, top: 10, bottom: 10 }}>
+                        <BarChart data={ppdData} layout="vertical" margin={{ left: 15, right: 15, top: 10, bottom: 10 }}>
                           <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.05)" />
                           <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 11 }} />
-                          <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11 }} width={100} tickMargin={8} />
+                          <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 10 }} width={95} tickMargin={4} />
                           <RechartsTooltip
                             cursor={{ fill: 'rgba(255,255,255,0.05)' }}
                             contentStyle={{ backgroundColor: 'rgba(15,17,21,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}

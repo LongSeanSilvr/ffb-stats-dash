@@ -17,7 +17,7 @@ const TABS: { id: RecordBookTab; label: string; icon: React.FC<{ size: number; c
 export const RecordBookNav: React.FC<RecordBookNavProps> = ({ activeTab, onTabChange }) => {
   return (
     <div className="w-full mb-8">
-      <div className="flex items-center justify-start sm:justify-center overflow-x-auto no-scrollbar gap-2 p-1.5 rounded-2xl bg-black/40 border border-white/10 backdrop-blur-md">
+      <div className="grid grid-cols-2 sm:flex sm:items-center sm:justify-center gap-2 p-1.5 rounded-2xl bg-black/40 border border-white/10 backdrop-blur-md">
         {TABS.map(tab => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;

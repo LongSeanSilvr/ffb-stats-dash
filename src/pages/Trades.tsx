@@ -331,7 +331,7 @@ export const Trades: React.FC = () => {
 
       {/* Hero KPI Cards */}
       {heroKpis && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 mb-6 sm:mb-8">
           {/* 1. Top Trade Winner */}
           {heroKpis.topWinner && (
             <div className="glass-card p-4 rounded-xl border border-emerald-500/20 flex flex-col justify-between">
@@ -552,10 +552,10 @@ export const Trades: React.FC = () => {
               <MobileTapHint text="Tap columns for detailed breakdown modal" />
               <div style={{ height: 360 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={matchupsFlippedData} layout="vertical" margin={{ left: 110, right: 30, top: 10, bottom: 10 }}>
+                  <BarChart data={matchupsFlippedData} layout="vertical" margin={{ left: 15, right: 15, top: 10, bottom: 10 }}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.05)" />
-                    <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 12 }} allowDecimals={false} />
-                    <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11 }} width={100} tickMargin={8} />
+                    <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 11 }} allowDecimals={false} />
+                    <YAxis type="category" dataKey="name" stroke="#94a3b8" tick={{ fontSize: 10 }} width={95} tickMargin={4} />
                     <RechartsTooltip cursor={false} contentStyle={{ backgroundColor: 'rgba(15,17,21,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }} itemStyle={{ color: '#f8fafc' }} />
                     <Bar dataKey="Added" name="Wins Added" fill="#10b981" radius={[0, 4, 4, 0]} isAnimationActive={false} onClick={(data) => setSelectedDrilldown(data.payload || data)} style={{ cursor: "pointer" }} />
                     <Bar dataKey="Lost" name="Wins Lost" fill="#f43f5e" radius={[0, 4, 4, 0]} isAnimationActive={false} onClick={(data) => setSelectedDrilldown(data.payload || data)} style={{ cursor: "pointer" }} />
@@ -937,8 +937,8 @@ export const Trades: React.FC = () => {
 
       {/* Drill-down Modal */}
       {selectedDrilldown && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in" onClick={() => setSelectedDrilldown(null)}>
-          <div className="bg-surface-color border border-white/10 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in overflow-y-auto" onClick={() => setSelectedDrilldown(null)}>
+          <div className="bg-surface-color border border-white/10 rounded-2xl w-full max-w-3xl max-h-[90dvh] overflow-hidden shadow-2xl flex flex-col my-auto" onClick={e => e.stopPropagation()}>
             {/* Header */}
             <div className="bg-black/40 border-b border-white/5 p-4 md:p-6 flex items-center justify-between">
               <div className="flex items-center gap-3 md:gap-4">
