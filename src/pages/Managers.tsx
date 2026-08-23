@@ -19,23 +19,42 @@ const CHART_COLORS = ['#3b82f6', '#10b981', '#8b5cf6', '#f97316', '#ec4899'];
 
 const CustomAvatarDot = (props: any) => {
   const { cx, cy, payload } = props;
-  const baseSize = 24;
+  const baseSize = 26;
   const size = baseSize + (payload.wins || 0) * 1.5;
   const avatarUrl = payload.avatar ? `https://sleepercdn.com/avatars/thumbs/${payload.avatar}` : null;
   if (!cx || !cy) return null;
+  const safeName = (payload.name || 'mgr').replace(/[^a-zA-Z0-9]/g, '_');
+  const clipId = `clip-mgr-${safeName}-${Math.round(cx)}-${Math.round(cy)}`;
+
   return (
-    <svg x={cx - size/2} y={cy - size/2} width={size} height={size}>
+    <g className="cursor-pointer transition-transform hover:scale-110">
       <defs>
-        <clipPath id={`clip-mgr-${payload.name}`}>
-          <circle cx={size/2} cy={size/2} r={size/2} />
+        <clipPath id={clipId}>
+          <circle cx={cx} cy={cy} r={size/2 - 1.5} />
         </clipPath>
       </defs>
+      {/* Outer border ring */}
+      <circle 
+        cx={cx} 
+        cy={cy} 
+        r={size/2} 
+        fill="#0f1115" 
+        stroke="rgba(255,255,255,0.4)" 
+        strokeWidth="1.5"
+      />
       {avatarUrl ? (
-        <image href={avatarUrl} x="0" y="0" width={size} height={size} clipPath={`url(#clip-mgr-${payload.name})`} />
+        <image 
+          href={avatarUrl} 
+          x={cx - size/2 + 1.5} 
+          y={cy - size/2 + 1.5} 
+          width={size - 3} 
+          height={size - 3} 
+          clipPath={`url(#${clipId})`} 
+        />
       ) : (
-        <circle cx={size/2} cy={size/2} r={size/2} fill="#475569" />
+        <circle cx={cx} cy={cy} r={size/2 - 1.5} fill="#475569" />
       )}
-    </svg>
+    </g>
   );
 };
 
@@ -128,39 +147,87 @@ export const Managers: React.FC = () => {
     });
   };
 
-  const renderSelector = (currentIds: number[], setter: React.Dispatch<React.SetStateAction<number[]>>) => {
+  const renderSelector = (
+    currentIds: number[], 
+    setter: React.Dispatch<React.SetStateAction<number[]>>,
+    title: string = "Compare Managers"
+  ) => {
     const sortedProfiles = [...profiles].sort((a, b) => (a.user?.display_name || '').localeCompare(b.user?.display_name || ''));
+    const top3 = [...profiles].sort((a,b) => b.compositeScore - a.compositeScore).slice(0, 3).map(p => p.roster_id);
+    
     return (
-      <div className="flex flex-wrap justify-center gap-2 mt-6 border-t border-white/5 pt-4 w-full">
-        {sortedProfiles.map(p => {
-          const activeIdx = currentIds.indexOf(p.roster_id);
-          const isActive = activeIdx !== -1;
-          const color = isActive ? CHART_COLORS[activeIdx] : '#64748b';
-          
-          return (
-            <div
-              key={p.roster_id}
-              onClick={() => handleToggle(p.roster_id, setter)}
-              className={`legend-toggle ${!isActive ? 'hidden-team' : ''}`}
-              style={{ 
-                borderColor: isActive ? color : 'rgba(255,255,255,0.05)',
-                opacity: isActive ? 1 : undefined
-              }}
+      <div className="mt-6 border-t border-white/5 pt-4 w-full space-y-3">
+        <div className="flex items-center justify-between text-xs text-muted">
+          <div className="flex items-center gap-1.5 font-medium">
+            <span>{title}</span>
+            <span className="px-1.5 py-0.5 rounded-full bg-white/10 text-white font-mono text-[10px]">
+              {currentIds.length}/4
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setter(top3)}
+              className="text-[11px] text-accent-color hover:underline cursor-pointer font-semibold"
             >
-              <span style={{ 
-                width: '8px', 
-                height: '8px', 
-                borderRadius: '50%', 
-                background: color, 
-                display: 'inline-block',
-                opacity: isActive ? 1 : 0.5
-              }}></span>
-              <span className="text-sm font-medium" style={{ color: isActive ? '#fff' : 'var(--text-secondary)' }}>
-                {p.user?.display_name || `Team ${p.roster_id}`}
-              </span>
-            </div>
-          );
-        })}
+              Top 3 by Composite
+            </button>
+            <span>•</span>
+            <button
+              onClick={() => setter([])}
+              className="text-[11px] text-muted hover:text-white cursor-pointer"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap justify-center gap-2">
+          {sortedProfiles.map(p => {
+            const activeIdx = currentIds.indexOf(p.roster_id);
+            const isActive = activeIdx !== -1;
+            const color = isActive ? CHART_COLORS[activeIdx] : '#64748b';
+            
+            return (
+              <button
+                key={p.roster_id}
+                onClick={() => handleToggle(p.roster_id, setter)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+                  isActive
+                    ? 'shadow-lg'
+                    : 'bg-white/[0.02] border-white/5 text-muted hover:border-white/20 hover:text-white'
+                }`}
+                style={{ 
+                  borderColor: isActive ? color : undefined,
+                  backgroundColor: isActive ? `${color}18` : undefined,
+                  boxShadow: isActive ? `0 0 12px ${color}30` : undefined,
+                  color: isActive ? '#fff' : undefined
+                }}
+              >
+                {p.user?.avatar ? (
+                  <img 
+                    src={`https://sleepercdn.com/avatars/thumbs/${p.user.avatar}`} 
+                    alt="" 
+                    className="w-4 h-4 rounded-full object-cover shrink-0" 
+                  />
+                ) : (
+                  <span 
+                    className="w-2 h-2 rounded-full shrink-0" 
+                    style={{ backgroundColor: color }}
+                  />
+                )}
+                <span className="truncate max-w-[110px]">
+                  {p.user?.display_name || `Team ${p.roster_id}`}
+                </span>
+                {isActive && (
+                  <span 
+                    className="w-1.5 h-1.5 rounded-full shrink-0" 
+                    style={{ backgroundColor: color }}
+                  />
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
     );
   };
@@ -998,7 +1065,16 @@ export const Managers: React.FC = () => {
                     <ReferenceLine x={avgDraftPts} stroke="rgba(255,255,255,0.2)" strokeDasharray="5 5" />
                     <ReferenceLine y={avgFaabPts} stroke="rgba(255,255,255,0.2)" strokeDasharray="5 5" />
                     <RechartsTooltip content={<CustomScatterTooltip />} cursor={{ strokeDasharray: '3 3', stroke: 'rgba(255,255,255,0.1)' }} />
-                    <Scatter name="Teams" data={matrixData} shape={<CustomAvatarDot />} isAnimationActive={false} />
+                    <Scatter 
+                      name="Teams" 
+                      data={matrixData} 
+                      shape={<CustomAvatarDot />} 
+                      isAnimationActive={false}
+                      onClick={(node: any) => {
+                        const p = profiles.find(pr => (pr.user?.display_name || `Team ${pr.roster_id}`) === node?.name);
+                        if (p) setSelectedManagerProfile(p);
+                      }} 
+                    />
                   </ScatterChart>
                 </ResponsiveContainer>
               </div>
@@ -1055,7 +1131,16 @@ export const Managers: React.FC = () => {
                     <ReferenceLine x={avgDraftHitRate} stroke="rgba(255,255,255,0.2)" strokeDasharray="5 5" />
                     <ReferenceLine y={avgFaabHitRate} stroke="rgba(255,255,255,0.2)" strokeDasharray="5 5" />
                     <RechartsTooltip content={<CustomHitRateTooltip />} cursor={{ strokeDasharray: '3 3', stroke: 'rgba(255,255,255,0.1)' }} />
-                    <Scatter name="Teams" data={hitRateComparison} shape={<CustomAvatarDot />} isAnimationActive={false} />
+                    <Scatter 
+                      name="Teams" 
+                      data={hitRateComparison} 
+                      shape={<CustomAvatarDot />} 
+                      isAnimationActive={false}
+                      onClick={(node: any) => {
+                        const p = profiles.find(pr => (pr.user?.display_name || `Team ${pr.roster_id}`) === node?.name);
+                        if (p) setSelectedManagerProfile(p);
+                      }}
+                    />
                   </ScatterChart>
                 </ResponsiveContainer>
               </div>
@@ -1085,7 +1170,7 @@ export const Managers: React.FC = () => {
                   </RadarChart>
                 </ResponsiveContainer>
               </div>
-              {renderSelector(radarMgrs, setRadarMgrs)}
+              {renderSelector(radarMgrs, setRadarMgrs, "Skill Discipline (Max 4)")}
             </Card>
 
             {/* Comparative Radar Chart 2: Roster DNA */}
@@ -1112,7 +1197,7 @@ export const Managers: React.FC = () => {
                   </RadarChart>
                 </ResponsiveContainer>
               </div>
-              {renderSelector(dnaMgrs, setDnaMgrs)}
+              {renderSelector(dnaMgrs, setDnaMgrs, "Roster DNA Channels (Max 4)")}
             </Card>
           </div>
 
@@ -1140,7 +1225,7 @@ export const Managers: React.FC = () => {
                 </RadarChart>
               </ResponsiveContainer>
             </div>
-            {renderSelector(posMgrs, setPosMgrs)}
+            {renderSelector(posMgrs, setPosMgrs, "Positional Yield (Max 4)")}
           </Card>
         </div>
       )}
