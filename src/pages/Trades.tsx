@@ -3,10 +3,10 @@ import { Card } from '../components/Card';
 import { useLeagueContext } from '../context/LeagueContext';
 import { useTradeEfficiency } from '../hooks/useTradeEfficiency';
 import { MobileTapHint } from '../components/MobileTapHint';
-import { X, User, ArrowRightLeft, TrendingUp, Sparkles, Trophy, Award, Zap, BarChart3, HelpCircle } from 'lucide-react';
+import { X, User, ArrowRightLeft, TrendingUp, Sparkles, Trophy, Zap, BarChart3 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
-  ResponsiveContainer, Legend, ScatterChart, Scatter, Cell, Label, ReferenceLine
+  ResponsiveContainer, ScatterChart, Scatter, Label
 } from 'recharts';
 
 const CustomAvatarDot = (props: any) => {
@@ -15,7 +15,8 @@ const CustomAvatarDot = (props: any) => {
   const avatarUrl = payload.avatar ? `https://sleepercdn.com/avatars/thumbs/${payload.avatar}` : null;
   if (!cx || !cy) return null;
   
-  const uniqueId = `clip-mgr-${payload.name ? payload.name.replace(/[^a-zA-Z0-9]/g, '') : Math.random().toString(36).substring(7)}`;
+  const safeName = (payload.name || 'mgr').replace(/[^a-zA-Z0-9]/g, '');
+  const uniqueId = `clip-mgr-${safeName}-${Math.round(cx)}-${Math.round(cy)}`;
   return (
     <svg x={cx - size / 2} y={cy - size / 2} width={size} height={size}>
       <defs>

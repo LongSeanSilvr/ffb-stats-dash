@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, MessageSquarePlus, MessageCircle, ExternalLink, Copy, Check, Sparkles, Bug, Lightbulb, Heart } from 'lucide-react';
+import { X, MessageSquarePlus, MessageCircle, ExternalLink, Copy, Check, Sparkles, Lightbulb, Heart } from 'lucide-react';
 
 interface FeedbackModalProps {
   isOpen: boolean;

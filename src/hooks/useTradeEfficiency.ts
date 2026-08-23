@@ -416,7 +416,7 @@ export function useTradeEfficiency() {
 
               if (!asset.isPick && asset.position !== 'FAAB') {
                 let ptsBefore = 0;
-                let weeksBefore = week - 1;
+                const weeksBefore = week - 1;
                 for (let w = 1; w < week; w++) {
                   const matchups = weeksData[w - 1]?.[1] || [];
                   let foundPts = 0;
@@ -431,7 +431,7 @@ export function useTradeEfficiency() {
                 asset.avgPointsBeforeTrade = weeksBefore > 0 ? Number((ptsBefore / weeksBefore).toFixed(2)) : 0;
 
                 let ptsAfter = 0;
-                let weeksAfter = lastPlayedWeek >= week ? lastPlayedWeek - week + 1 : 0;
+                const weeksAfter = lastPlayedWeek >= week ? lastPlayedWeek - week + 1 : 0;
                 for (let w = week; w <= lastPlayedWeek; w++) {
                   const matchups = weeksData[w - 1]?.[1] || [];
                   let foundPts = 0;
@@ -465,7 +465,7 @@ export function useTradeEfficiency() {
             side.gave.forEach(asset => {
               if (!asset.isPick && asset.position !== 'FAAB') {
                 let ptsBefore = 0;
-                let weeksBefore = week - 1;
+                const weeksBefore = week - 1;
                 for (let w = 1; w < week; w++) {
                   const matchups = weeksData[w - 1]?.[1] || [];
                   let foundPts = 0;
@@ -480,7 +480,7 @@ export function useTradeEfficiency() {
                 asset.avgPointsBeforeTrade = weeksBefore > 0 ? Number((ptsBefore / weeksBefore).toFixed(2)) : 0;
 
                 let ptsAfter = 0;
-                let weeksAfter = lastPlayedWeek >= week ? lastPlayedWeek - week + 1 : 0;
+                const weeksAfter = lastPlayedWeek >= week ? lastPlayedWeek - week + 1 : 0;
                 for (let w = week; w <= lastPlayedWeek; w++) {
                   const matchups = weeksData[w - 1]?.[1] || [];
                   let foundPts = 0;
@@ -650,7 +650,7 @@ export function useTradeEfficiency() {
 
                   const hypotheticalStartersList = alignedHypothetical.filter(Boolean);
 
-                  let primaryPlayerId = s.received.find(a => !a.isPick && a.position !== 'FAAB')?.playerId;
+                  const primaryPlayerId = s.received.find(a => !a.isPick && a.position !== 'FAAB')?.playerId;
                   let primaryPlayerName = 'Multiple Assets';
                   let primaryPlayerAvatar = '';
                   if (primaryPlayerId && playersData[primaryPlayerId]) {
