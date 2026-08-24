@@ -120,14 +120,15 @@ export const Managers: React.FC = () => {
   // Standings table sorting state
   type StandingsSortKey = 'standings' | 'team' | 'record' | 'allPlay' | 'luck' | 'pf' | 'pa' | 'lineupAcc' | 'powerScore';
   const [sortKey, setSortKey] = useState<StandingsSortKey>('standings');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   const handleSort = (key: StandingsSortKey) => {
     if (sortKey === key) {
       setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
     } else {
       setSortKey(key);
-      setSortDirection(key === 'team' || key === 'pa' ? 'asc' : 'desc');
+      // For team / regular season finish, default to asc (1st place at top)
+      setSortDirection(key === 'team' || key === 'standings' ? 'asc' : 'desc');
     }
   };
 
@@ -280,8 +281,12 @@ export const Managers: React.FC = () => {
 
       switch (sortKey) {
         case 'team':
-          comparison = userA.localeCompare(userB);
+        case 'standings': {
+          const seedA = regularSeasonStandingsOrder.get(a.roster_id) || 0;
+          const seedB = regularSeasonStandingsOrder.get(b.roster_id) || 0;
+          comparison = seedA - seedB;
           break;
+        }
         case 'record':
           comparison = (a.settings.wins - b.settings.wins) || (pfA - pfB);
           break;
@@ -306,10 +311,12 @@ export const Managers: React.FC = () => {
         case 'powerScore':
           comparison = (profileA?.compositeScore || 0) - (profileB?.compositeScore || 0);
           break;
-        case 'standings':
-        default:
-          comparison = (a.settings.wins - b.settings.wins) || (pfA - pfB);
+        default: {
+          const seedA = regularSeasonStandingsOrder.get(a.roster_id) || 0;
+          const seedB = regularSeasonStandingsOrder.get(b.roster_id) || 0;
+          comparison = seedA - seedB;
           break;
+        }
       }
 
       return sortDirection === 'asc' ? comparison : -comparison;
@@ -800,11 +807,11 @@ export const Managers: React.FC = () => {
                   onChange={(e) => {
                     const val = e.target.value as StandingsSortKey;
                     setSortKey(val);
-                    setSortDirection(val === 'team' || val === 'pa' ? 'asc' : 'desc');
+                    setSortDirection(val === 'team' || val === 'standings' ? 'asc' : 'desc');
                   }}
                   className="bg-[#12151c] text-white text-xs rounded-lg px-2.5 py-1 border border-white/10 focus:outline-none focus:border-blue-500 flex-1"
                 >
-                  <option value="standings">Original Standings</option>
+                  <option value="standings">Regular Season Finish</option>
                   <option value="record">Record (Wins)</option>
                   <option value="powerScore">Power Score</option>
                   <option value="allPlay">Vs League (All-Play)</option>
@@ -812,7 +819,6 @@ export const Managers: React.FC = () => {
                   <option value="pf">Points For (PF)</option>
                   <option value="pa">Points Against (PA)</option>
                   <option value="lineupAcc">Lineup Accuracy</option>
-                  <option value="team">Team Name (A-Z)</option>
                 </select>
                 <button
                   onClick={() => setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')}
@@ -912,7 +918,7 @@ export const Managers: React.FC = () => {
                       >
                         <div className="flex items-center gap-1.5">
                           <span>Team</span>
-                          {sortKey === 'team' ? (
+                          {sortKey === 'team' || sortKey === 'standings' ? (
                             sortDirection === 'asc' ? <ArrowUp size={13} className="text-accent-color" /> : <ArrowDown size={13} className="text-accent-color" />
                           ) : (
                             <ArrowUpDown size={12} className="opacity-30 group-hover:opacity-70 transition-opacity" />
@@ -925,7 +931,7 @@ export const Managers: React.FC = () => {
                       >
                         <div className="flex items-center justify-center gap-1.5">
                           <span>Record</span>
-                          {sortKey === 'record' || sortKey === 'standings' ? (
+                          {sortKey === 'record' ? (
                             sortDirection === 'asc' ? <ArrowUp size={13} className="text-accent-color" /> : <ArrowDown size={13} className="text-accent-color" />
                           ) : (
                             <ArrowUpDown size={12} className="opacity-30 group-hover:opacity-70 transition-opacity" />
