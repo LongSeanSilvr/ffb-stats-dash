@@ -1294,7 +1294,19 @@ export const Managers: React.FC = () => {
                   <span>•</span>
                   <span>PF: <strong className="text-accent-color">{selectedManagerProfile.totalPointsFor.toFixed(1)}</strong></span>
                   <span>•</span>
-                  <span>All-Play: <strong className="text-emerald-400">{selectedManagerProfile.allPlayWins}-{selectedManagerProfile.allPlayLosses}</strong></span>
+                  <span>All-Play: <strong className="text-purple-400">{selectedManagerProfile.allPlayWins}-{selectedManagerProfile.allPlayLosses}</strong></span>
+                  {(() => {
+                    const totalG = selectedManagerProfile.wins + selectedManagerProfile.losses || 1;
+                    const apTotal = selectedManagerProfile.allPlayWins + selectedManagerProfile.allPlayLosses || 1;
+                    const expW = (selectedManagerProfile.allPlayWins / apTotal) * totalG;
+                    const wae = selectedManagerProfile.wins - expW;
+                    return (
+                      <>
+                        <span>•</span>
+                        <span>Schedule Luck: <strong className={wae >= 0 ? 'text-emerald-400' : 'text-rose-400'}>{wae >= 0 ? `+${wae.toFixed(1)}` : wae.toFixed(1)} WAE</strong></span>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
             </div>

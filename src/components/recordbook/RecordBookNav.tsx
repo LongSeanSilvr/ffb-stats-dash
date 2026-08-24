@@ -1,5 +1,4 @@
-import React from 'react';
-import { Trophy, Flame, Swords, Table } from 'lucide-react';
+import { Trophy, Flame, Swords, Sparkles } from 'lucide-react';
 import type { RecordBookTab } from '../../types/recordBook';
 
 interface RecordBookNavProps {
@@ -11,7 +10,7 @@ const TABS: { id: RecordBookTab; label: string; icon: React.FC<{ size: number; c
   { id: 'rankings', label: 'Rankings & Titles', icon: Trophy },
   { id: 'scoring', label: 'Scoring Records', icon: Flame },
   { id: 'rivalries', label: 'Head-to-Head', icon: Swords },
-  { id: 'ledger', label: 'All-Time Standings', icon: Table },
+  { id: 'luck', label: 'Schedule Luck', icon: Sparkles },
 ];
 
 export const RecordBookNav: React.FC<RecordBookNavProps> = ({ activeTab, onTabChange }) => {

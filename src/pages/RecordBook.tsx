@@ -9,7 +9,7 @@ import { RecordBookNav } from '../components/recordbook/RecordBookNav';
 import { RankingsHub } from '../components/recordbook/RankingsHub';
 import { ScoringRecordsHub } from '../components/recordbook/ScoringRecordsHub';
 import { RivalryHub } from '../components/recordbook/RivalryHub';
-import { MasterLedgerHub } from '../components/recordbook/MasterLedgerHub';
+import { ScheduleLuckHub } from '../components/recordbook/ScheduleLuckHub';
 
 export const RecordBook: React.FC = () => {
   const { loading: ctxLoading, error: ctxError, seasons } = useLeagueContext();
@@ -67,7 +67,7 @@ export const RecordBook: React.FC = () => {
       {/* Standardized Header */}
       <h1 className="text-3xl text-gradient mt-4 mb-1">Record Book</h1>
       <p className="text-muted mb-8">
-        Official all-time archive and league history (Sleeper Era: {minYear}–{maxYear})
+        All-time archive and league history (Sleeper Era: {minYear}–{maxYear})
       </p>
 
       {/* Centered Segmented Navigation */}
@@ -84,8 +84,8 @@ export const RecordBook: React.FC = () => {
         {activeTab === 'rivalries' && (
           <RivalryHub managers={scoredManagers} matchups={matchups} />
         )}
-        {activeTab === 'ledger' && (
-          <MasterLedgerHub managers={scoredManagers} />
+        {activeTab === 'luck' && (
+          <ScheduleLuckHub managers={scoredManagers} matchups={matchups} />
         )}
       </div>
     </div>

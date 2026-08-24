@@ -1,7 +1,9 @@
 import React from 'react';
-import { Trophy, Award, Crown, Medal } from 'lucide-react';
+import { Trophy, Crown } from 'lucide-react';
 import type { ManagerScore } from '../../types/recordBook';
 import { SeasonBumpChart } from './SeasonBumpChart';
+
+import { MasterLedgerHub } from './MasterLedgerHub';
 
 interface RankingsHubProps {
   managers: ManagerScore[];
@@ -84,99 +86,12 @@ export const RankingsHub: React.FC<RankingsHubProps> = ({ managers, seasons }) =
         </div>
       )}
 
-      {/* All-Time Power Rankings Grid */}
-      <div>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-6">
-          <div>
-            <h2 className="text-2xl font-bold text-white flex items-center gap-2.5">
-              <Award className="text-purple-400" size={24} />
-              All-Time Power Rankings
-            </h2>
-            <p className="text-sm text-muted mt-1">
-              Weighted composite index based on Titles, Win %, Average Finish, and Starting Lineup Efficiency
-            </p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {managers.map((m, rankIndex) => {
-            const avatarUrl = m.avatar ? `https://sleepercdn.com/avatars/thumbs/${m.avatar}` : null;
-            const rank = rankIndex + 1;
-            const isTop3 = rank <= 3;
-            const rankColor =
-              rank === 1 ? 'text-yellow-400 border-yellow-400/40 bg-yellow-400/10' :
-              rank === 2 ? 'text-slate-300 border-slate-300/40 bg-slate-300/10' :
-              rank === 3 ? 'text-amber-600 border-amber-600/40 bg-amber-600/10' :
-              'text-muted border-white/10 bg-black/40';
-
-            return (
-              <div
-                key={m.ownerId}
-                className="glass-card flex flex-col justify-between transition-all duration-300 hover:border-purple-500/40"
-                style={{ padding: '1.5rem' }}
-              >
-                <div>
-                  {/* Card Header: Avatar, Name, and Top-Right Rank Badge */}
-                  <div className="flex items-center justify-between gap-3 mb-4">
-                    <div className="flex items-center gap-3 min-w-0">
-                      {avatarUrl ? (
-                        <img
-                          src={avatarUrl}
-                          alt={m.managerName}
-                          className="w-11 h-11 rounded-full object-cover border border-white/20 shadow-md shrink-0"
-                        />
-                      ) : (
-                        <div className="w-11 h-11 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
-                          N/A
-                        </div>
-                      )}
-                      <div className="min-w-0">
-                        <h3 className="font-bold text-white text-base truncate">{m.managerName}</h3>
-                        <div className="text-xs text-purple-400 font-bold">
-                          {m.seasonsPlayed} {m.seasonsPlayed === 1 ? 'Season' : 'Seasons'}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className={`flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-black border shrink-0 ${rankColor}`}>
-                      #{rank}
-                    </div>
-                  </div>
-
-                  {/* Power Score Hero */}
-                  <div className="my-4 py-3 px-4 rounded-xl bg-black/40 border border-white/5 flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase tracking-wider text-muted">
-                      Power Score
-                    </span>
-                    <span className="text-xl font-black text-purple-400 font-mono">
-                      {m.powerScore}
-                    </span>
-                  </div>
-                </div>
-
-                {/* 3 Stat Metrics */}
-                <div className="grid grid-cols-3 gap-2 pt-3 border-t border-white/10 text-center">
-                  <div>
-                    <div className="text-[10px] font-bold text-muted uppercase tracking-wider">Titles</div>
-                    <div className="font-bold text-sm text-yellow-400 mt-0.5">{m.championships}</div>
-                  </div>
-                  <div>
-                    <div className="text-[10px] font-bold text-muted uppercase tracking-wider">Win %</div>
-                    <div className="font-bold text-sm text-white mt-0.5">{m.winPercentage}%</div>
-                  </div>
-                  <div>
-                    <div className="text-[10px] font-bold text-muted uppercase tracking-wider">Avg Fin</div>
-                    <div className="font-bold text-sm text-blue-400 mt-0.5">{m.averageFinish}</div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      {/* All-Time Master Ledger Table */}
+      <MasterLedgerHub managers={managers} />
 
       {/* Season Trajectory Bump Chart */}
       <SeasonBumpChart managers={managers} seasons={seasons} />
     </div>
   );
 };
+

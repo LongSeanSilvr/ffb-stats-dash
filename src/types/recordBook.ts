@@ -93,4 +93,51 @@ export interface SuperlativeBadge {
   iconName: string;
 }
 
-export type RecordBookTab = 'rankings' | 'scoring' | 'rivalries' | 'ledger';
+export interface SeasonLuckRecord {
+  season: string;
+  actualWins: number;
+  actualLosses: number;
+  allPlayWins: number;
+  allPlayLosses: number;
+  allPlayWinPct: number;
+  expectedWins: number;
+  scheduleLuckWins: number;
+  pointsFor: number;
+  pointsAgainst: number;
+  ppg: number;
+  papg: number;
+}
+
+export interface ManagerLuckStats {
+  ownerId: string;
+  managerName: string;
+  avatar: string | null;
+  seasonsPlayed: number;
+  actualWins: number;
+  actualLosses: number;
+  actualWinPct: number;
+  allPlayWins: number;
+  allPlayLosses: number;
+  allPlayWinPct: number;
+  expectedWins: number;
+  scheduleLuckWins: number; // Wins Above Expectation (WAE)
+  totalPointsAgainst: number;
+  papg: number;
+  ppg: number;
+  seasonLuckList: SeasonLuckRecord[];
+}
+
+export interface SingleSeasonLuckExtreme {
+  ownerId: string;
+  managerName: string;
+  avatar: string | null;
+  season: string;
+  actualRecord: string;
+  expectedWins: number;
+  scheduleLuckWins: number;
+  allPlayRecord: string;
+  ppg: number;
+  papg: number;
+}
+
+export type RecordBookTab = 'rankings' | 'scoring' | 'rivalries' | 'luck';

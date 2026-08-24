@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { cachedFetch } from './useSessionCache';
 import type { SeasonData } from './useLeagueData';
 
+import type { ManagerLuckStats, SingleSeasonLuckExtreme } from '../types/recordBook';
+
 export interface H2HRecord {
   wins: number;
   losses: number;
@@ -30,6 +32,9 @@ export interface AllTimeMatchupData {
   mostCompetitiveRivalry: { owner1: string; owner2: string; wins: number; losses: number } | null;
   longestDominanceStreak: { dominator: string; victim: string; streak: number } | null;
   matchupList: MatchupRecord[];
+  managerLuckStats: ManagerLuckStats[];
+  luckiestSeasons: SingleSeasonLuckExtreme[];
+  unluckiestSeasons: SingleSeasonLuckExtreme[];
   loading: boolean;
   error: string | null;
   progress: number;
@@ -49,6 +54,9 @@ export function useAllTimeMatchups(seasons: SeasonData[]) {
     mostCompetitiveRivalry: null,
     longestDominanceStreak: null,
     matchupList: [],
+    managerLuckStats: [],
+    luckiestSeasons: [],
+    unluckiestSeasons: [],
     loading: true,
     error: null,
     progress: 0,
@@ -73,14 +81,19 @@ export function useAllTimeMatchups(seasons: SeasonData[]) {
         let biggestBlowoutLoss: any = null;
         let biggestChoke: any = null;
         let biggestRobbery: any = null;
-
         let completedSeasons = 0;
+        // Season-level all play tracker: season -> ownerId -> { wins, losses, games }
+        const seasonAllPlayTracker: Record<string, Record<string, { wins: number; losses: number; games: number }>> = {};
 
         for (const season of seasons) {
           const leagueId = season.league.league_id;
           const seasonYear = season.league.season;
           const playoffStartWeek = season.league.settings.playoff_week_start || 15;
           const totalWeeks = 17; // Sleeper generally supports up to 17 or 18 weeks now
+
+          if (!seasonAllPlayTracker[seasonYear]) {
+            seasonAllPlayTracker[seasonYear] = {};
+          }
 
           // Map roster ID to owner ID for this season
           const rosterToOwner: Record<number, string> = {};
@@ -118,11 +131,18 @@ export function useAllTimeMatchups(seasons: SeasonData[]) {
                 if (!allPlayTracker[ownerId]) {
                   allPlayTracker[ownerId] = { wins: 0, losses: 0, ties: 0 };
                 }
+                if (!seasonAllPlayTracker[seasonYear][ownerId]) {
+                  seasonAllPlayTracker[seasonYear][ownerId] = { wins: 0, losses: 0, games: 0 };
+                }
+
                 const wins = validScores.length - 1 - idx;
                 const losses = idx;
                 allPlayTracker[ownerId].wins += wins;
                 allPlayTracker[ownerId].losses += losses;
-                // Ignoring ties for all-play simplicity
+
+                seasonAllPlayTracker[seasonYear][ownerId].wins += wins;
+                seasonAllPlayTracker[seasonYear][ownerId].losses += losses;
+                seasonAllPlayTracker[seasonYear][ownerId].games += 1;
               });
             }
 
@@ -161,7 +181,7 @@ export function useAllTimeMatchups(seasons: SeasonData[]) {
                 } else if (ptsB > ptsA) {
                   h2hMatrix[ownerA][ownerB].losses += 1;
                   h2hMatrix[ownerB][ownerA].wins += 1;
-                } // ties ignored for strict H2H for now
+                }
 
                 // Regular Season Extremes
                 if (!isPlayoffs) {
@@ -187,15 +207,13 @@ export function useAllTimeMatchups(seasons: SeasonData[]) {
                     if (!biggestBlowoutWin || margin > biggestBlowoutWin.margin) {
                       const record = { winnerId: winner, loserId: loser, margin, winnerPts, loserPts, season: seasonYear, week: w };
                       biggestBlowoutWin = record;
-                      biggestBlowoutLoss = record; // Same game, just viewed from loser perspective
+                      biggestBlowoutLoss = record;
                     }
 
-                    // Biggest choke: highest score in a loss
                     if (!biggestChoke || loserPts > biggestChoke.points) {
                       biggestChoke = { ownerId: loser, opponentId: winner, points: loserPts, opponentPts: winnerPts, season: seasonYear, week: w };
                     }
 
-                    // Biggest robbery: lowest score in a win
                     if (!biggestRobbery || winnerPts < biggestRobbery.points) {
                       biggestRobbery = { ownerId: winner, opponentId: loser, points: winnerPts, opponentPts: loserPts, season: seasonYear, week: w };
                     }
@@ -211,12 +229,158 @@ export function useAllTimeMatchups(seasons: SeasonData[]) {
           }
         }
 
+        // Build User Profile Map from newest to oldest
+        const latestUsers = seasons[0]?.users || [];
+        const userMap: Record<string, { name: string; avatar: string | null }> = {};
+        seasons.forEach(s => {
+          s.users.forEach(u => {
+            if (!userMap[u.user_id]) {
+              const latest = latestUsers.find(lu => lu.user_id === u.user_id);
+              userMap[u.user_id] = {
+                name: latest?.display_name || u.display_name || `Manager ${u.user_id}`,
+                avatar: latest?.avatar || u.avatar || null
+              };
+            }
+          });
+        });
+
+        // Compute Comprehensive Schedule Luck Stats per Manager
+        const allSeasonLuckExtremes: SingleSeasonLuckExtreme[] = [];
+        const managerLuckMap: Record<string, ManagerLuckStats> = {};
+
+        seasons.forEach(season => {
+          const seasonYear = season.league.season;
+          const seasonAllPlay = seasonAllPlayTracker[seasonYear] || {};
+
+          season.rosters.forEach(r => {
+            const ownerId = r.owner_id;
+            if (!ownerId) return;
+
+            const uInfo = userMap[ownerId] || { name: `Team ${r.roster_id}`, avatar: null };
+
+            if (!managerLuckMap[ownerId]) {
+              managerLuckMap[ownerId] = {
+                ownerId,
+                managerName: uInfo.name,
+                avatar: uInfo.avatar,
+                seasonsPlayed: 0,
+                actualWins: 0,
+                actualLosses: 0,
+                actualWinPct: 0,
+                allPlayWins: 0,
+                allPlayLosses: 0,
+                allPlayWinPct: 0,
+                expectedWins: 0,
+                scheduleLuckWins: 0,
+                totalPointsAgainst: 0,
+                papg: 0,
+                ppg: 0,
+                seasonLuckList: []
+              };
+            }
+
+            const mStats = managerLuckMap[ownerId];
+            mStats.seasonsPlayed += 1;
+
+            const w = r.settings.wins || 0;
+            const l = r.settings.losses || 0;
+            const t = r.settings.ties || 0;
+            const regGames = w + l + t || 1;
+
+            const fpts = (r.settings.fpts || 0) + ((r.settings.fpts_decimal || 0) / 100);
+            const fptsAgainst = (r.settings.fpts_against || 0) + ((r.settings.fpts_against_decimal || 0) / 100);
+
+            mStats.actualWins += w;
+            mStats.actualLosses += l;
+            mStats.totalPointsAgainst += fptsAgainst;
+
+            const sAllPlay = seasonAllPlay[ownerId] || { wins: 0, losses: 0, games: regGames };
+            const totalSAllPlay = sAllPlay.wins + sAllPlay.losses || 1;
+            const sAllPlayWinPct = Number(((sAllPlay.wins / totalSAllPlay) * 100).toFixed(1));
+            const sExpectedWins = Number(((sAllPlay.wins / totalSAllPlay) * regGames).toFixed(1));
+            const sScheduleLuckWins = Number((w - sExpectedWins).toFixed(1));
+
+            const sPpg = Number((fpts / regGames).toFixed(1));
+            const sPapg = Number((fptsAgainst / regGames).toFixed(1));
+
+            mStats.seasonLuckList.push({
+              season: seasonYear,
+              actualWins: w,
+              actualLosses: l,
+              allPlayWins: sAllPlay.wins,
+              allPlayLosses: sAllPlay.losses,
+              allPlayWinPct: sAllPlayWinPct,
+              expectedWins: sExpectedWins,
+              scheduleLuckWins: sScheduleLuckWins,
+              pointsFor: fpts,
+              pointsAgainst: fptsAgainst,
+              ppg: sPpg,
+              papg: sPapg
+            });
+
+            if (regGames >= 10) {
+              allSeasonLuckExtremes.push({
+                ownerId,
+                managerName: uInfo.name,
+                avatar: uInfo.avatar,
+                season: seasonYear,
+                actualRecord: `${w}-${l}${t > 0 ? `-${t}` : ''}`,
+                expectedWins: sExpectedWins,
+                scheduleLuckWins: sScheduleLuckWins,
+                allPlayRecord: `${sAllPlay.wins}-${sAllPlay.losses}`,
+                ppg: sPpg,
+                papg: sPapg
+              });
+            }
+          });
+        });
+
+        // Finalize Career Luck Averages
+        const managerLuckStats: ManagerLuckStats[] = Object.values(managerLuckMap).map(m => {
+          const ap = allPlayTracker[m.ownerId] || { wins: 0, losses: 0, ties: 0 };
+          const totalAllPlay = ap.wins + ap.losses || 1;
+          const allPlayWinPct = Number(((ap.wins / totalAllPlay) * 100).toFixed(1));
+          
+          const totalRegGames = m.actualWins + m.actualLosses || 1;
+          const actualWinPct = Number(((m.actualWins / totalRegGames) * 100).toFixed(1));
+
+          const expectedWins = Number(((ap.wins / totalAllPlay) * totalRegGames).toFixed(1));
+          const scheduleLuckWins = Number((m.actualWins - expectedWins).toFixed(1));
+          const papg = Number((m.totalPointsAgainst / totalRegGames).toFixed(1));
+
+          const totalPointsFor = m.seasonLuckList.reduce((acc, s) => acc + s.pointsFor, 0);
+          const ppg = Number((totalPointsFor / totalRegGames).toFixed(1));
+
+          // Sort season luck list from newest to oldest
+          m.seasonLuckList.sort((a, b) => parseInt(b.season) - parseInt(a.season));
+
+          return {
+            ...m,
+            allPlayWins: ap.wins,
+            allPlayLosses: ap.losses,
+            allPlayWinPct,
+            actualWinPct,
+            expectedWins,
+            scheduleLuckWins,
+            papg,
+            ppg
+          };
+        }).sort((a, b) => b.scheduleLuckWins - a.scheduleLuckWins);
+
+        // Sort Top 5 Luckiest & Unluckiest Single Seasons
+        const luckiestSeasons = [...allSeasonLuckExtremes]
+          .sort((a, b) => b.scheduleLuckWins - a.scheduleLuckWins)
+          .slice(0, 5);
+
+        const unluckiestSeasons = [...allSeasonLuckExtremes]
+          .sort((a, b) => a.scheduleLuckWins - b.scheduleLuckWins)
+          .slice(0, 5);
+
         // Compute Rivalry Spotlights
         let mostLopsided: any = null;
         let mostCompetitive: any = null;
         let longestStreak: any = null;
 
-        // Sort all matches chronologically (oldest to newest) to find streaks
         allMatches.sort((a, b) => {
            if (a.season !== b.season) return parseInt(a.season) - parseInt(b.season);
            return a.week - b.week;
@@ -231,15 +395,12 @@ export function useAllTimeMatchups(seasons: SeasonData[]) {
             
             if (totalGames >= 3) {
               const diff = Math.abs(record.wins - record.losses);
-              // Lopsided: largest win differential (absolute)
               if (!mostLopsided || diff > mostLopsided.diff) {
-                // Ensure o1 is the winner for display
                 if (record.wins > record.losses) {
                    mostLopsided = { owner1: o1, owner2: o2, wins: record.wins, losses: record.losses, diff };
                 }
               }
 
-              // Competitive: closest to 0.500 with most games
               const winPct = record.wins / totalGames;
               const closenessTo500 = Math.abs(0.5 - winPct);
               
@@ -254,7 +415,6 @@ export function useAllTimeMatchups(seasons: SeasonData[]) {
           });
         });
 
-        // Find longest streak
         allMatches.forEach(m => {
            const pairId = [m.ownerA, m.ownerB].sort().join('-');
            if (!pairStreaks[pairId]) {
@@ -303,6 +463,9 @@ export function useAllTimeMatchups(seasons: SeasonData[]) {
             mostCompetitiveRivalry: mostCompetitive,
             longestDominanceStreak: longestStreak,
             matchupList: allMatches,
+            managerLuckStats,
+            luckiestSeasons,
+            unluckiestSeasons,
             loading: false,
             error: null,
             progress: 100
