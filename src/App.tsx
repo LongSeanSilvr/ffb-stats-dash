@@ -58,7 +58,8 @@ function App() {
           <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
           <main className="main-content">
             <Routes>
-              <Route path="/" element={<RecordBook />} />
+              <Route path="/" element={<Managers />} />
+              <Route path="/recordbook" element={<RecordBook />} />
               <Route path="/managers" element={<Managers />} />
               <Route path="/draft" element={<Draft />} />
               <Route path="/trades" element={<Trades />} />
