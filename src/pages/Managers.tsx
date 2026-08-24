@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { 
   Info, Trophy, Crown, Target, Zap, LayoutGrid, Radar as RadarIcon, 
   BarChart3, TrendingUp, Award, User, X, Sparkles, Layers, ShieldCheck, 
-  ChevronRight, ArrowRight, ShoppingCart, RefreshCw
+  ChevronRight, ArrowRight, ShoppingCart, RefreshCw, ArrowUpDown, ArrowUp, ArrowDown
 } from 'lucide-react';
 import { Card } from '../components/Card';
 import { MobileTapHint } from '../components/MobileTapHint';
@@ -117,6 +117,19 @@ export const Managers: React.FC = () => {
   const [radarMgrs, setRadarMgrs] = useState<number[]>([]);
   const [dnaMgrs, setDnaMgrs] = useState<number[]>([]);
   const [posMgrs, setPosMgrs] = useState<number[]>([]);
+  // Standings table sorting state
+  type StandingsSortKey = 'standings' | 'team' | 'record' | 'allPlay' | 'luck' | 'pf' | 'pa' | 'lineupAcc' | 'powerScore';
+  const [sortKey, setSortKey] = useState<StandingsSortKey>('standings');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
+  const handleSort = (key: StandingsSortKey) => {
+    if (sortKey === key) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDirection(key === 'team' || key === 'pa' ? 'asc' : 'desc');
+    }
+  };
 
   const loading = ctxLoading || analyticsLoading;
 
@@ -235,9 +248,76 @@ export const Managers: React.FC = () => {
     );
   };
 
-  const showAnalytics = profiles.length > 0 && !analyticsLoading;
+  // 1. Regular Season Standings Seeds (1 to 12)
+  const regularSeasonStandingsOrder = React.useMemo(() => {
+    if (!selectedSeason) return new Map<number, number>();
+    const sorted = [...selectedSeason.rosters].sort((a, b) => 
+      (b.settings.wins - a.settings.wins) || 
+      ((b.settings.fpts + b.settings.fpts_decimal/100) - (a.settings.fpts + a.settings.fpts_decimal/100))
+    );
+    const map = new Map<number, number>();
+    sorted.forEach((r, idx) => map.set(r.roster_id, idx + 1));
+    return map;
+  }, [selectedSeason]);
+
+  // 2. Dynamic Sort for Standings Table
+  const sortedRosters = React.useMemo(() => {
+    if (!selectedSeason) return [];
+    const list = [...selectedSeason.rosters];
+
+    return list.sort((a, b) => {
+      const userA = selectedSeason.rosterToUser[a.roster_id]?.display_name || `Team ${a.roster_id}`;
+      const userB = selectedSeason.rosterToUser[b.roster_id]?.display_name || `Team ${b.roster_id}`;
+      const profileA = profiles.find(p => p.roster_id === a.roster_id);
+      const profileB = profiles.find(p => p.roster_id === b.roster_id);
+
+      const pfA = a.settings.fpts + (a.settings.fpts_decimal / 100);
+      const pfB = b.settings.fpts + (b.settings.fpts_decimal / 100);
+      const paA = a.settings.fpts_against + (a.settings.fpts_against_decimal / 100);
+      const paB = b.settings.fpts_against + (b.settings.fpts_against_decimal / 100);
+
+      let comparison = 0;
+
+      switch (sortKey) {
+        case 'team':
+          comparison = userA.localeCompare(userB);
+          break;
+        case 'record':
+          comparison = (a.settings.wins - b.settings.wins) || (pfA - pfB);
+          break;
+        case 'allPlay': {
+          const apWinsA = profileA?.allPlayWins || 0;
+          const apWinsB = profileB?.allPlayWins || 0;
+          comparison = apWinsA - apWinsB;
+          break;
+        }
+        case 'luck':
+          comparison = (profileA?.wae || 0) - (profileB?.wae || 0);
+          break;
+        case 'pf':
+          comparison = pfA - pfB;
+          break;
+        case 'pa':
+          comparison = paA - paB;
+          break;
+        case 'lineupAcc':
+          comparison = (profileA?.coachingEfficiency || 0) - (profileB?.coachingEfficiency || 0);
+          break;
+        case 'powerScore':
+          comparison = (profileA?.compositeScore || 0) - (profileB?.compositeScore || 0);
+          break;
+        case 'standings':
+        default:
+          comparison = (a.settings.wins - b.settings.wins) || (pfA - pfB);
+          break;
+      }
+
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  }, [selectedSeason, profiles, sortKey, sortDirection]);
 
   // --- Data transformations ---
+  const showAnalytics = profiles.length > 0 && !analyticsLoading;
 
 
 
@@ -711,52 +791,73 @@ export const Managers: React.FC = () => {
           <Card title="Team Standings" className="stagger-1">
             <MobileTapHint text="Swipe/Scroll for full metrics" />
             
-            {/* Mobile View: Card Stack (Fixed Collision Layout) */}
+            {/* Mobile View: Quick Sort & Card Stack */}
             <div className="md:hidden flex flex-col gap-3 mt-4">
-              {[...selectedSeason.rosters].sort((a,b) => b.settings.wins - a.settings.wins || b.settings.fpts - a.settings.fpts).map((r, i) => {
+              <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-white/[0.03] border border-white/5 text-xs text-muted">
+                <span className="font-semibold text-white/80">Sort By:</span>
+                <select
+                  value={sortKey}
+                  onChange={(e) => {
+                    const val = e.target.value as StandingsSortKey;
+                    setSortKey(val);
+                    setSortDirection(val === 'team' || val === 'pa' ? 'asc' : 'desc');
+                  }}
+                  className="bg-[#12151c] text-white text-xs rounded-lg px-2.5 py-1 border border-white/10 focus:outline-none focus:border-blue-500 flex-1"
+                >
+                  <option value="standings">Original Standings</option>
+                  <option value="record">Record (Wins)</option>
+                  <option value="powerScore">Power Score</option>
+                  <option value="allPlay">Vs League (All-Play)</option>
+                  <option value="luck">Luck (WAE)</option>
+                  <option value="pf">Points For (PF)</option>
+                  <option value="pa">Points Against (PA)</option>
+                  <option value="lineupAcc">Lineup Accuracy</option>
+                  <option value="team">Team Name (A-Z)</option>
+                </select>
+                <button
+                  onClick={() => setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')}
+                  className="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-white flex items-center gap-1 text-[11px] font-bold"
+                  title="Toggle sort direction"
+                >
+                  {sortDirection === 'asc' ? <ArrowUp size={12} className="text-accent-color" /> : <ArrowDown size={12} className="text-accent-color" />}
+                  <span>{sortDirection.toUpperCase()}</span>
+                </button>
+              </div>
+
+              {sortedRosters.map((r) => {
                 const profile = profiles.find(p => p.roster_id === r.roster_id);
                 const user = selectedSeason.rosterToUser[r.roster_id];
                 const pf = (r.settings.fpts + (r.settings.fpts_decimal/100)).toFixed(1);
                 const pa = (r.settings.fpts_against + (r.settings.fpts_against_decimal/100)).toFixed(1);
-                
+                const seed = regularSeasonStandingsOrder.get(r.roster_id) || 1;
+
                 return (
                   <div 
-                    key={r.roster_id} 
+                    key={r.roster_id}
                     onClick={() => profile && setSelectedManagerProfile(profile)}
-                    className={`p-4 rounded-xl border transition-all cursor-pointer hover:border-white/20 active:scale-[0.99] ${
-                      i === 0 
-                        ? 'bg-amber-500/5 border-amber-500/25 shadow-lg shadow-amber-500/5' 
-                        : i === 1 
-                        ? 'bg-slate-400/5 border-slate-400/25' 
-                        : i === 2 
-                        ? 'bg-amber-700/5 border-amber-700/25' 
-                        : 'bg-black/30 border-white/5 hover:bg-white/[0.02]'
-                    }`}
+                    className="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 hover:border-white/15 transition-all cursor-pointer"
                   >
-                    <div className="flex items-center justify-between gap-3 border-b border-white/5 pb-3 mb-3">
+                    <div className="flex items-center justify-between gap-3 mb-3">
                       <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className={`flex items-center justify-center shrink-0 w-7 h-7 rounded-full text-xs font-bold ${
-                          i === 0 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' :
-                          i === 1 ? 'bg-slate-400/20 text-slate-300 border border-slate-400/40' :
-                          i === 2 ? 'bg-amber-700/20 text-amber-500 border border-amber-700/40' :
-                          'bg-white/5 text-muted border border-white/10'
+                        <span className={`font-mono text-sm font-bold w-4 text-center shrink-0 ${
+                          seed === 1 ? 'text-amber-400' : seed === 2 ? 'text-slate-300' : seed === 3 ? 'text-amber-600' : 'text-muted'
                         }`}>
-                          {i + 1}
-                        </div>
+                          {seed}
+                        </span>
                         {user?.avatar ? (
-                          <img src={`https://sleepercdn.com/avatars/thumbs/${user.avatar}`} alt="" className="w-10 h-10 rounded-full border border-white/15 object-cover shrink-0" />
+                          <img src={`https://sleepercdn.com/avatars/thumbs/${user.avatar}`} alt="avatar" className="w-10 h-10 rounded-full object-cover shrink-0" />
                         ) : (
                           <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/50 shrink-0">N/A</div>
                         )}
                         <div className="min-w-0 flex-1">
                           <div className="font-bold text-sm text-white truncate flex items-center gap-1.5">
                             <span className="truncate">{user?.display_name || `Team ${r.roster_id}`}</span>
-                            {i < 2 && (
+                            {seed <= 2 && (
                               <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-300 border border-amber-500/25 shrink-0">
                                 BYE
                               </span>
                             )}
-                            {i >= 2 && i < 6 && (
+                            {seed > 2 && seed <= 6 && (
                               <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/25 shrink-0">
                                 PLAYOFF
                               </span>
@@ -805,13 +906,45 @@ export const Managers: React.FC = () => {
                 <table className="standings-table">
                   <thead className="bg-white/[0.02]">
                     <tr>
-                      <th>Team</th>
-                      <th className="text-center">Record</th>
+                      <th 
+                        onClick={() => handleSort('team')} 
+                        className="cursor-pointer select-none hover:text-white transition-colors group"
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <span>Team</span>
+                          {sortKey === 'team' ? (
+                            sortDirection === 'asc' ? <ArrowUp size={13} className="text-accent-color" /> : <ArrowDown size={13} className="text-accent-color" />
+                          ) : (
+                            <ArrowUpDown size={12} className="opacity-30 group-hover:opacity-70 transition-opacity" />
+                          )}
+                        </div>
+                      </th>
+                      <th 
+                        onClick={() => handleSort('record')} 
+                        className="text-center cursor-pointer select-none hover:text-white transition-colors group"
+                      >
+                        <div className="flex items-center justify-center gap-1.5">
+                          <span>Record</span>
+                          {sortKey === 'record' || sortKey === 'standings' ? (
+                            sortDirection === 'asc' ? <ArrowUp size={13} className="text-accent-color" /> : <ArrowDown size={13} className="text-accent-color" />
+                          ) : (
+                            <ArrowUpDown size={12} className="opacity-30 group-hover:opacity-70 transition-opacity" />
+                          )}
+                        </div>
+                      </th>
                       {showAnalytics && (
-                        <th className="text-center">
+                        <th 
+                          onClick={() => handleSort('allPlay')} 
+                          className="text-center cursor-pointer select-none hover:text-white transition-colors group"
+                        >
                           <div className="flex items-center justify-center gap-1.5">
                             <span>Vs League</span>
-                            <div className="tooltip-container">
+                            {sortKey === 'allPlay' ? (
+                              sortDirection === 'asc' ? <ArrowUp size={13} className="text-accent-color" /> : <ArrowDown size={13} className="text-accent-color" />
+                            ) : (
+                              <ArrowUpDown size={12} className="opacity-30 group-hover:opacity-70 transition-opacity" />
+                            )}
+                            <div className="tooltip-container" onClick={e => e.stopPropagation()}>
                               <Info size={12} className="text-muted opacity-50" />
                               <div className="tooltip-text tooltip-bottom">
                                 Standard All-Play Record: Wins and losses aggregated as if you played every league member every week.
@@ -821,10 +954,18 @@ export const Managers: React.FC = () => {
                         </th>
                       )}
                       {showAnalytics && (
-                        <th className="text-center">
+                        <th 
+                          onClick={() => handleSort('luck')} 
+                          className="text-center cursor-pointer select-none hover:text-white transition-colors group"
+                        >
                           <div className="flex items-center justify-center gap-1.5">
                             <span>Luck (WAE)</span>
-                            <div className="tooltip-container">
+                            {sortKey === 'luck' ? (
+                              sortDirection === 'asc' ? <ArrowUp size={13} className="text-accent-color" /> : <ArrowDown size={13} className="text-accent-color" />
+                            ) : (
+                              <ArrowUpDown size={12} className="opacity-30 group-hover:opacity-70 transition-opacity" />
+                            )}
+                            <div className="tooltip-container" onClick={e => e.stopPropagation()}>
                               <Info size={12} className="text-muted opacity-50" />
                               <div className="tooltip-text tooltip-bottom">
                                 Wins Above Expectation (WAE): Actual wins minus expected all-play wins. Positive (+WAE) indicates favorable schedule fortune; negative (-WAE) indicates brutal opponent matchups.
@@ -833,14 +974,60 @@ export const Managers: React.FC = () => {
                           </div>
                         </th>
                       )}
-                      <th className="text-center">PF</th>
-                      <th className="text-center">PA</th>
-                      {showAnalytics && <th className="text-center">Lineup Acc</th>}
+                      <th 
+                        onClick={() => handleSort('pf')} 
+                        className="text-center cursor-pointer select-none hover:text-white transition-colors group"
+                      >
+                        <div className="flex items-center justify-center gap-1.5">
+                          <span>PF</span>
+                          {sortKey === 'pf' ? (
+                            sortDirection === 'asc' ? <ArrowUp size={13} className="text-accent-color" /> : <ArrowDown size={13} className="text-accent-color" />
+                          ) : (
+                            <ArrowUpDown size={12} className="opacity-30 group-hover:opacity-70 transition-opacity" />
+                          )}
+                        </div>
+                      </th>
+                      <th 
+                        onClick={() => handleSort('pa')} 
+                        className="text-center cursor-pointer select-none hover:text-white transition-colors group"
+                      >
+                        <div className="flex items-center justify-center gap-1.5">
+                          <span>PA</span>
+                          {sortKey === 'pa' ? (
+                            sortDirection === 'asc' ? <ArrowUp size={13} className="text-accent-color" /> : <ArrowDown size={13} className="text-accent-color" />
+                          ) : (
+                            <ArrowUpDown size={12} className="opacity-30 group-hover:opacity-70 transition-opacity" />
+                          )}
+                        </div>
+                      </th>
                       {showAnalytics && (
-                        <th className="text-center">
+                        <th 
+                          onClick={() => handleSort('lineupAcc')} 
+                          className="text-center cursor-pointer select-none hover:text-white transition-colors group"
+                        >
+                          <div className="flex items-center justify-center gap-1.5">
+                            <span>Lineup Acc</span>
+                            {sortKey === 'lineupAcc' ? (
+                              sortDirection === 'asc' ? <ArrowUp size={13} className="text-accent-color" /> : <ArrowDown size={13} className="text-accent-color" />
+                            ) : (
+                              <ArrowUpDown size={12} className="opacity-30 group-hover:opacity-70 transition-opacity" />
+                            )}
+                          </div>
+                        </th>
+                      )}
+                      {showAnalytics && (
+                        <th 
+                          onClick={() => handleSort('powerScore')} 
+                          className="text-center cursor-pointer select-none hover:text-white transition-colors group"
+                        >
                           <div className="flex items-center justify-center gap-1.5">
                             <span>Power Score</span>
-                            <div className="tooltip-container">
+                            {sortKey === 'powerScore' ? (
+                              sortDirection === 'asc' ? <ArrowUp size={13} className="text-accent-color" /> : <ArrowDown size={13} className="text-accent-color" />
+                            ) : (
+                              <ArrowUpDown size={12} className="opacity-30 group-hover:opacity-70 transition-opacity" />
+                            )}
+                            <div className="tooltip-container" onClick={e => e.stopPropagation()}>
                               <Info size={12} className="text-muted opacity-50" />
                               <div className="tooltip-text tooltip-bottom align-right">
                                 Power Score: Holistic formula weighting Points For (30%), All-Play % (25%), Win % (25%), and Lineup Efficiency (20%).
@@ -853,8 +1040,10 @@ export const Managers: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {[...selectedSeason.rosters].sort((a,b) => b.settings.wins - a.settings.wins || b.settings.fpts - a.settings.fpts).map((r, i) => {
+                    {sortedRosters.map((r, i) => {
                       const profile = profiles.find(p => p.roster_id === r.roster_id);
+                      const seed = regularSeasonStandingsOrder.get(r.roster_id) || (i + 1);
+
                       return (
                         <tr 
                           key={r.roster_id} 
@@ -866,9 +1055,9 @@ export const Managers: React.FC = () => {
                         >
                           <td className="team-cell">
                             <span className={`font-mono text-xs font-bold mr-2 ${
-                              i === 0 ? 'text-amber-400' : i === 1 ? 'text-slate-300' : i === 2 ? 'text-amber-600' : 'text-muted'
+                              seed === 1 ? 'text-amber-400' : seed === 2 ? 'text-slate-300' : seed === 3 ? 'text-amber-600' : 'text-muted'
                             }`}>
-                              {i + 1}.
+                              {seed}.
                             </span>
                             {selectedSeason.rosterToUser[r.roster_id]?.avatar ? (
                               <img src={`https://sleepercdn.com/avatars/thumbs/${selectedSeason.rosterToUser[r.roster_id].avatar}`} alt="avatar" className="team-avatar" />
@@ -877,12 +1066,12 @@ export const Managers: React.FC = () => {
                             )}
                             <span className="font-semibold text-white group-hover:text-accent-color transition-colors flex items-center gap-2">
                               <span>{selectedSeason.rosterToUser[r.roster_id]?.display_name || `Team ${r.roster_id}`}</span>
-                              {i < 2 && (
+                              {seed <= 2 && (
                                 <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/25">
                                   BYE
                                 </span>
                               )}
-                              {i >= 2 && i < 6 && (
+                              {seed > 2 && seed <= 6 && (
                                 <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/25">
                                   PLAYOFFS
                                 </span>
