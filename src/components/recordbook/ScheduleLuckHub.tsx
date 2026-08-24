@@ -357,38 +357,38 @@ export const ScheduleLuckHub: React.FC<ScheduleLuckHubProps> = ({ matchups }) =>
             All-Play Win % (True Roster Quality) vs. Wins Above Expectation (WAE). Quadrants classify managers based on independent roster strength vs schedule fortune.
           </div>
           <div className="grid grid-cols-2 gap-2 pt-3 mt-3 border-t border-white/5">
-            {/* Top-Left: Paper Tigers */}
+            {/* Top-Left: Inflated Records */}
             <div className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-2.5 rounded-xl bg-blue-500/5 border border-blue-500/20 text-xs min-w-0">
-              <span className="text-sm shrink-0">🐅</span>
+              <span className="text-sm shrink-0">🎈</span>
               <div className="min-w-0 flex-1">
-                <div className="font-bold text-blue-400 truncate">Paper Tigers</div>
+                <div className="font-bold text-blue-400 truncate">Inflated Records</div>
                 <div className="text-[10px] text-muted truncate">Top-Left • Low All-Play %, High Luck (+WAE)</div>
               </div>
             </div>
 
-            {/* Top-Right: #blessed */}
+            {/* Top-Right: Gold Standard */}
             <div className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-xs min-w-0">
-              <span className="text-sm shrink-0">🙏</span>
+              <span className="text-sm shrink-0">🌟</span>
               <div className="min-w-0 flex-1">
-                <div className="font-bold text-emerald-400 truncate">#blessed</div>
+                <div className="font-bold text-emerald-400 truncate">Gold Standard</div>
                 <div className="text-[10px] text-muted truncate">Top-Right • Elite All-Play %, High Luck (+WAE)</div>
               </div>
             </div>
 
-            {/* Bottom-Left: Kicked While Down */}
+            {/* Bottom-Left: True Basement */}
             <div className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-2.5 rounded-xl bg-rose-500/5 border border-rose-500/20 text-xs min-w-0">
-              <span className="text-sm shrink-0">🩼</span>
+              <span className="text-sm shrink-0">📉</span>
               <div className="min-w-0 flex-1">
-                <div className="font-bold text-rose-400 truncate">Kicked While Down</div>
+                <div className="font-bold text-rose-400 truncate">True Basement</div>
                 <div className="text-[10px] text-muted truncate">Bottom-Left • Low All-Play %, Brutal Schedule (-WAE)</div>
               </div>
             </div>
 
-            {/* Bottom-Right: Didn't Hear No Bell */}
+            {/* Bottom-Right: Gauntlet Victims */}
             <div className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-2.5 rounded-xl bg-amber-500/5 border border-amber-500/20 text-xs min-w-0">
-              <span className="text-sm shrink-0">🥊</span>
+              <span className="text-sm shrink-0">🛡️</span>
               <div className="min-w-0 flex-1">
-                <div className="font-bold text-amber-400 truncate">Didn't Hear No Bell</div>
+                <div className="font-bold text-amber-400 truncate">Gauntlet Victims</div>
                 <div className="text-[10px] text-muted truncate">Bottom-Right • Elite All-Play %, Robbed by Schedule (-WAE)</div>
               </div>
             </div>
