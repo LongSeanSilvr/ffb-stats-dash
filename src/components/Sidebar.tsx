@@ -27,10 +27,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             <UserCircle size={20} />
             League Managers
           </NavLink>
-          <NavLink to="/recordbook" onClick={onClose} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-            <BookOpen size={20} />
-            Record Book
-          </NavLink>
           <NavLink to="/playoffs" onClick={onClose} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
             <Trophy size={20} />
             Playoffs
@@ -50,6 +46,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           <NavLink to="/freeagency" onClick={onClose} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
             <Zap size={20} />
             Free Agency
+          </NavLink>
+          <NavLink to="/recordbook" onClick={onClose} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+            <BookOpen size={20} />
+            Record Book
           </NavLink>
         </nav>
 

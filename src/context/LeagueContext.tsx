@@ -3,6 +3,8 @@ import type { ReactNode } from 'react';
 import { useLeagueData } from '../hooks/useLeagueData';
 import type { SeasonData } from '../hooks/useLeagueData';
 
+import { prefetchRecordBookData } from '../utils/prefetchRecordBook';
+
 interface LeagueContextType {
   loading: boolean;
   error: string | null;
@@ -19,10 +21,13 @@ export const LeagueProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const { loading, error, seasons } = useLeagueData(LEAGUE_ID);
   const [selectedSeasonId, setSelectedSeasonId] = useState<string | null>(null);
 
-  // Set the first season as default once data loads
+  // Set the first season as default once data loads and prefetch historical data in background
   useEffect(() => {
-    if (seasons.length > 0 && !selectedSeasonId) {
-      setSelectedSeasonId(seasons[0].league.league_id);
+    if (seasons.length > 0) {
+      if (!selectedSeasonId) {
+        setSelectedSeasonId(seasons[0].league.league_id);
+      }
+      prefetchRecordBookData(seasons);
     }
   }, [seasons, selectedSeasonId]);
 
