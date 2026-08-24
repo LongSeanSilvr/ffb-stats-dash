@@ -19,14 +19,15 @@ import {
   Scatter,
   XAxis,
   YAxis,
-  ZAxis,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   ReferenceLine,
-  Cell
+  CartesianGrid,
+  Label
 } from 'recharts';
 import type { ManagerScore } from '../../types/recordBook';
 import type { AllTimeMatchupData } from '../../hooks/useAllTimeMatchups';
 import { Card } from '../Card';
+import { MobileTapHint } from '../MobileTapHint';
 
 interface ScheduleLuckHubProps {
   managers: ManagerScore[];
@@ -40,12 +41,6 @@ const CustomAvatarDot = (props: any) => {
   const size = 26;
   const safeName = (payload.name || 'mgr').replace(/[^a-zA-Z0-9]/g, '_');
   const clipId = `clip-luck-${safeName}-${Math.round(cx)}-${Math.round(cy)}`;
-  const strokeColor =
-    payload.scheduleLuckWins >= 2
-      ? '#10b981'
-      : payload.scheduleLuckWins <= -2
-      ? '#f43f5e'
-      : '#38bdf8';
 
   return (
     <g className="cursor-pointer group">
@@ -54,15 +49,17 @@ const CustomAvatarDot = (props: any) => {
           <circle cx={cx} cy={cy} r={size / 2 - 1.5} />
         </clipPath>
       </defs>
+      {/* Invisible hit expander */}
       <circle cx={cx} cy={cy} r={size / 2 + 4} fill="transparent" />
+      {/* Outer border ring */}
       <circle
         cx={cx}
         cy={cy}
         r={size / 2}
         fill="#0f1115"
-        stroke={strokeColor}
-        strokeWidth="2"
-        className="group-hover:stroke-white group-hover:stroke-[3px] transition-all"
+        stroke="rgba(255,255,255,0.4)"
+        strokeWidth="1.5"
+        className="group-hover:stroke-white group-hover:stroke-[2.5px] transition-all"
       />
       {avatarUrl ? (
         <image
@@ -145,32 +142,39 @@ export const ScheduleLuckHub: React.FC<ScheduleLuckHubProps> = ({ matchups }) =>
       const isPositive = data.scheduleLuckWins >= 0;
 
       return (
-        <div className="glass-card p-3 rounded-xl border border-white/20 shadow-2xl backdrop-blur-xl max-w-xs text-xs space-y-1.5 z-50">
-          <div className="flex items-center gap-2 pb-1 border-b border-white/10">
+        <div style={{ background: 'rgba(15,17,21,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '1rem', boxShadow: '0 8px 32px rgba(0,0,0,0.5)', minWidth: '220px' }}>
+          <div className="flex items-center gap-3 mb-2 pb-1.5 border-b border-white/10">
             {avatarUrl ? (
-              <img src={avatarUrl} alt="" className="w-6 h-6 rounded-full object-cover border border-white/20" />
+              <img src={avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover border border-white/20 shadow" />
             ) : (
-              <div className="w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center text-[10px] text-white">N/A</div>
+              <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white">N/A</div>
             )}
-            <span className="font-bold text-white text-sm truncate">{data.name}</span>
+            <div>
+              <div className="font-bold text-sm text-white">{data.name}</div>
+              <div className="text-[10px] text-muted">{data.seasons} {data.seasons === 1 ? 'Season' : 'Seasons'}</div>
+            </div>
           </div>
-          <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] pt-0.5">
-            <div>
-              <span className="text-muted block">Actual Record</span>
-              <span className="font-bold text-white">{data.actualWins}-{data.actualLosses}</span>
+          <div className="space-y-1 text-xs text-muted">
+            <div className="flex justify-between">
+              <span>Actual Record:</span>
+              <span className="font-mono text-white font-bold">{data.actualWins}-{data.actualLosses}</span>
             </div>
-            <div>
-              <span className="text-muted block">Expected Wins</span>
-              <span className="font-bold text-blue-400">{data.expectedWins}</span>
+            <div className="flex justify-between">
+              <span>Expected Wins:</span>
+              <span className="font-mono text-blue-400 font-bold">{data.expectedWins}</span>
             </div>
-            <div>
-              <span className="text-muted block">All-Play Strength</span>
-              <span className="font-bold text-purple-400">{data.allPlayWinPct}%</span>
+            <div className="flex justify-between">
+              <span>All-Play Strength:</span>
+              <span className="font-mono text-purple-400 font-bold">{data.allPlayWinPct}%</span>
             </div>
-            <div>
-              <span className="text-muted block">Schedule Luck</span>
-              <span className={`font-bold ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
-                {isPositive ? `+${data.scheduleLuckWins}` : data.scheduleLuckWins} WAE
+            <div className="flex justify-between">
+              <span>Opponent PAPG:</span>
+              <span className="font-mono text-amber-400 font-bold">{data.papg}</span>
+            </div>
+            <div className="flex justify-between border-t border-white/5 pt-1 mt-1">
+              <span>Schedule Luck:</span>
+              <span className={`font-mono font-bold ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+                {isPositive ? `+${data.scheduleLuckWins.toFixed(1)}` : data.scheduleLuckWins.toFixed(1)} WAE
               </span>
             </div>
           </div>
@@ -347,43 +351,93 @@ export const ScheduleLuckHub: React.FC<ScheduleLuckHubProps> = ({ matchups }) =>
       </div>
 
       {/* Skill vs. Schedule Luck Scatter Plot */}
-      <Card
-        title={
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div className="flex items-center gap-2.5">
-              <TrendingUp className="text-cyan-400" size={20} />
-              <span>True Strength vs. Schedule Luck Matrix</span>
-            </div>
-            <span className="text-xs text-muted font-normal">
-              All-Play Strength (X) vs. Wins Above Expectation (Y)
-            </span>
+      <Card title="True Strength vs. Schedule Luck Matrix" className="stagger-1">
+        <div className="chart-header mb-4">
+          <div className="chart-description">
+            All-Play Win % (True Roster Quality) vs. Wins Above Expectation (WAE). Quadrants classify managers based on independent roster strength vs schedule fortune.
           </div>
-        }
-      >
-        <div className="h-72 sm:h-80 w-full pt-2">
+          <div className="grid grid-cols-2 gap-2 pt-3 mt-3 border-t border-white/5">
+            {/* Top-Left: Luck Beneficiary */}
+            <div className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-2.5 rounded-xl bg-blue-500/5 border border-blue-500/20 text-xs min-w-0">
+              <span className="text-sm shrink-0">🍀</span>
+              <div className="min-w-0 flex-1">
+                <div className="font-bold text-blue-400 truncate">Luck Beneficiary</div>
+                <div className="text-[10px] text-muted truncate">Top-Left • Low All-Play %, High Luck (+WAE)</div>
+              </div>
+            </div>
+
+            {/* Top-Right: Dynasty Juggernaut */}
+            <div className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-xs min-w-0">
+              <span className="text-sm shrink-0">👑</span>
+              <div className="min-w-0 flex-1">
+                <div className="font-bold text-emerald-400 truncate">Dynasty Juggernaut</div>
+                <div className="text-[10px] text-muted truncate">Top-Right • Elite All-Play %, High Luck (+WAE)</div>
+              </div>
+            </div>
+
+            {/* Bottom-Left: Double Jeopardy */}
+            <div className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-2.5 rounded-xl bg-rose-500/5 border border-rose-500/20 text-xs min-w-0">
+              <span className="text-sm shrink-0">📉</span>
+              <div className="min-w-0 flex-1">
+                <div className="font-bold text-rose-400 truncate">Double Jeopardy</div>
+                <div className="text-[10px] text-muted truncate">Bottom-Left • Low All-Play %, Brutal Schedule (-WAE)</div>
+              </div>
+            </div>
+
+            {/* Bottom-Right: Schedule Gauntlet */}
+            <div className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-2.5 rounded-xl bg-amber-500/5 border border-amber-500/20 text-xs min-w-0">
+              <span className="text-sm shrink-0">🛡️</span>
+              <div className="min-w-0 flex-1">
+                <div className="font-bold text-amber-400 truncate">Schedule Gauntlet</div>
+                <div className="text-[10px] text-muted truncate">Bottom-Right • Elite All-Play %, Robbed by Schedule (-WAE)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <MobileTapHint />
+        <div style={{ height: 380 }}>
           <ResponsiveContainer width="100%" height="100%">
-            <ScatterChart margin={{ top: 20, right: 30, bottom: 20, left: 10 }}>
+            <ScatterChart margin={{ top: 20, right: 30, bottom: 30, left: 10 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
               <XAxis
                 type="number"
                 dataKey="allPlayWinPct"
                 name="All-Play Win %"
-                domain={[35, 65]}
+                domain={['dataMin - 3', 'dataMax + 3']}
+                stroke="#94a3b8"
+                tick={{ fontSize: 12 }}
                 tickFormatter={v => `${v}%`}
-                stroke="#64748b"
-                tick={{ fill: '#94a3b8', fontSize: 11 }}
-              />
+              >
+                <Label
+                  value="All-Play Win % (True Roster Strength)"
+                  position="insideBottom"
+                  offset={-15}
+                  fill="#64748b"
+                  style={{ fontSize: '0.75rem', fontWeight: 500 }}
+                />
+              </XAxis>
               <YAxis
                 type="number"
                 dataKey="scheduleLuckWins"
-                name="Wins Above Expectation"
-                domain={[-8, 8]}
-                tickFormatter={v => (v > 0 ? `+${v}` : `${v}`)}
-                stroke="#64748b"
-                tick={{ fill: '#94a3b8', fontSize: 11 }}
-              />
-              <Tooltip content={<CustomScatterTooltip />} cursor={{ strokeDasharray: '3 3', stroke: 'rgba(255,255,255,0.1)' }} />
-              <ReferenceLine x={50} stroke="#475569" strokeDasharray="3 3" />
-              <ReferenceLine y={0} stroke="#475569" strokeDasharray="3 3" />
+                name="Wins Above Expectation (WAE)"
+                domain={['dataMin - 1', 'dataMax + 1']}
+                stroke="#94a3b8"
+                tick={{ fontSize: 12 }}
+                tickFormatter={v => (v > 0 ? `+${v.toFixed(1)}` : `${v.toFixed(1)}`)}
+                width={70}
+              >
+                <Label
+                  value="Wins Above Expectation (Schedule Luck)"
+                  angle={-90}
+                  position="insideLeft"
+                  offset={5}
+                  style={{ textAnchor: 'middle', fill: '#64748b', fontSize: '0.75rem', fontWeight: 500 }}
+                />
+              </YAxis>
+              <ReferenceLine x={50} stroke="rgba(255,255,255,0.2)" strokeDasharray="5 5" />
+              <ReferenceLine y={0} stroke="rgba(255,255,255,0.2)" strokeDasharray="5 5" />
+              <RechartsTooltip content={<CustomScatterTooltip />} cursor={{ strokeDasharray: '3 3', stroke: 'rgba(255,255,255,0.1)' }} />
               <Scatter
                 name="Managers"
                 data={scatterData}
@@ -392,26 +446,6 @@ export const ScheduleLuckHub: React.FC<ScheduleLuckHubProps> = ({ matchups }) =>
               />
             </ScatterChart>
           </ResponsiveContainer>
-        </div>
-
-        {/* Quadrant Legend Labels */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 pt-4 border-t border-white/5 text-[11px] text-center">
-          <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-            <span className="font-bold block">Dominant & Fortunate</span>
-            <span className="text-[10px] text-muted">High All-Play & Positive WAE</span>
-          </div>
-          <div className="p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
-            <span className="font-bold block">Schedule Beneficiary</span>
-            <span className="text-[10px] text-muted">Sub-50% All-Play & Positive WAE</span>
-          </div>
-          <div className="p-2 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400">
-            <span className="font-bold block">Unlucky Juggernaut</span>
-            <span className="text-[10px] text-muted">High All-Play & Negative WAE</span>
-          </div>
-          <div className="p-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400">
-            <span className="font-bold block">Toughest Gauntlet</span>
-            <span className="text-[10px] text-muted">Sub-50% All-Play & Negative WAE</span>
-          </div>
         </div>
       </Card>
 
