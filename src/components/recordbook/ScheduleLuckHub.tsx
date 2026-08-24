@@ -377,7 +377,7 @@ export const ScheduleLuckHub: React.FC<ScheduleLuckHubProps> = ({ matchups }) =>
 
             {/* Bottom-Left: Kicked While Down */}
             <div className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-2.5 rounded-xl bg-rose-500/5 border border-rose-500/20 text-xs min-w-0">
-              <span className="text-sm shrink-0">🩹</span>
+              <span className="text-sm shrink-0">🩼</span>
               <div className="min-w-0 flex-1">
                 <div className="font-bold text-rose-400 truncate">Kicked While Down</div>
                 <div className="text-[10px] text-muted truncate">Bottom-Left • Low All-Play %, Brutal Schedule (-WAE)</div>
