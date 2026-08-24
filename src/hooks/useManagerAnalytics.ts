@@ -47,6 +47,11 @@ export interface ManagerProfile {
   idxDraft: number;
   idxAcq: number;
   idxTrade: number;
+
+  // Schedule Luck & Expected Wins
+  expectedWins: number;
+  wae: number;
+  allPlayWinPct: number;
 }
 
 export function useManagerAnalytics() {
@@ -62,7 +67,6 @@ export function useManagerAnalytics() {
 
   useEffect(() => {
     if (!selectedSeason || loading) return;
-    if (!draftData.length) return; // Draft data is our mandatory floor for generating analytics
 
     // Pass 1: Collect raw attribution stats across all active managers
     const intermediate = selectedSeason.rosters.map(roster => {
@@ -131,6 +135,12 @@ export function useManagerAnalytics() {
         ? Number((totalMaxPoints - totalPointsFor).toFixed(1)) 
         : coach?.plob || 0;
 
+      const totalGames = wins + losses;
+      const totalAllPlay = allPlayWins + allPlayLosses + allPlayTies;
+      const allPlayWinPct = totalAllPlay > 0 ? Number(((allPlayWins / totalAllPlay) * 100).toFixed(1)) : 50;
+      const expectedWins = totalAllPlay > 0 ? Number(((allPlayWins / totalAllPlay) * totalGames).toFixed(1)) : Number((totalGames * 0.5).toFixed(1));
+      const wae = Number((wins - expectedWins).toFixed(1));
+
       return {
         roster_id: rosterId,
         user,
@@ -141,6 +151,9 @@ export function useManagerAnalytics() {
         allPlayWins,
         allPlayLosses,
         allPlayTies,
+        allPlayWinPct,
+        expectedWins,
+        wae,
         coachingEfficiency,
         pointsLeftOnBench,
         positionalPoints,

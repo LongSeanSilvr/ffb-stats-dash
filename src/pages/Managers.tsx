@@ -444,10 +444,6 @@ export const Managers: React.FC = () => {
   // --- Hero KPIs ---
   const heroKpis = React.useMemo(() => {
     if (!selectedSeason || !profiles.length) return null;
-    const sortedByStandings = [...selectedSeason.rosters].sort((a, b) => b.settings.wins - a.settings.wins || b.settings.fpts - a.settings.fpts);
-    const topSeed = sortedByStandings[0];
-    const topSeedUser = topSeed ? selectedSeason.rosterToUser[topSeed.roster_id] : null;
-
     const topComposite = [...profiles].sort((a, b) => b.compositeScore - a.compositeScore)[0];
     const topCoach = [...profiles].sort((a, b) => b.coachingEfficiency - a.coachingEfficiency)[0];
     
@@ -455,14 +451,9 @@ export const Managers: React.FC = () => {
     const topScorer = sortedByPoints[0];
     const topScorerUser = topScorer ? selectedSeason.rosterToUser[topScorer.roster_id] : null;
 
+    const topLuck = [...profiles].sort((a, b) => b.wae - a.wae)[0];
+
     return {
-      topSeed: topSeed ? {
-        rosterId: topSeed.roster_id,
-        user: topSeedUser,
-        wins: topSeed.settings.wins,
-        losses: topSeed.settings.losses,
-        fpts: (topSeed.settings.fpts + topSeed.settings.fpts_decimal/100).toFixed(1)
-      } : null,
       topComposite: topComposite ? {
         user: topComposite.user,
         score: topComposite.compositeScore.toFixed(1),
@@ -477,6 +468,13 @@ export const Managers: React.FC = () => {
         user: topScorerUser,
         fpts: (topScorer.settings.fpts + topScorer.settings.fpts_decimal/100).toFixed(1),
         rosterId: topScorer.roster_id
+      } : null,
+      topLuck: topLuck ? {
+        user: topLuck.user,
+        wae: topLuck.wae,
+        wins: topLuck.wins,
+        expectedWins: topLuck.expectedWins,
+        rosterId: topLuck.roster_id
       } : null
     };
   }, [selectedSeason, profiles]);
@@ -505,43 +503,7 @@ export const Managers: React.FC = () => {
       {/* Hero KPI Cards */}
       {heroKpis && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 mb-6 sm:mb-8 w-full">
-          {/* 1. Regular Season Leader */}
-          {heroKpis.topSeed && (
-            <div className="glass-card p-3 sm:p-4 rounded-xl border border-amber-500/20 flex flex-col justify-between min-w-0 overflow-hidden">
-              <div>
-                <div className="text-[11px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5 mb-2 min-w-0">
-                  <Crown size={14} className="text-amber-400 shrink-0" />
-                  <span className="truncate">Regular Season #1 Seed</span>
-                </div>
-                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                  {heroKpis.topSeed.user?.avatar ? (
-                    <img
-                      src={`https://sleepercdn.com/avatars/thumbs/${heroKpis.topSeed.user.avatar}`}
-                      alt=""
-                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-amber-400/40 object-cover shrink-0"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
-                      N/A
-                    </div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <div className="font-bold text-white text-xs sm:text-sm truncate">
-                      {heroKpis.topSeed.user?.display_name || `Team ${heroKpis.topSeed.rosterId}`}
-                    </div>
-                    <div className="text-[11px] sm:text-xs font-mono font-bold text-amber-400 mt-0.5 leading-snug">
-                      {heroKpis.topSeed.wins}-{heroKpis.topSeed.losses} ({heroKpis.topSeed.fpts} pts)
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="text-[10px] sm:text-[11px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
-                Top regular season record and standings seed
-              </div>
-            </div>
-          )}
-
-          {/* 2. Top Power Score */}
+          {/* 1. Top Power Score */}
           {heroKpis.topComposite && (
             <div className="glass-card p-3 sm:p-4 rounded-xl border border-blue-500/20 flex flex-col justify-between min-w-0 overflow-hidden">
               <div>
@@ -577,7 +539,7 @@ export const Managers: React.FC = () => {
             </div>
           )}
 
-          {/* 3. Top Lineup Accuracy */}
+          {/* 2. Top Lineup Accuracy */}
           {heroKpis.topCoach && (
             <div className="glass-card p-3 sm:p-4 rounded-xl border border-emerald-500/20 flex flex-col justify-between min-w-0 overflow-hidden">
               <div>
@@ -613,7 +575,7 @@ export const Managers: React.FC = () => {
             </div>
           )}
 
-          {/* 4. Top Regular Season Scorer */}
+          {/* 3. Top Regular Season Scorer */}
           {heroKpis.topScorer && (
             <div className="glass-card p-3 sm:p-4 rounded-xl border border-purple-500/20 flex flex-col justify-between min-w-0 overflow-hidden">
               <div>
@@ -645,6 +607,42 @@ export const Managers: React.FC = () => {
               </div>
               <div className="text-[10px] sm:text-[11px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
                 Most total regular season fantasy points scored
+              </div>
+            </div>
+          )}
+
+          {/* 4. Season Luck Leader */}
+          {heroKpis.topLuck && (
+            <div className="glass-card p-3 sm:p-4 rounded-xl border border-amber-500/20 flex flex-col justify-between min-w-0 overflow-hidden">
+              <div>
+                <div className="text-[11px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5 mb-2 min-w-0">
+                  <Sparkles size={14} className="text-amber-400 shrink-0" />
+                  <span className="truncate">Season Luck Leader</span>
+                </div>
+                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                  {heroKpis.topLuck.user?.avatar ? (
+                    <img
+                      src={`https://sleepercdn.com/avatars/thumbs/${heroKpis.topLuck.user.avatar}`}
+                      alt=""
+                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-amber-400/40 object-cover shrink-0"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-700 flex items-center justify-center text-xs text-white/60 shrink-0">
+                      N/A
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="font-bold text-white text-xs sm:text-sm truncate">
+                      {heroKpis.topLuck.user?.display_name || `Team ${heroKpis.topLuck.rosterId}`}
+                    </div>
+                    <div className="text-[11px] sm:text-xs font-mono font-bold text-amber-400 mt-0.5 leading-snug">
+                      {heroKpis.topLuck.wae >= 0 ? `+${heroKpis.topLuck.wae}` : heroKpis.topLuck.wae} WAE
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="text-[10px] sm:text-[11px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
+                {heroKpis.topLuck.wins} Wins vs {heroKpis.topLuck.expectedWins} Expected (+{heroKpis.topLuck.wae} luck bonus)
               </div>
             </div>
           )}
@@ -776,7 +774,7 @@ export const Managers: React.FC = () => {
                       )}
                     </div>
                     
-                    <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                    <div className="grid grid-cols-4 gap-2 text-center text-xs">
                       <div className="p-2 rounded-lg bg-white/[0.02] border border-white/5">
                         <span className="text-[10px] text-muted uppercase tracking-wider block mb-0.5">PF</span>
                         <span className="font-mono font-bold text-accent-color">{pf}</span>
@@ -788,6 +786,12 @@ export const Managers: React.FC = () => {
                       <div className="p-2 rounded-lg bg-white/[0.02] border border-white/5">
                         <span className="text-[10px] text-muted uppercase tracking-wider block mb-0.5">Vs League</span>
                         <span className="font-mono font-bold text-success-color">{profile?.allPlayWins}-{profile?.allPlayLosses}</span>
+                      </div>
+                      <div className="p-2 rounded-lg bg-white/[0.02] border border-white/5">
+                        <span className="text-[10px] text-muted uppercase tracking-wider block mb-0.5">Luck</span>
+                        <span className={`font-mono font-bold ${profile && profile.wae >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                          {profile ? (profile.wae >= 0 ? `+${profile.wae}` : profile.wae) : '--'}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -811,6 +815,19 @@ export const Managers: React.FC = () => {
                               <Info size={12} className="text-muted opacity-50" />
                               <div className="tooltip-text tooltip-bottom">
                                 Standard All-Play Record: Wins and losses aggregated as if you played every league member every week.
+                              </div>
+                            </div>
+                          </div>
+                        </th>
+                      )}
+                      {showAnalytics && (
+                        <th className="text-center">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <span>Luck (WAE)</span>
+                            <div className="tooltip-container">
+                              <Info size={12} className="text-muted opacity-50" />
+                              <div className="tooltip-text tooltip-bottom">
+                                Wins Above Expectation (WAE): Actual wins minus expected all-play wins. Positive (+WAE) indicates favorable schedule fortune; negative (-WAE) indicates brutal opponent matchups.
                               </div>
                             </div>
                           </div>
@@ -874,6 +891,15 @@ export const Managers: React.FC = () => {
                           </td>
                           <td className="text-center text-base font-bold font-mono text-white">{r.settings.wins}-{r.settings.losses}{r.settings.ties > 0 ? `-${r.settings.ties}` : ''}</td>
                           {showAnalytics && <td className="text-center font-mono text-success-color font-bold">{profile?.allPlayWins}-{profile?.allPlayLosses}</td>}
+                          {showAnalytics && (
+                            <td className="text-center font-mono font-bold">
+                              {profile ? (
+                                <span className={profile.wae >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                                  {profile.wae >= 0 ? `+${profile.wae}` : profile.wae}
+                                </span>
+                              ) : '--'}
+                            </td>
+                          )}
                           <td className="text-center font-mono text-accent-color font-semibold">{(r.settings.fpts + (r.settings.fpts_decimal/100)).toFixed(1)}</td>
                           <td className="text-center font-mono text-muted">{(r.settings.fpts_against + (r.settings.fpts_against_decimal/100)).toFixed(1)}</td>
                           {showAnalytics && <td className="text-center font-mono text-white font-bold">{profile?.coachingEfficiency}%</td>}
@@ -1312,34 +1338,109 @@ export const Managers: React.FC = () => {
               </div>
             </div>
 
-            {/* Executive Composite Rating */}
+            {/* Executive Power Rating */}
             <div className="p-5 rounded-2xl bg-gradient-to-br from-blue-950/40 via-indigo-950/20 to-purple-950/40 border border-blue-500/20 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm font-bold text-blue-300">
                   <Sparkles size={16} className="text-blue-400" />
-                  <span>Composite Index Rating</span>
+                  <span>Season Power Rating</span>
                 </div>
                 <div className="font-mono text-2xl font-black text-accent-color">
                   {selectedManagerProfile.compositeScore.toFixed(1)} <span className="text-xs text-muted font-normal">/ 100</span>
                 </div>
               </div>
               
-              {/* Sub-index Progress Bars */}
-              <div className="grid grid-cols-3 gap-3 pt-2">
-                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5">
-                  <div className="text-[10px] text-muted uppercase tracking-wider font-semibold mb-1">Drafting (40%)</div>
-                  <div className="font-mono text-base font-bold text-teal-400">{selectedManagerProfile.idxDraft ?? '--'}</div>
+              {/* Holistic Pillar Badges */}
+              <div className="grid grid-cols-4 gap-2 pt-2 text-center text-xs">
+                <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/5">
+                  <div className="text-[10px] text-muted uppercase tracking-wider font-semibold mb-1">Points (30%)</div>
+                  <div className="font-mono text-sm font-bold text-accent-color">{selectedManagerProfile.totalPointsFor.toFixed(1)}</div>
                 </div>
-                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5">
-                  <div className="text-[10px] text-muted uppercase tracking-wider font-semibold mb-1">Free Agency (40%)</div>
-                  <div className="font-mono text-base font-bold text-emerald-400">{selectedManagerProfile.idxAcq ?? '--'}</div>
+                <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/5">
+                  <div className="text-[10px] text-muted uppercase tracking-wider font-semibold mb-1">All-Play (25%)</div>
+                  <div className="font-mono text-sm font-bold text-purple-400">{selectedManagerProfile.allPlayWinPct}%</div>
                 </div>
-                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5">
-                  <div className="text-[10px] text-muted uppercase tracking-wider font-semibold mb-1">Trading (20%)</div>
-                  <div className="font-mono text-base font-bold text-purple-400">{selectedManagerProfile.idxTrade ?? '--'}</div>
+                <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/5">
+                  <div className="text-[10px] text-muted uppercase tracking-wider font-semibold mb-1">Wins (25%)</div>
+                  <div className="font-mono text-sm font-bold text-emerald-400">{selectedManagerProfile.wins}W</div>
+                </div>
+                <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/5">
+                  <div className="text-[10px] text-muted uppercase tracking-wider font-semibold mb-1">Lineup (20%)</div>
+                  <div className="font-mono text-sm font-bold text-teal-400">{selectedManagerProfile.coachingEfficiency}%</div>
                 </div>
               </div>
             </div>
+
+            {/* Schedule Fortune & Matchup Luck Card */}
+            {(() => {
+              const wae = selectedManagerProfile.wae;
+              const apWinPct = selectedManagerProfile.allPlayWinPct;
+              
+              // Quadrant classifier matching the site standard
+              let quadEmoji = '🌟';
+              let quadTitle = 'Gold Standard';
+              let quadColor = 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10';
+              let quadDesc = 'High Roster Quality • Favorable Matchups';
+
+              if (apWinPct >= 50 && wae < 0) {
+                quadEmoji = '🛡️';
+                quadTitle = 'Gauntlet Victim';
+                quadColor = 'text-amber-400 border-amber-500/30 bg-amber-500/10';
+                quadDesc = 'High Roster Quality • Robbed by Opponent Spikes';
+              } else if (apWinPct < 50 && wae >= 0) {
+                quadEmoji = '🎈';
+                quadTitle = 'Inflated Records';
+                quadColor = 'text-blue-400 border-blue-500/30 bg-blue-500/10';
+                quadDesc = 'Lower Roster Quality • Carried by Soft Schedule';
+              } else if (apWinPct < 50 && wae < 0) {
+                quadEmoji = '📉';
+                quadTitle = 'True Basement';
+                quadColor = 'text-rose-400 border-rose-500/30 bg-rose-500/10';
+                quadDesc = 'Lower Roster Quality • Brutal Opponent Matchups';
+              }
+
+              return (
+                <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/10 space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 text-sm font-bold text-white">
+                      <Sparkles size={16} className="text-amber-400" />
+                      <span>Schedule Fortune & Matchup Luck</span>
+                    </div>
+                    <div className={`px-2.5 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 ${quadColor}`}>
+                      <span>{quadEmoji}</span>
+                      <span>{quadTitle}</span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1 text-center">
+                    <div className="p-2.5 rounded-xl bg-white/[0.02] border border-white/5">
+                      <div className="text-[10px] text-muted uppercase tracking-wider font-semibold">Actual Record</div>
+                      <div className="font-mono text-base font-bold text-white mt-0.5">{selectedManagerProfile.wins}-{selectedManagerProfile.losses}</div>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-white/[0.02] border border-white/5">
+                      <div className="text-[10px] text-muted uppercase tracking-wider font-semibold">Expected Wins</div>
+                      <div className="font-mono text-base font-bold text-purple-400 mt-0.5">{selectedManagerProfile.expectedWins} Wins</div>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-white/[0.02] border border-white/5">
+                      <div className="text-[10px] text-muted uppercase tracking-wider font-semibold">Schedule Luck (WAE)</div>
+                      <div className={`font-mono text-base font-bold mt-0.5 ${wae >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {wae >= 0 ? `+${wae}` : wae} WAE
+                      </div>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-white/[0.02] border border-white/5">
+                      <div className="text-[10px] text-muted uppercase tracking-wider font-semibold">All-Play Win %</div>
+                      <div className="font-mono text-base font-bold text-accent-color mt-0.5">{apWinPct}%</div>
+                    </div>
+                  </div>
+                  <div className="text-[11px] text-muted pt-1 border-t border-white/5 flex items-center justify-between">
+                    <span>{quadDesc}</span>
+                    <span className={wae >= 0 ? 'text-emerald-400 font-semibold' : 'text-rose-400 font-semibold'}>
+                      {wae >= 0 ? `+${wae} extra wins via soft schedule` : `${Math.abs(wae)} wins lost to tough schedule`}
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Sourcing Channel Breakdown */}
             <div className="space-y-3">
