@@ -99,7 +99,7 @@ const CustomScatterTooltip = ({ active, payload }: any) => {
         <div className="text-sm text-muted">Record: <span className="text-white font-bold ml-1">{data.wins}W</span></div>
         <div className="text-sm text-muted">Draft Points: <span className="text-accent-color font-bold ml-1">{data.draftPts?.toFixed(1)}</span></div>
         <div className="text-sm text-muted">FAAB Points: <span className="text-success-color font-bold ml-1">{data.faabPts?.toFixed(1)}</span></div>
-        {data.compositeScore !== undefined && <div className="text-sm text-muted">Composite Score: <span className="text-white font-bold ml-1">{data.compositeScore}</span></div>}
+        {data.compositeScore !== undefined && <div className="text-sm text-muted">Power Score: <span className="text-white font-bold ml-1">{data.compositeScore}</span></div>}
       </div>
     );
   }
@@ -172,7 +172,7 @@ export const Managers: React.FC = () => {
               onClick={() => setter(top3)}
               className="text-[11px] text-accent-color hover:underline cursor-pointer font-semibold"
             >
-              Top 3 by Composite
+              Top 3 by Power Score
             </button>
             <span>•</span>
             <button
@@ -498,7 +498,7 @@ export const Managers: React.FC = () => {
       <div className="mb-8">
         <h1 className="text-2xl md:text-3xl font-bold text-gradient">League Managers ({selectedSeason.league.season})</h1>
         <p className="text-muted text-sm mt-1">
-          Season standings, sourcing efficiency matrices, composite scores, and comparative multi-discipline radars.
+          Season standings, sourcing efficiency matrices, power scores, and comparative multi-discipline radars.
         </p>
       </div>
 
@@ -541,13 +541,13 @@ export const Managers: React.FC = () => {
             </div>
           )}
 
-          {/* 2. Top Composite Score */}
+          {/* 2. Top Power Score */}
           {heroKpis.topComposite && (
             <div className="glass-card p-3 sm:p-4 rounded-xl border border-blue-500/20 flex flex-col justify-between min-w-0 overflow-hidden">
               <div>
                 <div className="text-[11px] font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1.5 mb-2 min-w-0">
                   <Award size={14} className="text-blue-400 shrink-0" />
-                  <span className="truncate">Top Composite Index</span>
+                  <span className="truncate">Season Power Leader</span>
                 </div>
                 <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                   {heroKpis.topComposite.user?.avatar ? (
@@ -566,13 +566,13 @@ export const Managers: React.FC = () => {
                       {heroKpis.topComposite.user?.display_name || `Team ${heroKpis.topComposite.rosterId}`}
                     </div>
                     <div className="text-[11px] sm:text-xs font-mono font-bold text-blue-400 mt-0.5 leading-snug">
-                      {heroKpis.topComposite.score} / 100 Composite
+                      {heroKpis.topComposite.score} Power Score
                     </div>
                   </div>
                 </div>
               </div>
               <div className="text-[10px] sm:text-[11px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
-                Drafting (40%) + Free Agency (40%) + Trades (20%)
+                Points (30%) + All-Play (25%) + Wins (25%) + Lineup Acc (20%)
               </div>
             </div>
           )}
@@ -583,7 +583,7 @@ export const Managers: React.FC = () => {
               <div>
                 <div className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5 mb-2 min-w-0">
                   <Target size={14} className="text-emerald-400 shrink-0" />
-                  <span className="truncate">Lineup Accuracy Leader</span>
+                  <span className="truncate">Top Lineup Accuracy</span>
                 </div>
                 <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                   {heroKpis.topCoach.user?.avatar ? (
@@ -602,18 +602,18 @@ export const Managers: React.FC = () => {
                       {heroKpis.topCoach.user?.display_name || `Team ${heroKpis.topCoach.rosterId}`}
                     </div>
                     <div className="text-[11px] sm:text-xs font-mono font-bold text-emerald-400 mt-0.5 leading-snug">
-                      {heroKpis.topCoach.efficiency}% optimal yield
+                      {heroKpis.topCoach.efficiency}% Efficient
                     </div>
                   </div>
                 </div>
               </div>
               <div className="text-[10px] sm:text-[11px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
-                Points scored vs total potential maximum
+                Points started vs maximum possible bench output
               </div>
             </div>
           )}
 
-          {/* 4. Top Scoring Offense */}
+          {/* 4. Top Regular Season Scorer */}
           {heroKpis.topScorer && (
             <div className="glass-card p-3 sm:p-4 rounded-xl border border-purple-500/20 flex flex-col justify-between min-w-0 overflow-hidden">
               <div>
@@ -638,13 +638,13 @@ export const Managers: React.FC = () => {
                       {heroKpis.topScorer.user?.display_name || `Team ${heroKpis.topScorer.rosterId}`}
                     </div>
                     <div className="text-[11px] sm:text-xs font-mono font-bold text-purple-400 mt-0.5 leading-snug">
-                      {heroKpis.topScorer.fpts} total PF
+                      {heroKpis.topScorer.fpts} Total Pts
                     </div>
                   </div>
                 </div>
               </div>
               <div className="text-[10px] sm:text-[11px] text-muted border-t border-white/5 pt-2 mt-3 leading-tight">
-                Highest raw fantasy points scored
+                Most total regular season fantasy points scored
               </div>
             </div>
           )}
@@ -664,7 +664,7 @@ export const Managers: React.FC = () => {
           <div className={`p-1.5 rounded-lg ${activeTab === 'standings' ? 'bg-white/20' : 'bg-white/5'}`}>
             <Trophy size={16} />
           </div>
-          <span>Standings & Composite Index</span>
+          <span>Standings & Power Score</span>
         </button>
 
         <button
@@ -706,7 +706,7 @@ export const Managers: React.FC = () => {
         </Card>
       )}
 
-      {/* Tab 1: Standings & Composite Index */}
+      {/* Tab 1: Standings & Power Score */}
       {activeTab === 'standings' && (
         <div className="space-y-8 animate-fade-in">
           {/* Team Standings Card */}
@@ -770,7 +770,7 @@ export const Managers: React.FC = () => {
                       </div>
                       {showAnalytics && profile && (
                         <div className="flex flex-col items-end justify-center shrink-0 px-2.5 py-1.5 rounded-xl bg-white/[0.03] border border-white/5">
-                          <div className="text-[10px] text-muted uppercase tracking-wider font-semibold">Composite</div>
+                          <div className="text-[10px] text-muted uppercase tracking-wider font-semibold">Power</div>
                           <div className="font-mono font-bold text-base text-accent-color">{profile.compositeScore.toFixed(1)}</div>
                         </div>
                       )}
@@ -822,11 +822,11 @@ export const Managers: React.FC = () => {
                       {showAnalytics && (
                         <th className="text-center">
                           <div className="flex items-center justify-center gap-1.5">
-                            <span>Composite Score</span>
+                            <span>Power Score</span>
                             <div className="tooltip-container">
                               <Info size={12} className="text-muted opacity-50" />
                               <div className="tooltip-text tooltip-bottom align-right">
-                                Composite Impact: Blended weighting across Drafting (40%), Free Agency/Waivers (40%), and Trading (20%).
+                                Power Score: Holistic formula weighting Points For (30%), All-Play % (25%), Win % (25%), and Lineup Efficiency (20%).
                               </div>
                             </div>
                           </div>
@@ -897,17 +897,18 @@ export const Managers: React.FC = () => {
             </div>
           </Card>
 
-          {/* Manager Composite Strength Card with Sub-Metric Toggle */}
+          {/* Manager Power Score & Sourcing Ranking Card with Sub-Metric Toggle */}
           {showAnalytics && (
-            <Card title="Manager Composite Strength Ranking" className="stagger-2">
+            <Card title="Manager Power Score & Sourcing Ranking" className="stagger-2">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                 <div className="text-sm text-muted">
                   {compositeMetric === 'overall' && (
                     <>
-                      Weighted percentile ranking evaluating sourcing dominance across 
-                      <span className="text-white font-medium mx-1">Drafting (40%)</span>, 
-                      <span className="text-white font-medium mx-1">FAAB + Waivers (40%)</span>, and 
-                      <span className="text-white font-medium mx-1">Trades (20%)</span>.
+                      Holistic single-season power score evaluating 
+                      <span className="text-white font-medium mx-1">Points For (30%)</span>, 
+                      <span className="text-white font-medium mx-1">All-Play % (25%)</span>, 
+                      <span className="text-white font-medium mx-1">Win % (25%)</span>, and 
+                      <span className="text-white font-medium mx-1">Lineup Acc (20%)</span>.
                     </>
                   )}
                   {compositeMetric === 'draft' && (
@@ -931,7 +932,7 @@ export const Managers: React.FC = () => {
                         : 'text-muted hover:text-white'
                     }`}
                   >
-                    🌟 Composite
+                    ⚡ Power Score
                   </button>
                   <button
                     onClick={() => setCompositeMetric('draft')}

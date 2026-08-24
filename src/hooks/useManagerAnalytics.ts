@@ -166,7 +166,27 @@ export function useManagerAnalytics() {
       };
     });
 
-    // Pass 2: Find global min/max to lock to 0-100 index
+    // Pass 2: Global min/max across performance pillars
+    const ptsList = intermediate.map(m => m.totalPointsFor);
+    const minPts = Math.min(...ptsList);
+    const maxPts = Math.max(...ptsList);
+
+    const winPcts = intermediate.map(m => (m.wins / Math.max(1, m.wins + m.losses)) * 100);
+    const minWinPct = Math.min(...winPcts);
+    const maxWinPct = Math.max(...winPcts);
+
+    const allPlayPcts = intermediate.map(m => {
+      const total = m.allPlayWins + m.allPlayLosses + m.allPlayTies;
+      return total > 0 ? (m.allPlayWins / total) * 100 : 50;
+    });
+    const minAllPlay = Math.min(...allPlayPcts);
+    const maxAllPlay = Math.max(...allPlayPcts);
+
+    const effList = intermediate.map(m => m.coachingEfficiency);
+    const minEff = Math.min(...effList);
+    const maxEff = Math.max(...effList);
+
+    // Acquisition Sub-indices
     const getMax = (key: 'rawDraftScore' | 'rawAcqScore' | 'rawTradeScore') => Math.max(...intermediate.map(m => m[key]));
     const getMin = (key: 'rawDraftScore' | 'rawAcqScore' | 'rawTradeScore') => Math.min(...intermediate.map(m => m[key]));
 
@@ -179,27 +199,26 @@ export function useManagerAnalytics() {
     const normalizeToPercentile = (val: number, bounds: { min: number, max: number }) => {
       const span = bounds.max - bounds.min;
       if (span <= 0) return 50; 
-      return ((val - bounds.min) / span) * 100;
+      return Math.max(0, Math.min(100, ((val - bounds.min) / span) * 100));
     };
 
-    // Pass 3: Apply normalized weights to form the composite index
-    const finalProfiles: ManagerProfile[] = intermediate.map(m => {
+    // Pass 3: Apply grounded Power Score weighting matching the site-wide standard:
+    // 30% Points For (Offensive firepower)
+    // 25% All-Play Win % (Schedule-independent roster strength)
+    // 25% Matchup Win % (Standings success)
+    // 20% Coaching Efficiency (% optimal points started)
+    const finalProfiles: ManagerProfile[] = intermediate.map((m, idx) => {
+      const normPts = normalizeToPercentile(m.totalPointsFor, { min: minPts, max: maxPts });
+      const normWinPct = normalizeToPercentile(winPcts[idx], { min: minWinPct, max: maxWinPct });
+      const normAllPlay = normalizeToPercentile(allPlayPcts[idx], { min: minAllPlay, max: maxAllPlay });
+      const normEff = normalizeToPercentile(m.coachingEfficiency, { min: minEff, max: maxEff });
+
+      const rawPower = (normPts * 0.30) + (normAllPlay * 0.25) + (normWinPct * 0.25) + (normEff * 0.20);
+      const compositeScore = Number(rawPower.toFixed(1));
+
       const idxDraft = normalizeToPercentile(m.rawDraftScore, ranges.draft);
       const idxAcq = normalizeToPercentile(m.rawAcqScore, ranges.acq);
       const idxTrade = normalizeToPercentile(m.rawTradeScore, ranges.trade);
-
-      // Dynamically scale base in case trading/acquisition variation is 0 across the dataset (protect divisions)
-      const hasTradeActivity = ranges.trade.max !== ranges.trade.min;
-      const hasAcqActivity = ranges.acq.max !== ranges.acq.min;
-
-      // Core Weighting Configuration (40/40/20 user request)
-      const wDraft = 0.40;
-      const wAcq = hasAcqActivity ? 0.40 : 0;
-      const wTrade = hasTradeActivity ? 0.20 : 0;
-      const totalBasisWeight = wDraft + wAcq + wTrade;
-
-      const rawIndex = (idxDraft * wDraft) + (idxAcq * wAcq) + (idxTrade * wTrade);
-      const compositeScore = Number((rawIndex / Math.max(totalBasisWeight, 0.01)).toFixed(1));
 
       // Clean up and finalize
       const { rawDraftScore, rawAcqScore, rawTradeScore, ...rest } = m;
