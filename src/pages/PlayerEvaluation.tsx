@@ -60,7 +60,8 @@ export const PlayerEvaluation: React.FC = () => {
   const { loading, error, getScopedData, completedWeeks } = usePlayerEvaluation(
     selectedSeasonId,
     currentSeasonYear,
-    scoringSettings
+    scoringSettings,
+    isUnlocked
   );
 
   // States & Filters

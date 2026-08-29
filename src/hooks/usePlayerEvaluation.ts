@@ -149,7 +149,8 @@ const normalizeTeamAbbr = (team: string): string => {
 export function usePlayerEvaluation(
   leagueId: string | null,
   season: string | null,
-  scoringSettings: Record<string, any> | undefined
+  scoringSettings: Record<string, any> | undefined,
+  isUnlocked: boolean = false
 ) {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -556,15 +557,15 @@ export function usePlayerEvaluation(
 
           results.push({
             id: pid,
-            name: meta.full_name || `${meta.first_name || ''} ${meta.last_name || ''}`.trim() || pid,
+            name: isUnlocked ? (meta.full_name || `${meta.first_name || ''} ${meta.last_name || ''}`.trim() || pid) : '██████████',
             pos,
-            team,
-            age: meta.age,
-            yearsExp: meta.years_exp,
-            avatarUrl: meta.avatar ? `https://sleepercdn.com/content/nfl/players/thumb/${pid}.jpg` : undefined,
+            team: isUnlocked ? team : '???',
+            age: isUnlocked ? meta.age : undefined,
+            yearsExp: isUnlocked ? meta.years_exp : undefined,
+            avatarUrl: isUnlocked && meta.avatar ? `https://sleepercdn.com/content/nfl/players/thumb/${pid}.jpg` : undefined,
 
             isRostered: !!rosterInfo,
-            owner: rosterInfo?.user,
+            owner: isUnlocked ? rosterInfo?.user : (rosterInfo?.user ? { ...rosterInfo.user, display_name: '????' } : undefined),
             rosterId: rosterInfo?.roster.roster_id,
 
             gamesPlayed,
@@ -654,7 +655,7 @@ export function usePlayerEvaluation(
     return () => {
       isCancelled = true;
     };
-  }, [leagueId, season, scoringSettings]);
+  }, [leagueId, season, scoringSettings, isUnlocked]);
 
   // Sliced data based on Timeframe Scope
   const getScopedData = useMemo(() => {
