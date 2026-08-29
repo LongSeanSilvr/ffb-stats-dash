@@ -64,17 +64,14 @@ export const SecretUnlockModal: React.FC = () => {
           <X size={18} />
         </button>
 
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-3 mb-5">
           <div className="p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
             {isUnlocked ? <ShieldCheck size={24} /> : <KeyRound size={24} />}
           </div>
           <div>
             <h3 className="text-base font-bold text-white tracking-tight">
-              Commissioner Access Protocol
+              Get out of my garage, Jerry.
             </h3>
-            <p className="text-xs text-muted">
-              Enter the private master passphrase to unlock Player Evaluation.
-            </p>
           </div>
         </div>
 
@@ -83,7 +80,7 @@ export const SecretUnlockModal: React.FC = () => {
             <input
               type="password"
               autoFocus
-              placeholder="Enter commissioner passphrase..."
+              placeholder="Enter passphrase"
               value={passcode}
               onChange={(e) => {
                 setPasscode(e.target.value);
