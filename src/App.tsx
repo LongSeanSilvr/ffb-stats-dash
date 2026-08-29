@@ -7,6 +7,7 @@ import { Faab } from './pages/Faab';
 import { Draft } from './pages/Draft';
 import { Trades } from './pages/Trades';
 import { FreeAgency } from './pages/FreeAgency';
+import { PlayerEvaluation } from './pages/PlayerEvaluation';
 import Playoffs from './pages/Playoffs';
 import { RecordBook } from './pages/RecordBook';
 import { LeagueProvider } from './context/LeagueContext';
@@ -65,6 +66,8 @@ function App() {
               <Route path="/trades" element={<Trades />} />
               <Route path="/faab" element={<Faab />} />
               <Route path="/freeagency" element={<FreeAgency />} />
+              <Route path="/players" element={<PlayerEvaluation />} />
+              <Route path="/waivers" element={<PlayerEvaluation />} />
               <Route path="/playoffs" element={<Playoffs />} />
             </Routes>
           </main>

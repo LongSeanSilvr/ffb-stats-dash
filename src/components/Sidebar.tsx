@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { UserCircle, Target, DollarSign, Repeat, Zap, Trophy, BookOpen, MessageSquarePlus } from 'lucide-react';
+import { UserCircle, Target, DollarSign, Repeat, Zap, Trophy, BookOpen, MessageSquarePlus, Crosshair } from 'lucide-react';
 import { useLeagueContext } from '../context/LeagueContext';
 import { FeedbackModal } from './FeedbackModal';
 
@@ -50,6 +50,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           <NavLink to="/recordbook" onClick={onClose} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
             <BookOpen size={20} />
             Record Book
+          </NavLink>
+          <NavLink to="/players" onClick={onClose} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+            <Crosshair size={20} />
+            Player Evaluation
           </NavLink>
         </nav>
 
