@@ -311,8 +311,8 @@ export const PlayerRadarDrawer: React.FC<PlayerRadarDrawerProps> = ({ player, is
                   {player.gameLogs.filter(l => l.gp).map((log) => (
                     <tr key={log.week} className="hover:bg-white/[0.02] transition-colors">
                       <td className="py-2 px-3 font-sans font-bold text-white">{log.week}</td>
-                      <td className="py-2 px-2 text-muted">{log.opp || '-'}</td>
-                      <td className="py-2 px-2">{log.snaps} <span className="text-[10px] text-muted">({Math.round(log.snapPct * 100)}%)</span></td>
+                      <td className="py-2 px-2 text-cyan-300 font-semibold">{log.opp || '-'}</td>
+                      <td className="py-2 px-2">{log.snaps} <span className="text-[10px] text-muted">({Math.round(log.snapPct)}%)</span></td>
                       <td className="py-2 px-2">{log.rushAtt}-{log.rushYd}{log.rushTd > 0 ? ` (${log.rushTd}TD)` : ''}</td>
                       <td className="py-2 px-2">{log.rec}/{log.recTgt}-{log.recYd}{log.recTd > 0 ? ` (${log.recTd}TD)` : ''}</td>
                       <td className="py-2 px-2 text-amber-400 font-bold">{log.rushFd + log.recFd}</td>

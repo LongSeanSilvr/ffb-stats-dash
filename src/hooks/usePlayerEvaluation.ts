@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { BASE_URL, getPlayers, getRosters, getUsers, getMatchups } from '../api/sleeper';
 import type { User, Roster } from '../api/sleeper';
+import { getNflOpponent } from '../data/nflSchedules';
 
 export type TimeframeScope = 'full' | 'last1' | 'last3' | 'last5';
 export type OwnershipFilter = 'all' | 'available' | 'rostered';
@@ -60,8 +61,12 @@ export interface PlayerEvaluationItem {
   // Games & Timeframe
   gamesPlayed: number;
   weeksActive: number[];
+  snapPct: number;
+  totalSnaps: number;
+  avgSnapsPerGame: number;
+  snapTrend3Wk: number;
 
-  // Fantasy Scoring
+  // Custom League Scoring & Baselines
   totalCustomPts: number;
   customPpg: number;
   totalStdPts: number;
@@ -71,47 +76,41 @@ export interface PlayerEvaluationItem {
   deltaVsPpr: number;
   deltaVsStd: number;
 
-  // Opportunity & Snaps
-  totalSnaps: number;
-  avgSnapsPerGame: number;
-  snapPct: number;
-  snapTrend3Wk: number; // Delta in snap% over last 3 games vs overall
+  // Touch & Opportunity Metrics
   totalTouches: number;
   touchesPerGame: number;
-
-  // Receiving & Air Yards
-  targets: number;
-  targetsPerGame: number;
-  targetSharePct: number;
-  receptions: number;
-  recYards: number;
-  recTds: number;
-  airYards: number;
-  airYardsSharePct: number;
-  aDoT: number;
-  wopr: number; // 1.5 * targetShare + 0.7 * airYardsShare
-  recFd: number;
-  recFdRate: number; // recFd / targets
-
-  // Rushing & High Value Touches
   carries: number;
   carriesPerGame: number;
   rushYards: number;
   rushTds: number;
   ypc: number;
   rushFd: number;
-  rushFdRate: number; // rushFd / carries
+  rushFdRate: number;
   rzCarries: number;
-  rzTargets: number;
-  hvt: number; // High Value Touches = rzCarries + targets
-  hvtPerGame: number;
   rushYacPerAtt: number;
   brokenTackleRate: number;
 
-  // First Downs Combined
+  // Receiving Metrics
+  targets: number;
+  targetsPerGame: number;
+  targetSharePct: number;
+  airYardsSharePct: number;
+  wopr: number;
+  receptions: number;
+  recYards: number;
+  recTds: number;
+  recFd: number;
+  recFdRate: number;
+  airYards: number;
+  aDoT: number;
+  rzTargets: number;
+
+  // High-Value Touches (HVT) & First Downs (1D)
+  hvt: number;
+  hvtPerGame: number;
   totalFd: number;
   fdPerGame: number;
-  fdPerTouch: number; // totalFd / totalTouches
+  fdPerTouch: number;
 
   // Special Teams & Returns
   krYd: number;
@@ -139,6 +138,14 @@ export interface PlayerEvaluationItem {
 // Memory cache for weekly stats across seasons
 const seasonStatsCache: Record<string, Record<number, Record<string, any>>> = {};
 
+const normalizeTeamAbbr = (team: string): string => {
+  const t = (team || '').toUpperCase();
+  if (t === 'WSH') return 'WAS';
+  if (t === 'LA') return 'LAR';
+  if (t === 'JAC') return 'JAX';
+  return t;
+};
+
 export function usePlayerEvaluation(
   leagueId: string | null,
   season: string | null,
@@ -154,11 +161,15 @@ export function usePlayerEvaluation(
     let isCancelled = false;
 
     async function loadData() {
-      if (!leagueId || !season) return;
-      try {
-        setLoading(true);
-        setError(null);
+      if (!leagueId || !season) {
+        setLoading(false);
+        return;
+      }
 
+      setLoading(true);
+      setError(null);
+
+      try {
         // 1. Fetch Players Database, Users, and Rosters
         const [playersDict, users, rosters] = await Promise.all([
           getPlayers(),
@@ -194,7 +205,6 @@ export function usePlayerEvaluation(
         }
 
         if (weeksToFetch.length > 0) {
-          // Fetch weeks with concurrency
           const weekResults = await Promise.all(
             weeksToFetch.map(async (w) => {
               try {
@@ -318,7 +328,7 @@ export function usePlayerEvaluation(
             const teamWeek = teamWeeklyTotals[team]?.[w] || { passAtt: 1, airYd: 1, offSnaps: 65 };
             const teamOffSnaps = s.tm_off_snp || teamWeek.offSnaps || 65;
             const playerSnaps = s.off_snp || 0;
-            const snapPct = teamOffSnaps > 0 ? playerSnaps / teamOffSnaps : 0;
+            const snapPct = teamOffSnaps > 0 ? (playerSnaps / teamOffSnaps) * 100 : 0;
 
             // Compute custom fantasy points
             const customPts = 
@@ -355,9 +365,12 @@ export function usePlayerEvaluation(
 
             const pprPts = stdPts + (s.rec || 0) * 1.0;
 
+            const playerTeam = pMeta.team || s.team || 'FA';
+            const opp = s.opponent || getNflOpponent(season, w, playerTeam);
+
             playerMap[pid].logs.push({
               week: w,
-              opp: s.opponent,
+              opp,
               gp: !!(s.gp || s.gms_active || playerSnaps > 0 || (s.rush_att || 0) > 0 || (s.rec_tgt || 0) > 0 || (s.kr_yd || 0) > 0),
               snaps: playerSnaps,
               teamSnaps: teamOffSnaps,
@@ -767,6 +780,7 @@ export function usePlayerEvaluation(
           carriesPerGame: carries / scopedGames,
           rushYards,
           rushTds,
+          ypc: carries > 0 ? rushYards / carries : 0,
           rushFd,
           rushFdRate: carries > 0 ? (rushFd / carries) * 100 : 0,
           rzCarries,
@@ -793,6 +807,8 @@ export function usePlayerEvaluation(
           returnTds: krTd + prTd,
           returnPts,
           returnFloorPpg,
+          totalSnaps,
+          avgSnapsPerGame: totalSnaps / scopedGames,
           snapPct,
           mortyEdgeIndex: Math.round(scopedEdgeScore)
         };
