@@ -294,16 +294,35 @@ export const PlayerRadarDrawer: React.FC<PlayerRadarDrawerProps> = ({ player, is
             </h4>
             <div className="overflow-x-auto rounded-xl border border-white/10">
               <table className="w-full text-xs text-left">
-                <thead className="bg-white/5 text-muted uppercase text-[10px] font-semibold border-b border-white/10">
+                <thead className="bg-white/5 text-muted uppercase text-[10px] font-semibold border-b border-white/10 select-none">
                   <tr>
                     <th className="py-2.5 px-3">Wk</th>
                     <th className="py-2.5 px-2">Opp</th>
-                    <th className="py-2.5 px-2">Snaps</th>
-                    <th className="py-2.5 px-2">Rush</th>
-                    <th className="py-2.5 px-2">Rec</th>
-                    <th className="py-2.5 px-2">1D</th>
-                    <th className="py-2.5 px-2">KR/PR Yds</th>
-                    <th className="py-2.5 px-2">Custom Pts</th>
+                    <th className="py-2.5 px-2 text-right">Snaps</th>
+                    <th className="py-2.5 px-2 text-right">Snap %</th>
+                    {player.pos === 'QB' ? (
+                      <>
+                        <th className="py-2.5 px-2 text-right">Pass Yds</th>
+                        <th className="py-2.5 px-2 text-right">Pass TD</th>
+                        <th className="py-2.5 px-2 text-right">Int</th>
+                        <th className="py-2.5 px-2 text-right">Rush Att</th>
+                        <th className="py-2.5 px-2 text-right">Rush Yds</th>
+                        <th className="py-2.5 px-2 text-right">Rush TD</th>
+                      </>
+                    ) : (
+                      <>
+                        <th className="py-2.5 px-2 text-right">Carries</th>
+                        <th className="py-2.5 px-2 text-right">Rush Yds</th>
+                        <th className="py-2.5 px-2 text-right">Rush TD</th>
+                        <th className="py-2.5 px-2 text-right">Tgts</th>
+                        <th className="py-2.5 px-2 text-right">Rec</th>
+                        <th className="py-2.5 px-2 text-right">Rec Yds</th>
+                        <th className="py-2.5 px-2 text-right">Rec TD</th>
+                      </>
+                    )}
+                    <th className="py-2.5 px-2 text-right">1D</th>
+                    <th className="py-2.5 px-2 text-right">Ret Yds</th>
+                    <th className="py-2.5 px-2 text-right">Custom Pts</th>
                     <th className="py-2.5 px-3 text-right">Std Pts</th>
                   </tr>
                 </thead>
@@ -312,12 +331,31 @@ export const PlayerRadarDrawer: React.FC<PlayerRadarDrawerProps> = ({ player, is
                     <tr key={log.week} className="hover:bg-white/[0.02] transition-colors">
                       <td className="py-2 px-3 font-sans font-bold text-white">{log.week}</td>
                       <td className="py-2 px-2 text-cyan-300 font-semibold">{log.opp || '-'}</td>
-                      <td className="py-2 px-2">{log.snaps} <span className="text-[10px] text-muted">({Math.round(log.snapPct)}%)</span></td>
-                      <td className="py-2 px-2">{log.rushAtt}-{log.rushYd}{log.rushTd > 0 ? ` (${log.rushTd}TD)` : ''}</td>
-                      <td className="py-2 px-2">{log.rec}/{log.recTgt}-{log.recYd}{log.recTd > 0 ? ` (${log.recTd}TD)` : ''}</td>
-                      <td className="py-2 px-2 text-amber-400 font-bold">{log.rushFd + log.recFd}</td>
-                      <td className="py-2 px-2 text-cyan-400">{log.krYd + log.prYd > 0 ? `${log.krYd + log.prYd}` : '-'}</td>
-                      <td className="py-2 px-2 text-emerald-400 font-bold">{log.customPts.toFixed(1)}</td>
+                      <td className="py-2 px-2 text-right text-muted">{log.snaps}</td>
+                      <td className="py-2 px-2 text-right text-white font-medium">{Math.round(log.snapPct)}%</td>
+                      {player.pos === 'QB' ? (
+                        <>
+                          <td className="py-2 px-2 text-right text-white">{log.passYd}</td>
+                          <td className="py-2 px-2 text-right text-amber-400 font-bold">{log.passTd > 0 ? log.passTd : '-'}</td>
+                          <td className="py-2 px-2 text-right text-rose-400">{log.passInt > 0 ? log.passInt : '-'}</td>
+                          <td className="py-2 px-2 text-right text-muted">{log.rushAtt}</td>
+                          <td className="py-2 px-2 text-right text-emerald-400">{log.rushYd}</td>
+                          <td className="py-2 px-2 text-right text-amber-400 font-bold">{log.rushTd > 0 ? log.rushTd : '-'}</td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="py-2 px-2 text-right text-muted">{log.rushAtt}</td>
+                          <td className="py-2 px-2 text-right text-emerald-400 font-medium">{log.rushYd}</td>
+                          <td className="py-2 px-2 text-right text-amber-400 font-bold">{log.rushTd > 0 ? log.rushTd : '-'}</td>
+                          <td className="py-2 px-2 text-right text-white font-semibold">{log.recTgt}</td>
+                          <td className="py-2 px-2 text-right text-muted">{log.rec}</td>
+                          <td className="py-2 px-2 text-right text-emerald-400 font-medium">{log.recYd}</td>
+                          <td className="py-2 px-2 text-right text-amber-400 font-bold">{log.recTd > 0 ? log.recTd : '-'}</td>
+                        </>
+                      )}
+                      <td className="py-2 px-2 text-right text-amber-300 font-bold">{log.rushFd + log.recFd}</td>
+                      <td className="py-2 px-2 text-right text-cyan-400">{log.krYd + log.prYd > 0 ? log.krYd + log.prYd : '-'}</td>
+                      <td className="py-2 px-2 text-right text-emerald-400 font-bold">{log.customPts.toFixed(1)}</td>
                       <td className="py-2 px-3 text-right text-muted">{log.stdPts.toFixed(1)}</td>
                     </tr>
                   ))}
