@@ -52,7 +52,7 @@ type RoleFilter = 'ALL' | 'OFFENSIVE' | 'VELOCITY' | 'RETURNERS';
 
 export const PlayerEvaluation: React.FC = () => {
   const { selectedSeason, selectedSeasonId, setSelectedSeasonId, seasons } = useLeagueContext();
-  const { isUnlocked, lock } = useAuth();
+  const { isUnlocked, lock, setIsUnlockModalOpen } = useAuth();
   const currentSeasonYear = selectedSeason?.league.season || '2025';
   const scoringSettings = (selectedSeason?.league as any)?.scoring_settings || selectedSeason?.league.settings;
 
@@ -119,7 +119,8 @@ export const PlayerEvaluation: React.FC = () => {
         const q = searchQuery.toLowerCase();
         const matchesName = p.name.toLowerCase().includes(q);
         const matchesTeam = p.team.toLowerCase().includes(q);
-        if (!matchesName && !matchesTeam) return false;
+        const matchesOwner = p.owner?.display_name?.toLowerCase().includes(q) || false;
+        if (!matchesName && !matchesTeam && !matchesOwner) return false;
       }
 
       return true;
@@ -133,7 +134,7 @@ export const PlayerEvaluation: React.FC = () => {
       const valB = (b[sortField] ?? 0) as number | string;
 
       if (typeof valA === 'string' && typeof valB === 'string') {
-        return sortDirection === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        return sortDirection === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(a[sortField] as string);
       }
 
       const numA = typeof valA === 'number' ? valA : 0;
@@ -160,6 +161,10 @@ export const PlayerEvaluation: React.FC = () => {
   };
 
   const handleOpenPlayer = (player: PlayerEvaluationItem) => {
+    if (!isUnlocked) {
+      setIsUnlockModalOpen(true);
+      return;
+    }
     setSelectedPlayer(player);
     setIsDrawerOpen(true);
   };
@@ -203,20 +208,16 @@ export const PlayerEvaluation: React.FC = () => {
   // Scatter Chart Data
   const scatterData = useMemo(() => {
     return filteredData.slice(0, 100).map(p => ({
-      name: p.name,
+      name: isUnlocked ? p.name : '[CLASSIFIED]',
       pos: p.pos,
-      team: p.team,
+      team: isUnlocked ? p.team : '???',
       isRostered: p.isRostered,
       touches: p.totalTouches,
       customPts: Number(p.totalCustomPts.toFixed(1)),
       fdRate: Number(p.fdPerTouch.toFixed(1)),
       raw: p
     }));
-  }, [filteredData]);
-
-  if (!isUnlocked) {
-    return <RestrictedAccessTaunt />;
-  }
+  }, [filteredData, isUnlocked]);
 
   return (
     <div className="space-y-6 animate-fade-in pb-16">
@@ -308,15 +309,26 @@ export const PlayerEvaluation: React.FC = () => {
             </button>
           </div>
 
-          {/* Re-Lock Action */}
-          <button
-            onClick={lock}
-            title="Lock Player Evaluation page"
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.03] hover:bg-rose-500/20 border border-white/10 hover:border-rose-500/30 text-xs font-semibold text-muted hover:text-rose-300 transition-all cursor-pointer shadow-sm"
-          >
-            <Lock size={13} />
-            <span className="hidden sm:inline">Lock Page</span>
-          </button>
+          {/* Lock / Unlock Toggle */}
+          {isUnlocked ? (
+            <button
+              onClick={lock}
+              title="Lock player names (blur identities)"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-500/10 hover:bg-rose-500/20 border border-emerald-500/30 hover:border-rose-500/30 text-xs font-semibold text-emerald-300 hover:text-rose-300 transition-all cursor-pointer shadow-sm"
+            >
+              <ShieldCheck size={13} />
+              <span className="hidden sm:inline">Lock Names</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => setIsUnlockModalOpen(true)}
+              title="Classified Player Identities - Click to unlock"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-xs font-semibold text-amber-300 transition-all cursor-pointer shadow-sm animate-pulse"
+            >
+              <Lock size={13} />
+              <span className="hidden sm:inline">Classified (Unlock)</span>
+            </button>
+          )}
 
         </div>
       </div>
@@ -534,7 +546,9 @@ export const PlayerEvaluation: React.FC = () => {
                         <div className="flex items-center gap-2 min-w-0">
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
-                              <span className="text-xs font-bold text-white group-hover:text-purple-300 truncate">{p.name}</span>
+                              <span className={`text-xs font-bold truncate ${isUnlocked ? 'text-white group-hover:text-purple-300' : 'text-white/40 filter blur-[5px] select-none pointer-events-none'}`}>
+                                {isUnlocked ? p.name : '██████████'}
+                              </span>
                               {ownership === 'all' && (
                                 <span className={`text-[8px] px-1 py-0.2 rounded font-semibold ${p.isRostered ? 'bg-blue-500/20 text-blue-300' : 'bg-emerald-500/20 text-emerald-300'}`}>
                                   {p.isRostered ? 'Rostered' : 'Waiver'}
@@ -542,9 +556,11 @@ export const PlayerEvaluation: React.FC = () => {
                               )}
                             </div>
                             <div className="text-[10px] text-muted flex items-center gap-1 truncate">
-                              <span>{p.pos} • {p.team}</span>
+                              <span>{p.pos} • <span className={isUnlocked ? '' : 'filter blur-[4px] select-none text-white/30'}>{isUnlocked ? p.team : '???'}</span></span>
                               {p.isRostered && p.owner && (
-                                <span className="text-blue-300/80 font-medium truncate">({p.owner.display_name})</span>
+                                <span className={`text-blue-300/80 font-medium truncate ${isUnlocked ? '' : 'filter blur-[4px] select-none'}`}>
+                                  ({isUnlocked ? p.owner.display_name : '????'})
+                                </span>
                               )}
                             </div>
                           </div>
@@ -587,7 +603,9 @@ export const PlayerEvaluation: React.FC = () => {
                         <div className="flex items-center gap-2 min-w-0">
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
-                              <span className="text-xs font-bold text-white group-hover:text-amber-300 truncate">{p.name}</span>
+                              <span className={`text-xs font-bold truncate ${isUnlocked ? 'text-white group-hover:text-amber-300' : 'text-white/40 filter blur-[5px] select-none pointer-events-none'}`}>
+                                {isUnlocked ? p.name : '██████████'}
+                              </span>
                               {ownership === 'all' && (
                                 <span className={`text-[8px] px-1 py-0.2 rounded font-semibold ${p.isRostered ? 'bg-blue-500/20 text-blue-300' : 'bg-emerald-500/20 text-emerald-300'}`}>
                                   {p.isRostered ? 'Rostered' : 'Waiver'}
@@ -595,9 +613,11 @@ export const PlayerEvaluation: React.FC = () => {
                               )}
                             </div>
                             <div className="text-[10px] text-muted flex items-center gap-1 truncate">
-                              <span>{p.pos} • {p.team}</span>
+                              <span>{p.pos} • <span className={isUnlocked ? '' : 'filter blur-[4px] select-none text-white/30'}>{isUnlocked ? p.team : '???'}</span></span>
                               {p.isRostered && p.owner && (
-                                <span className="text-blue-300/80 font-medium truncate">({p.owner.display_name})</span>
+                                <span className={`text-blue-300/80 font-medium truncate ${isUnlocked ? '' : 'filter blur-[4px] select-none'}`}>
+                                  ({isUnlocked ? p.owner.display_name : '????'})
+                                </span>
                               )}
                             </div>
                           </div>
@@ -640,7 +660,9 @@ export const PlayerEvaluation: React.FC = () => {
                         <div className="flex items-center gap-2 min-w-0">
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
-                              <span className="text-xs font-bold text-white group-hover:text-emerald-300 truncate">{p.name}</span>
+                              <span className={`text-xs font-bold truncate ${isUnlocked ? 'text-white group-hover:text-emerald-300' : 'text-white/40 filter blur-[5px] select-none pointer-events-none'}`}>
+                                {isUnlocked ? p.name : '██████████'}
+                              </span>
                               {ownership === 'all' && (
                                 <span className={`text-[8px] px-1 py-0.2 rounded font-semibold ${p.isRostered ? 'bg-blue-500/20 text-blue-300' : 'bg-emerald-500/20 text-emerald-300'}`}>
                                   {p.isRostered ? 'Rostered' : 'Waiver'}
@@ -648,9 +670,11 @@ export const PlayerEvaluation: React.FC = () => {
                               )}
                             </div>
                             <div className="text-[10px] text-muted flex items-center gap-1 truncate">
-                              <span>{p.team}</span>
+                              <span>{p.pos} • <span className={isUnlocked ? '' : 'filter blur-[4px] select-none text-white/30'}>{isUnlocked ? p.team : '???'}</span></span>
                               {p.isRostered && p.owner && (
-                                <span className="text-blue-300/80 font-medium truncate">({p.owner.display_name})</span>
+                                <span className={`text-blue-300/80 font-medium truncate ${isUnlocked ? '' : 'filter blur-[4px] select-none'}`}>
+                                  ({isUnlocked ? p.owner.display_name : '????'})
+                                </span>
                               )}
                             </div>
                           </div>
@@ -693,7 +717,9 @@ export const PlayerEvaluation: React.FC = () => {
                         <div className="flex items-center gap-2 min-w-0">
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
-                              <span className="text-xs font-bold text-white group-hover:text-cyan-300 truncate">{p.name}</span>
+                              <span className={`text-xs font-bold truncate ${isUnlocked ? 'text-white group-hover:text-cyan-300' : 'text-white/40 filter blur-[5px] select-none pointer-events-none'}`}>
+                                {isUnlocked ? p.name : '██████████'}
+                              </span>
                               {ownership === 'all' && (
                                 <span className={`text-[8px] px-1 py-0.2 rounded font-semibold ${p.isRostered ? 'bg-blue-500/20 text-blue-300' : 'bg-emerald-500/20 text-emerald-300'}`}>
                                   {p.isRostered ? 'Rostered' : 'Waiver'}
@@ -701,9 +727,11 @@ export const PlayerEvaluation: React.FC = () => {
                               )}
                             </div>
                             <div className="text-[10px] text-muted flex items-center gap-1 truncate">
-                              <span>{p.pos} • {p.team}</span>
+                              <span>{p.pos} • <span className={isUnlocked ? '' : 'filter blur-[4px] select-none text-white/30'}>{isUnlocked ? p.team : '???'}</span></span>
                               {p.isRostered && p.owner && (
-                                <span className="text-blue-300/80 font-medium truncate">({p.owner.display_name})</span>
+                                <span className={`text-blue-300/80 font-medium truncate ${isUnlocked ? '' : 'filter blur-[4px] select-none'}`}>
+                                  ({isUnlocked ? p.owner.display_name : '????'})
+                                </span>
                               )}
                             </div>
                           </div>
@@ -1097,13 +1125,15 @@ export const PlayerEvaluation: React.FC = () => {
                             <div className="flex items-center gap-2.5">
                               <img
                                 src={photoUrl}
-                                alt={p.name}
+                                alt={isUnlocked ? p.name : 'player'}
                                 onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
-                                className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 object-cover"
+                                className={`w-8 h-8 rounded-lg bg-white/5 border border-white/10 object-cover ${isUnlocked ? '' : 'filter blur-md select-none'}`}
                               />
                               <div>
-                                <div className="font-bold text-white group-hover:text-cyan-300 transition-colors flex items-center gap-1.5">
-                                  <span>{p.name}</span>
+                                <div className="flex items-center gap-1.5">
+                                  <span className={`font-bold transition-colors ${isUnlocked ? 'text-white group-hover:text-cyan-300' : 'text-white/40 filter blur-[6px] select-none pointer-events-none'}`}>
+                                    {isUnlocked ? p.name : '████████████'}
+                                  </span>
                                   {p.totalReturnYd > 100 && (
                                     <span title="Return Game Role">
                                       <Zap size={11} className="text-cyan-400" />
@@ -1118,7 +1148,7 @@ export const PlayerEvaluation: React.FC = () => {
                                   }`}>
                                     {p.pos}
                                   </span>
-                                  <span> • {p.team}</span>
+                                  <span> • <span className={isUnlocked ? '' : 'filter blur-[4px] select-none text-white/30'}>{isUnlocked ? p.team : '???'}</span></span>
                                   <span> • {p.gamesPlayed} GP</span>
                                 </div>
                               </div>
@@ -1129,12 +1159,14 @@ export const PlayerEvaluation: React.FC = () => {
                           <td className="py-2.5 px-2 font-sans">
                             {p.isRostered ? (
                               <div className="flex items-center gap-1.5 text-[10px] text-blue-300">
-                                {ownerAvatar ? (
+                                {ownerAvatar && isUnlocked ? (
                                   <img src={ownerAvatar} alt="owner" className="w-4 h-4 rounded-full object-cover" />
                                 ) : (
                                   <ShieldCheck size={12} />
                                 )}
-                                <span className="truncate max-w-[80px]">{p.owner?.display_name || 'Rostered'}</span>
+                                <span className={`truncate max-w-[80px] ${isUnlocked ? '' : 'filter blur-[4px] select-none text-blue-300/40'}`}>
+                                  {isUnlocked ? (p.owner?.display_name || 'Rostered') : 'Rostered'}
+                                </span>
                               </div>
                             ) : (
                               <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">

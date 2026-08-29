@@ -14,6 +14,7 @@ import {
   Calendar 
 } from 'lucide-react';
 import type { PlayerEvaluationItem } from '../../hooks/usePlayerEvaluation';
+import { useAuth } from '../../context/AuthContext';
 import {
   ResponsiveContainer,
   BarChart,
@@ -33,6 +34,8 @@ interface PlayerRadarDrawerProps {
 }
 
 export const PlayerRadarDrawer: React.FC<PlayerRadarDrawerProps> = ({ player, isOpen, onClose }) => {
+  const { isUnlocked } = useAuth();
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -89,11 +92,11 @@ export const PlayerRadarDrawer: React.FC<PlayerRadarDrawerProps> = ({ player, is
             <div className="relative">
               <img
                 src={playerPhoto}
-                alt={player.name}
+                alt={isUnlocked ? player.name : 'player'}
                 onError={(e) => {
                   (e.target as HTMLElement).style.display = 'none';
                 }}
-                className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 object-cover shadow-inner"
+                className={`w-16 h-16 rounded-2xl bg-white/5 border border-white/10 object-cover shadow-inner ${isUnlocked ? '' : 'filter blur-md select-none'}`}
               />
               <span className={`absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${
                 player.pos === 'RB' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
@@ -107,8 +110,12 @@ export const PlayerRadarDrawer: React.FC<PlayerRadarDrawerProps> = ({ player, is
 
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold text-white tracking-tight">{player.name}</h2>
-                <span className="text-xs px-2 py-0.5 rounded bg-white/10 text-white/70 font-semibold">{player.team}</span>
+                <h2 className={`text-xl font-bold tracking-tight ${isUnlocked ? 'text-white' : 'text-white/40 filter blur-[6px] select-none pointer-events-none'}`}>
+                  {isUnlocked ? player.name : '████████████'}
+                </h2>
+                <span className={`text-xs px-2 py-0.5 rounded bg-white/10 text-white/70 font-semibold ${isUnlocked ? '' : 'filter blur-[4px] select-none text-white/30'}`}>
+                  {isUnlocked ? player.team : '???'}
+                </span>
               </div>
 
               <div className="flex items-center gap-3 mt-1.5 text-xs text-muted">
