@@ -36,13 +36,18 @@ export const PlayerRadarDrawer: React.FC<PlayerRadarDrawerProps> = ({ player, is
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') onClose();
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => {
+        document.body.style.overflow = '';
+        window.removeEventListener('keydown', handleKeyDown);
+      };
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = '';
     }
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen]);
+  }, [isOpen, onClose]);
 
   if (!isOpen || !player) return null;
 
@@ -70,11 +75,11 @@ export const PlayerRadarDrawer: React.FC<PlayerRadarDrawerProps> = ({ player, is
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[2000] flex items-center justify-end bg-black/80 backdrop-blur-md animate-fade-in"
+      className="fixed inset-0 z-[2000] flex items-center justify-center p-3 sm:p-4 md:p-6 bg-black/85 backdrop-blur-md animate-fade-in overflow-y-auto"
       onClick={onClose}
     >
       <div
-        className="glass-card border-l border-white/10 w-full max-w-2xl h-full flex flex-col overflow-hidden shadow-2xl bg-[#0f1115]/95 animate-slide-left"
+        className="glass-card border border-white/15 w-full max-w-3xl lg:max-w-4xl max-h-[90vh] flex flex-col rounded-2xl overflow-hidden shadow-2xl bg-[#0f1115]/95 animate-fade-in my-auto text-left"
         style={{ padding: 0 }}
         onClick={e => e.stopPropagation()}
       >
