@@ -247,6 +247,12 @@ export const PlayerRadarDrawer: React.FC<PlayerRadarDrawerProps> = ({ player, is
               </div>
 
               <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5">
+                <div className="text-[10px] text-muted font-medium">TPRR (Targets / Route)</div>
+                <div className="text-base font-bold text-cyan-400 mt-0.5">{player.tprr > 0 ? `${player.tprr.toFixed(1)}%` : '-'}</div>
+                <div className="text-[10px] text-muted">{player.routesRun} routes ({player.routesPerGame.toFixed(1)}/g)</div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5">
                 <div className="text-[10px] text-muted font-medium">1st Down Efficiency</div>
                 <div className="text-base font-bold text-amber-400 mt-0.5">{player.fdPerTouch.toFixed(1)}%</div>
                 <div className="text-[10px] text-muted">{player.totalFd} 1Ds ({player.fdPerGame.toFixed(1)}/g)</div>
@@ -325,6 +331,8 @@ export const PlayerRadarDrawer: React.FC<PlayerRadarDrawerProps> = ({ player, is
                         <th className="py-2.5 px-2 text-right">Rec</th>
                         <th className="py-2.5 px-2 text-right">Rec Yds</th>
                         <th className="py-2.5 px-2 text-right">Rec TD</th>
+                        <th className="py-2.5 px-2 text-right">Routes</th>
+                        <th className="py-2.5 px-2 text-right">TPRR</th>
                       </>
                     )}
                     <th className="py-2.5 px-2 text-right">1D</th>
@@ -354,10 +362,12 @@ export const PlayerRadarDrawer: React.FC<PlayerRadarDrawerProps> = ({ player, is
                           <td className="py-2 px-2 text-right text-muted">{log.rushAtt}</td>
                           <td className="py-2 px-2 text-right text-emerald-400 font-medium">{log.rushYd}</td>
                           <td className="py-2 px-2 text-right text-amber-400 font-bold">{log.rushTd > 0 ? log.rushTd : '-'}</td>
-                          <td className="py-2 px-2 text-right text-white font-semibold">{log.recTgt}</td>
+                          <td className="py-2 px-2 text-right text-amber-300 font-semibold">{log.recTgt}</td>
                           <td className="py-2 px-2 text-right text-muted">{log.rec}</td>
                           <td className="py-2 px-2 text-right text-emerald-400 font-medium">{log.recYd}</td>
                           <td className="py-2 px-2 text-right text-amber-400 font-bold">{log.recTd > 0 ? log.recTd : '-'}</td>
+                          <td className="py-2 px-2 text-right text-muted">{log.routes}</td>
+                          <td className="py-2 px-2 text-right text-cyan-400 font-semibold">{log.tprr > 0 ? `${log.tprr.toFixed(0)}%` : '-'}</td>
                         </>
                       )}
                       <td className="py-2 px-2 text-right text-amber-300 font-bold">{log.rushFd + log.recFd}</td>

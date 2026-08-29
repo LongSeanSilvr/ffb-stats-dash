@@ -384,10 +384,30 @@ export const PlayerEvaluation: React.FC = () => {
                     Formula: 1.5 × Target Share + 0.7 × Air Yards Share
                   </div>
                   <p className="text-muted text-[11px] leading-relaxed">
-                    The <strong className="text-white">#1 predictive metric</strong> for wide receiver breakouts. It measures true receiving intent before fantasy points catch up.
+                    The <strong className="text-white">#1 predictive metric</strong> for receiving volume. It measures true receiving intent before fantasy points catch up.
                   </p>
                   <div className="text-[10px] text-emerald-400 font-semibold pt-0.5">
-                    ★ Rule of Thumb: &gt; 0.60 is elite alpha, &gt; 0.45 is strong target earner.
+                    ★ Rule of Thumb: &gt; 0.55 is alpha volume, &gt; 0.40 is strong starter.
+                  </div>
+                </div>
+
+                {/* Metric 2: TPRR */}
+                <div className="p-3.5 rounded-xl bg-white/[0.03] border border-cyan-500/20 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-cyan-400 flex items-center gap-1">
+                      <Activity size={13} />
+                      <span>TPRR (Targets Per Route Run)</span>
+                    </span>
+                    <span className="text-[10px] font-mono text-muted">Efficiency Alpha</span>
+                  </div>
+                  <div className="text-[10px] font-mono text-cyan-300 bg-cyan-500/10 px-2 py-1 rounded border border-cyan-500/20">
+                    Formula: Total Targets / Estimated Routes Run
+                  </div>
+                  <p className="text-muted text-[11px] leading-relaxed">
+                    The <strong className="text-white">gold standard efficiency metric</strong> for identifying part-time breakout wide receivers and tight ends before they earn full-time snaps.
+                  </p>
+                  <div className="text-[10px] text-cyan-300 font-semibold pt-0.5">
+                    ★ Rule of Thumb: &gt; 25% is elite target earner, &gt; 30% is alpha breakout.
                   </div>
                 </div>
 
@@ -609,7 +629,9 @@ export const PlayerEvaluation: React.FC = () => {
                         </div>
                         <div className="text-right font-mono shrink-0 pl-2">
                           <span className="text-xs font-bold text-amber-400">{p.wopr.toFixed(2)}</span>
-                          <span className="text-[9px] text-muted block whitespace-nowrap">WOPR ({p.aDoT.toFixed(1)} aDoT)</span>
+                          <span className="text-[9px] text-muted block whitespace-nowrap">
+                            WOPR ({p.tprr > 0 ? `${p.tprr.toFixed(0)}% TPRR • ` : ''}{p.aDoT.toFixed(1)} aDoT)
+                          </span>
                         </div>
                       </div>
                     ))}
@@ -1017,6 +1039,12 @@ export const PlayerEvaluation: React.FC = () => {
                             {sortField === 'wopr' && <ArrowUpDown size={12} className="text-cyan-400" />}
                           </div>
                         </th>
+                        <th className="py-3 px-2 cursor-pointer text-right" onClick={() => handleSort('tprr')} title="Targets Per Route Run (TPRR %): Percentage of pass routes where the player earned a target. >25% indicates elite target earning power.">
+                          <div className="flex items-center justify-end gap-1">
+                            <span>TPRR</span>
+                            {sortField === 'tprr' && <ArrowUpDown size={12} className="text-cyan-400" />}
+                          </div>
+                        </th>
                         <th className="py-3 px-2 cursor-pointer text-right" onClick={() => handleSort('returnFloorPpg')} title="Return Floor PPG: Average weekly points scored purely on special teams kickoff/punt returns.">
                           <div className="flex items-center justify-end gap-1">
                             <span>Ret Floor</span>
@@ -1038,6 +1066,8 @@ export const PlayerEvaluation: React.FC = () => {
                         <th className="py-3 px-2 cursor-pointer text-right" onClick={() => handleSort('snapTrend3Wk')} title="Snap Trend: 3-week change in snap share percentage compared to baseline.">3-Wk Δ</th>
                         <th className="py-3 px-2 cursor-pointer text-right" onClick={() => handleSort('totalTouches')} title="Total Carries + Receptions.">Touches</th>
                         <th className="py-3 px-2 cursor-pointer text-right" onClick={() => handleSort('targets')} title="Total Pass Targets.">Tgts</th>
+                        <th className="py-3 px-2 cursor-pointer text-right" onClick={() => handleSort('routesRun')} title="Estimated Pass Routes Run across active games.">Routes</th>
+                        <th className="py-3 px-2 cursor-pointer text-right" onClick={() => handleSort('tprr')} title="Targets Per Route Run %">TPRR</th>
                         <th className="py-3 px-2 cursor-pointer text-right" onClick={() => handleSort('targetSharePct')} title="Target Share: Percentage of team pass attempts targeted to this player.">Tgt%</th>
                         <th className="py-3 px-2 cursor-pointer text-right" onClick={() => handleSort('carries')} title="Total Rush Attempts.">Carries</th>
                         <th className="py-3 px-2 cursor-pointer text-right" onClick={() => handleSort('rzCarries')} title="Red Zone Rush Attempts (inside the opponent 10).">RZ Rush</th>
@@ -1051,6 +1081,8 @@ export const PlayerEvaluation: React.FC = () => {
                         <th className="py-3 px-2 cursor-pointer text-right" onClick={() => handleSort('targets')} title="Total Pass Targets.">Targets</th>
                         <th className="py-3 px-2 cursor-pointer text-right" onClick={() => handleSort('receptions')} title="Total Receptions.">Catches</th>
                         <th className="py-3 px-2 cursor-pointer text-right" onClick={() => handleSort('recYards')} title="Total Receiving Yards.">Rec Yds</th>
+                        <th className="py-3 px-2 cursor-pointer text-right" onClick={() => handleSort('routesRun')} title="Estimated Pass Routes Run across active games.">Routes</th>
+                        <th className="py-3 px-2 cursor-pointer text-right" onClick={() => handleSort('tprr')} title="Targets Per Route Run % (>25% is elite target earner).">TPRR%</th>
                         <th className="py-3 px-2 cursor-pointer text-right" onClick={() => handleSort('airYards')} title="Total Air Yards (downfield throw distance).">Air Yds</th>
                         <th className="py-3 px-2 cursor-pointer text-right" onClick={() => handleSort('aDoT')} title="Average Depth of Target: Air Yards / Targets. High aDoT (>12y) yields high 1D conversion rates.">aDoT</th>
                         <th className="py-3 px-2 cursor-pointer text-right" onClick={() => handleSort('airYardsSharePct')} title="Air Yards Share: Percentage of team downfield air yards targeted to this player.">Air%</th>
@@ -1189,6 +1221,9 @@ export const PlayerEvaluation: React.FC = () => {
                                 {p.wopr > 0 ? p.wopr.toFixed(2) : '-'}
                               </td>
                               <td className="py-2.5 px-2 text-right text-cyan-400 font-semibold">
+                                {p.tprr > 0 ? `${p.tprr.toFixed(0)}%` : '-'}
+                              </td>
+                              <td className="py-2.5 px-2 text-right text-cyan-300 font-semibold">
                                 {p.returnFloorPpg > 0 ? `+${p.returnFloorPpg.toFixed(1)}` : '-'}
                               </td>
                               <td className="py-2.5 px-3 text-right text-muted">
@@ -1208,6 +1243,8 @@ export const PlayerEvaluation: React.FC = () => {
                               </td>
                               <td className="py-2.5 px-2 text-right font-bold text-white">{p.totalTouches}</td>
                               <td className="py-2.5 px-2 text-right text-amber-400">{p.targets}</td>
+                              <td className="py-2.5 px-2 text-right text-muted">{p.routesRun > 0 ? p.routesRun : '-'}</td>
+                              <td className="py-2.5 px-2 text-right text-cyan-400 font-semibold">{p.tprr > 0 ? `${p.tprr.toFixed(0)}%` : '-'}</td>
                               <td className="py-2.5 px-2 text-right text-muted">{p.targetSharePct > 0 ? `${p.targetSharePct.toFixed(1)}%` : '-'}</td>
                               <td className="py-2.5 px-2 text-right text-emerald-400">{p.carries}</td>
                               <td className="py-2.5 px-2 text-right text-muted">{p.rzCarries}</td>
@@ -1222,8 +1259,10 @@ export const PlayerEvaluation: React.FC = () => {
                               <td className="py-2.5 px-2 text-right font-bold text-white">{p.targets}</td>
                               <td className="py-2.5 px-2 text-right text-muted">{p.receptions}</td>
                               <td className="py-2.5 px-2 text-right text-emerald-400 font-semibold">{p.recYards}</td>
+                              <td className="py-2.5 px-2 text-right text-muted">{p.routesRun > 0 ? p.routesRun : '-'}</td>
+                              <td className="py-2.5 px-2 text-right text-cyan-400 font-bold">{p.tprr > 0 ? `${p.tprr.toFixed(1)}%` : '-'}</td>
                               <td className="py-2.5 px-2 text-right text-muted">{p.airYards}</td>
-                              <td className="py-2.5 px-2 text-right text-cyan-400 font-bold">{p.aDoT > 0 ? `${p.aDoT.toFixed(1)}y` : '-'}</td>
+                              <td className="py-2.5 px-2 text-right text-cyan-300 font-bold">{p.aDoT > 0 ? `${p.aDoT.toFixed(1)}y` : '-'}</td>
                               <td className="py-2.5 px-2 text-right text-muted">{p.airYardsSharePct > 0 ? `${p.airYardsSharePct.toFixed(1)}%` : '-'}</td>
                               <td className="py-2.5 px-2 text-right text-amber-400 font-bold">{p.wopr > 0 ? p.wopr.toFixed(2) : '-'}</td>
                               <td className="py-2.5 px-2 text-right text-amber-300 font-semibold">{p.recFd}</td>

@@ -31,6 +31,8 @@ export interface PlayerWeeklyStat {
   recFd: number;
   recRzTgt: number;
   recAirYd: number;
+  routes: number;
+  tprr: number;
   krYd: number;
   prYd: number;
   krTd: number;
@@ -104,6 +106,9 @@ export interface PlayerEvaluationItem {
   airYards: number;
   aDoT: number;
   rzTargets: number;
+  routesRun: number;
+  routesPerGame: number;
+  tprr: number; // Targets Per Route Run %
 
   // High-Value Touches (HVT) & First Downs (1D)
   hvt: number;
@@ -369,6 +374,11 @@ export function usePlayerEvaluation(
             const playerTeam = pMeta.team || s.team || 'FA';
             const opp = s.opponent || getNflOpponent(season, w, playerTeam);
 
+            const teamPassAttempts = teamWeek.passAtt || 0;
+            const snapFraction = teamOffSnaps > 0 ? (playerSnaps / teamOffSnaps) : 0;
+            const routes = Math.max(Math.round(teamPassAttempts * snapFraction), s.rec_tgt || 0);
+            const weeklyTprr = routes > 0 ? ((s.rec_tgt || 0) / routes) * 100 : 0;
+
             playerMap[pid].logs.push({
               week: w,
               opp,
@@ -393,6 +403,8 @@ export function usePlayerEvaluation(
               recFd: s.rec_fd || 0,
               recRzTgt: s.rec_rz_tgt || 0,
               recAirYd: s.rec_air_yd || 0,
+              routes,
+              tprr: weeklyTprr,
               krYd: s.kr_yd || 0,
               prYd: s.pr_yd || 0,
               krTd: s.kr_td || 0,
@@ -440,6 +452,7 @@ export function usePlayerEvaluation(
           let recFd = 0;
           let rzTargets = 0;
           let airYards = 0;
+          let totalRoutes = 0;
           let krYd = 0;
           let prYd = 0;
           let krTd = 0;
@@ -477,6 +490,7 @@ export function usePlayerEvaluation(
             recFd += l.recFd;
             rzTargets += l.recRzTgt;
             airYards += l.recAirYd;
+            totalRoutes += l.routes;
 
             krYd += l.krYd;
             prYd += l.prYd;
@@ -518,6 +532,8 @@ export function usePlayerEvaluation(
           const airYardsSharePct = teamAirYdInPlayedGames > 0 ? (airYards / teamAirYdInPlayedGames) * 100 : 0;
           const aDoT = targets > 0 ? airYards / targets : 0;
           const wopr = (1.5 * (targetSharePct / 100)) + (0.7 * (airYardsSharePct / 100));
+          const tprr = totalRoutes > 0 ? (targets / totalRoutes) * 100 : 0;
+          const routesPerGame = gamesPlayed > 0 ? totalRoutes / gamesPlayed : 0;
 
           const rushFdRate = carries > 0 ? (rushFd / carries) * 100 : 0;
           const recFdRate = targets > 0 ? (recFd / targets) * 100 : 0;
@@ -529,14 +545,15 @@ export function usePlayerEvaluation(
           const hvt = rzCarries + targets;
           const hvtPerGame = gamesPlayed > 0 ? hvt / gamesPlayed : 0;
 
-          // Compute Morty Edge Index (0 - 100): Priority on Role Growth, Volume (WOPR/HVT), and 1D Efficiency
+          // Compute Morty Edge Index (0 - 100): Priority on Role Growth, Volume (WOPR/HVT/TPRR), and 1D Efficiency
           let edgeScore = 0;
           if (pos === 'WR' || pos === 'TE') {
-            const normWopr = Math.min(wopr / 0.55, 1.0) * 40;
-            const normTrend = Math.max(Math.min((snapTrend3Wk + 10) / 30, 1.0), 0) * 25;
-            const normFd = Math.min((recFd / gamesPlayed) / 3.0, 1.0) * 20;
+            const normWopr = Math.min(wopr / 0.55, 1.0) * 35;
+            const normTprr = Math.min(tprr / 26.0, 1.0) * 15;
+            const normTrend = Math.max(Math.min((snapTrend3Wk + 10) / 30, 1.0), 0) * 20;
+            const normFd = Math.min((recFd / gamesPlayed) / 3.0, 1.0) * 15;
             const normRet = Math.min(returnFloorPpg / 6.0, 1.0) * 15;
-            edgeScore = normWopr + normTrend + normFd + normRet;
+            edgeScore = normWopr + normTprr + normTrend + normFd + normRet;
           } else if (pos === 'RB') {
             const normHvt = Math.min(hvtPerGame / 5.5, 1.0) * 40;
             const normTrend = Math.max(Math.min((snapTrend3Wk + 10) / 30, 1.0), 0) * 25;
@@ -597,6 +614,10 @@ export function usePlayerEvaluation(
             airYardsSharePct,
             aDoT,
             wopr,
+            rzTargets,
+            routesRun: totalRoutes,
+            routesPerGame,
+            tprr,
             recFd,
             recFdRate,
 
@@ -608,7 +629,6 @@ export function usePlayerEvaluation(
             rushFd,
             rushFdRate,
             rzCarries,
-            rzTargets,
             hvt,
             hvtPerGame,
             rushYacPerAtt,
@@ -714,6 +734,8 @@ export function usePlayerEvaluation(
         const recTds = scopedLogs.reduce((acc, l) => acc + l.recTd, 0);
         const recFd = scopedLogs.reduce((acc, l) => acc + l.recFd, 0);
         const airYards = scopedLogs.reduce((acc, l) => acc + l.recAirYd, 0);
+        const routesRun = scopedLogs.reduce((acc, l) => acc + l.routes, 0);
+        const tprr = routesRun > 0 ? (targets / routesRun) * 100 : 0;
         const krYd = scopedLogs.reduce((acc, l) => acc + l.krYd, 0);
         const prYd = scopedLogs.reduce((acc, l) => acc + l.prYd, 0);
         const krTd = scopedLogs.reduce((acc, l) => acc + l.krTd, 0);
@@ -744,11 +766,12 @@ export function usePlayerEvaluation(
 
         let scopedEdgeScore = 0;
         if (p.pos === 'WR' || p.pos === 'TE') {
-          const normWopr = Math.min(wopr / 0.55, 1.0) * 40;
-          const normTrend = Math.max(Math.min((p.snapTrend3Wk + 10) / 30, 1.0), 0) * 25;
-          const normFd = Math.min((recFd / scopedGames) / 3.0, 1.0) * 20;
+          const normWopr = Math.min(wopr / 0.55, 1.0) * 35;
+          const normTprr = Math.min(tprr / 26.0, 1.0) * 15;
+          const normTrend = Math.max(Math.min((p.snapTrend3Wk + 10) / 30, 1.0), 0) * 20;
+          const normFd = Math.min((recFd / scopedGames) / 3.0, 1.0) * 15;
           const normRet = Math.min(returnFloorPpg / 6.0, 1.0) * 15;
-          scopedEdgeScore = normWopr + normTrend + normFd + normRet;
+          scopedEdgeScore = normWopr + normTprr + normTrend + normFd + normRet;
         } else if (p.pos === 'RB') {
           const normHvt = Math.min(((rzCarries + targets) / scopedGames) / 5.5, 1.0) * 40;
           const normTrend = Math.max(Math.min((p.snapTrend3Wk + 10) / 30, 1.0), 0) * 25;
@@ -797,6 +820,10 @@ export function usePlayerEvaluation(
           recFdRate: targets > 0 ? (recFd / targets) * 100 : 0,
           airYards,
           aDoT,
+          rzTargets: p.rzTargets,
+          routesRun,
+          routesPerGame: routesRun / scopedGames,
+          tprr,
           hvt: rzCarries + targets,
           hvtPerGame: (rzCarries + targets) / scopedGames,
           totalFd,
