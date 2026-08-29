@@ -17,8 +17,7 @@ const STORAGE_KEY = 'morty_commissioner_unlocked_v1';
 
 // SHA-256 hashes of accepted commissioner passphrases
 const VALID_HASHES = [
-  '1d54368caa7d719ae5b7324d0f4c832e0b8d5ab48d19cbd9940d864640d9e68d',
-  '47c00f376acae6b8140dcad501fdb25427ee913cda5c68520d9ecfa724b51c29',
+  '4639468434c504af52b7d0b00d380fd2db52ac199a01d6593de5626e112afe08',
   (import.meta.env.VITE_COMMISSIONER_HASH as string)
 ].filter(Boolean);
 
