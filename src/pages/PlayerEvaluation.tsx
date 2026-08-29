@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { Card } from '../components/Card';
 import { useLeagueContext } from '../context/LeagueContext';
+import { useAuth } from '../context/AuthContext';
+import { RestrictedAccessTaunt } from '../components/waivers/RestrictedAccessTaunt';
 import { 
   usePlayerEvaluation, 
   type TimeframeScope, 
@@ -39,7 +41,8 @@ import {
   ChevronUp,
   BookOpen,
   HelpCircle,
-  Info
+  Info,
+  Lock
 } from 'lucide-react';
 
 type ViewTab = 'overview' | 'usage' | 'receiving' | 'rushing' | 'special_teams';
@@ -49,6 +52,7 @@ type RoleFilter = 'ALL' | 'OFFENSIVE' | 'VELOCITY' | 'RETURNERS';
 
 export const PlayerEvaluation: React.FC = () => {
   const { selectedSeason, selectedSeasonId, setSelectedSeasonId, seasons } = useLeagueContext();
+  const { isUnlocked, lock } = useAuth();
   const currentSeasonYear = selectedSeason?.league.season || '2025';
   const scoringSettings = (selectedSeason?.league as any)?.scoring_settings || selectedSeason?.league.settings;
 
@@ -210,6 +214,10 @@ export const PlayerEvaluation: React.FC = () => {
     }));
   }, [filteredData]);
 
+  if (!isUnlocked) {
+    return <RestrictedAccessTaunt />;
+  }
+
   return (
     <div className="space-y-6 animate-fade-in pb-16">
       
@@ -231,7 +239,7 @@ export const PlayerEvaluation: React.FC = () => {
           </p>
         </div>
 
-        {/* Top Controls: Season, Ownership Scope & Timeframe Scope */}
+        {/* Top Controls: Season, Ownership Scope, Timeframe Scope & Lock */}
         <div className="flex flex-wrap items-center gap-3">
           
           {/* Season Selector */}
@@ -299,6 +307,17 @@ export const PlayerEvaluation: React.FC = () => {
               Last 5 Wks
             </button>
           </div>
+
+          {/* Re-Lock Action */}
+          <button
+            onClick={lock}
+            title="Lock Player Evaluation page"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.03] hover:bg-rose-500/20 border border-white/10 hover:border-rose-500/30 text-xs font-semibold text-muted hover:text-rose-300 transition-all cursor-pointer shadow-sm"
+          >
+            <Lock size={13} />
+            <span className="hidden sm:inline">Lock Page</span>
+          </button>
+
         </div>
       </div>
 

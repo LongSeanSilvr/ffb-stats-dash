@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { UserCircle, Target, DollarSign, Repeat, Zap, Trophy, BookOpen, MessageSquarePlus, Crosshair } from 'lucide-react';
+import { UserCircle, Target, DollarSign, Repeat, Zap, Trophy, BookOpen, MessageSquarePlus, Crosshair, Lock, ShieldCheck } from 'lucide-react';
 import { useLeagueContext } from '../context/LeagueContext';
+import { useAuth } from '../context/AuthContext';
 import { FeedbackModal } from './FeedbackModal';
 
 interface SidebarProps {
@@ -11,13 +12,18 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const { seasons, selectedSeasonId, setSelectedSeasonId, loading } = useLeagueContext();
+  const { isUnlocked, handleLogoTap } = useAuth();
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
   return (
     <>
       <div className={`sidebar-overlay ${isOpen ? 'open' : ''}`} onClick={onClose} />
       <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
-        <div className="sidebar-logo pt-4">
+        <div 
+          className="sidebar-logo pt-4 cursor-pointer select-none transition-transform active:scale-95" 
+          onClick={handleLogoTap}
+          title="Morty Stats"
+        >
           <img src="/logo_clean.png?v=6" style={{ width: '24px', height: '24px', borderRadius: '50%' }} alt="logo" />
           <span>Morty Stats</span>
         </div>
@@ -51,9 +57,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             <BookOpen size={20} />
             Record Book
           </NavLink>
-          <NavLink to="/players" onClick={onClose} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-            <Crosshair size={20} />
-            Player Evaluation
+          <NavLink to="/players" onClick={onClose} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''} flex items-center justify-between`}>
+            <div className="flex items-center gap-2">
+              <Crosshair size={20} />
+              <span>Player Evaluation</span>
+            </div>
+            {isUnlocked ? (
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400" title="Unlocked" />
+            ) : (
+              <span title="Restricted"><Lock size={13} className="text-rose-400/80" /></span>
+            )}
           </NavLink>
         </nav>
 
