@@ -190,7 +190,7 @@ a:hover {
 .main-content {
   flex: 1;
   padding: 3rem; /* Increased padding */
-  overflow-y: auto;
+  min-width: 0;
 }
 
 /* Typography Utilities */
