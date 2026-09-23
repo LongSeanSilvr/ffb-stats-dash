@@ -108,13 +108,15 @@ export function useAllTimeStats(seasons: SeasonData[]) {
           let runnerUpRosterId: number | null = null;
           let thirdPlaceRosterId: number | null = null;
           let fourthPlaceRosterId: number | null = null;
+          let isSeasonComplete = false;
 
           if (bracket.length > 0) {
             // p: 1 is the championship match
             const champMatch = bracket.find((m: any) => m.p === 1);
-            if (champMatch) {
+            if (champMatch && champMatch.w) {
               championRosterId = champMatch.w;
               runnerUpRosterId = champMatch.l;
+              isSeasonComplete = true;
             }
             
             // p: 3 is the third place match
@@ -218,9 +220,12 @@ export function useAllTimeStats(seasons: SeasonData[]) {
             else if (roster.roster_id === thirdPlaceRosterId) finish = 3;
             else if (roster.roster_id === fourthPlaceRosterId) finish = 4;
             
-            stats.finishes.push(finish);
-            if (finish < stats.bestFinish) stats.bestFinish = finish;
-            if (finish > stats.worstFinish) stats.worstFinish = finish;
+            // Only record finishes for completed seasons to avoid skewing career averages
+            if (isSeasonComplete) {
+              stats.finishes.push(finish);
+              if (finish < stats.bestFinish) stats.bestFinish = finish;
+              if (finish > stats.worstFinish) stats.worstFinish = finish;
+            }
 
             const totalGames = wins + losses + ties;
             const winPct = totalGames > 0 ? (wins + ties * 0.5) / totalGames : 0;

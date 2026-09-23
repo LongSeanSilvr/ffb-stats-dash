@@ -86,7 +86,8 @@ function aggregateViews(
   allAssets: any[],
   positionalThresholds: Record<string, number>,
   rosterIdList: number[],
-  baseRosters: Record<number, FreeAgencyResult>
+  baseRosters: Record<number, FreeAgencyResult>,
+  lastPlayedWeek: number
 ): { data: FreeAgencyResult[]; ledger: TopAcquisitionLedger[] }[] {
   const filters: AcqFilter[] = ['all', 'faab', 'street'];
   return filters.map(filter => {
@@ -130,7 +131,7 @@ function aggregateViews(
       const rd = rosterData[asset.rosterId];
       if (!rd) return;
       
-      const holdTime = (asset.endWeek !== null ? asset.endWeek : 18) - asset.startWeek;
+      const holdTime = (asset.endWeek !== null ? asset.endWeek : lastPlayedWeek) - asset.startWeek;
       rd.averageWeeksHeld += holdTime;
       
       if (asset.timestamp) {
@@ -229,6 +230,15 @@ export function useFreeAgencyEfficiency() {
           Promise.all(weekPromises),
           getPlayers()
         ]);
+
+        // Determine last week with actual scores (not Sleeper placeholder matchups)
+        let lastPlayedWeek = 0;
+        weeksData.forEach((weekData, index) => {
+          const matchups = weekData[1] || [];
+          const hasScores = matchups.some((m: any) => (m.points || 0) > 0);
+          if (hasScores) lastPlayedWeek = index + 1;
+        });
+        if (lastPlayedWeek === 0) lastPlayedWeek = lastRegularWeek; // fallback for completed seasons
 
         // Build base roster stubs (wins etc)
         const baseRosters: Record<number, FreeAgencyResult> = {};
@@ -380,7 +390,7 @@ export function useFreeAgencyEfficiency() {
         });
 
         // Build all three views in one pass
-        const [allView, faabView, streetView] = aggregateViews(allAssets, positionalThresholds, rosterIdList, baseRosters);
+        const [allView, faabView, streetView] = aggregateViews(allAssets, positionalThresholds, rosterIdList, baseRosters, lastPlayedWeek);
 
         setViews({ all: allView.data, faab: faabView.data, street: streetView.data });
         setTopAssets({ all: allView.ledger, faab: faabView.ledger, street: streetView.ledger });

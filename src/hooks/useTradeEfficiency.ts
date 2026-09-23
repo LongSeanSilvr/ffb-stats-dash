@@ -188,12 +188,12 @@ export function useTradeEfficiency() {
           };
         });
 
-        // Calculate the last week that has actually been played
+        // Calculate the last week that has actually been played (not just placeholder matchups)
         let lastPlayedWeek = 0;
         weeksData.forEach((weekData, index) => {
-          if (weekData[1] && weekData[1].length > 0) {
-            lastPlayedWeek = index + 1;
-          }
+          const matchups = weekData[1] || [];
+          const hasScores = matchups.some((m: any) => (m.points || 0) > 0);
+          if (hasScores) lastPlayedWeek = index + 1;
         });
 
         // Find all trade transactions
@@ -532,7 +532,7 @@ export function useTradeEfficiency() {
             const s = record.sides.find(s => s.rosterId === rosterId);
             let totalLineupDelta = 0;
 
-            for (let w = week; w <= 18; w++) {
+            for (let w = week; w <= lastPlayedWeek; w++) {
               const matchups = weeksData[w - 1]?.[1] || [];
               const myMatchup = matchups.find((m: any) => m.roster_id === rosterId);
               if (!myMatchup) continue;

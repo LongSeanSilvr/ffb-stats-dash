@@ -53,7 +53,7 @@ type RoleFilter = 'ALL' | 'OFFENSIVE' | 'VELOCITY' | 'RETURNERS';
 export const PlayerEvaluation: React.FC = () => {
   const { selectedSeason, selectedSeasonId } = useLeagueContext();
   const { isUnlocked, lock, setIsUnlockModalOpen } = useAuth();
-  const currentSeasonYear = selectedSeason?.league.season || '2025';
+  const currentSeasonYear = selectedSeason?.league.season || String(new Date().getFullYear());
   const scoringSettings = (selectedSeason?.league as any)?.scoring_settings || selectedSeason?.league.settings;
 
   // Evaluation Hook

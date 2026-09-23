@@ -43,6 +43,15 @@ export async function calculateFaabMetrics(selectedSeason: any): Promise<FaabEff
     Promise.all(weekPromises),
     getPlayers()
   ]);
+
+  // Determine last week with actual scores
+  let lastPlayedWeek = 0;
+  weeksData.forEach((weekData, index) => {
+    const matchups = weekData[1] || [];
+    const hasScores = matchups.some((m: any) => (m.points || 0) > 0);
+    if (hasScores) lastPlayedWeek = index + 1;
+  });
+  if (lastPlayedWeek === 0) lastPlayedWeek = lastRegularWeek;
   
   // Data structures
   const rosterData: Record<number, FaabEfficiencyResult> = {};
@@ -152,9 +161,10 @@ export async function calculateFaabMetrics(selectedSeason: any): Promise<FaabEff
   });
 
   // Fill forward remaining weeks so cumulative spend does not plunge to 0
+  const fillStart = Math.max(lastPlayedWeek, 1);
   Object.values(rosterData).forEach(rd => {
-    for (let w = lastRegularWeek; w < 18; w++) {
-      rd.spendingVelocity[w] = rd.spendingVelocity[lastRegularWeek - 1];
+    for (let w = fillStart; w < 18; w++) {
+      rd.spendingVelocity[w] = rd.spendingVelocity[fillStart - 1];
     }
   });
   
@@ -259,6 +269,15 @@ export function useFaabEfficiency() {
           Promise.all(weekPromises),
           getPlayers()
         ]);
+
+        // Determine last week with actual scores
+        let lastPlayedWeek = 0;
+        weeksData.forEach((weekData, index) => {
+          const matchups = weekData[1] || [];
+          const hasScores = matchups.some((m: any) => (m.points || 0) > 0);
+          if (hasScores) lastPlayedWeek = index + 1;
+        });
+        if (lastPlayedWeek === 0) lastPlayedWeek = lastRegularWeek;
         
         // Data structures
         const rosterData: Record<number, FaabEfficiencyResult> = {};

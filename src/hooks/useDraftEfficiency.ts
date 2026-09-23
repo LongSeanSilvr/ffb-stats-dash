@@ -82,6 +82,14 @@ export function useDraftEfficiency() {
         }
         const weeksData = await Promise.all(weekPromises);
 
+        // Determine last week with actual scores (not Sleeper placeholder matchups)
+        let lastPlayedWeek = 0;
+        weeksData.forEach((weekData, index) => {
+          const matchups = weekData[1] || [];
+          const hasScores = matchups.some((m: any) => (m.points || 0) > 0);
+          if (hasScores) lastPlayedWeek = index + 1;
+        });
+
         // Initialize roster data
         const rosterData: Record<number, DraftEfficiencyResult> = {};
         selectedSeason.rosters.forEach(r => {
@@ -206,14 +214,15 @@ export function useDraftEfficiency() {
         });
 
         // Calculate Games Missed due to Injury/Busts
+        const effectiveEndWeek = lastPlayedWeek || lastRegularWeek;
         assets.forEach(asset => {
            const totalSeasonGp = seasonStats[asset.playerId]?.gp || 0;
-           if (asset.gamesPlayedOnRoster === totalSeasonGp && asset.endWeek !== null && asset.endWeek < 18) {
+           if (asset.gamesPlayedOnRoster === totalSeasonGp && asset.endWeek !== null && asset.endWeek < effectiveEndWeek) {
               // Season ending injury / out of NFL drop
-              asset.gamesMissed = Math.max(0, 17 - totalSeasonGp);
+              asset.gamesMissed = Math.max(0, effectiveEndWeek - totalSeasonGp);
            } else {
-              // Missed games while on roster
-              const weeksOnRoster = (asset.endWeek || 18) - asset.startWeek + 1;
+              // Missed games while on roster (bounded to lastPlayedWeek so in-progress seasons don't inflate)
+              const weeksOnRoster = (asset.endWeek || effectiveEndWeek) - asset.startWeek + 1;
               asset.gamesMissed = Math.max(0, weeksOnRoster - asset.gamesPlayedOnRoster - 1); // rough -1 for BYE
            }
         });

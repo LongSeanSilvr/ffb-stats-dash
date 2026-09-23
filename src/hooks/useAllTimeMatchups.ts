@@ -89,7 +89,7 @@ export function useAllTimeMatchups(seasons: SeasonData[]) {
           const leagueId = season.league.league_id;
           const seasonYear = season.league.season;
           const playoffStartWeek = season.league.settings.playoff_week_start || 15;
-          const totalWeeks = 17; // Sleeper generally supports up to 17 or 18 weeks now
+          const totalWeeks = 18; // Modern NFL has 18 regular season weeks (pre-2021 weeks just return empty)
 
           if (!seasonAllPlayTracker[seasonYear]) {
             seasonAllPlayTracker[seasonYear] = {};
